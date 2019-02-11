@@ -112,10 +112,10 @@ public class FilePollingServiceImpl implements FilePollingService {
 
     private MessageSource<File> buildFileReadingMessageSource(String path) {
         CustomRecursiveDirectoryScanner scanner = new CustomRecursiveDirectoryScanner();
+        scanner.setFilter(new IgnoreHiddenFileListFilter());
         FileReadingMessageSource source = new FileReadingMessageSource();
         source.setDirectory(new File(path));
         source.setScanner(scanner);
-        source.setFilter(new IgnoreHiddenFileListFilter());
         return source;
     }
 
