@@ -1,5 +1,5 @@
-drop table if exists STAGING_AREAS;
 drop table if exists STAGING_AREA_FILES;
+drop table if exists STAGING_AREAS;
 
 create table STAGING_AREAS
 (
@@ -20,5 +20,5 @@ create table STAGING_AREA_FILES
   SIZE            integer      not null,
   CREATE_DATE     timestamp    not null,
   UPDATE_DATE     timestamp    not null,
-  FOREIGN KEY (STAGING_AREA_ID) REFERENCES STAGIN_AREAS (ID)
+  CONSTRAINT FK_STAGING_AREA_FILE_TO_AREA_ID FOREIGN KEY (STAGING_AREA_ID) REFERENCES STAGING_AREAS (ID)
 );

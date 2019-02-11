@@ -24,17 +24,17 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 import uk.ac.ebi.ega.ingestion.file.discovery.persistence.StagingAreaService;
 import uk.ac.ebi.ega.ingestion.file.discovery.persistence.StagingAreaServiceImpl;
+import uk.ac.ebi.ega.ingestion.file.discovery.persistence.repositories.StagingAreaFileRepository;
 import uk.ac.ebi.ega.ingestion.file.discovery.persistence.repositories.StagingAreaRepository;
 
 @Configuration
 @EnableJdbcRepositories
 public class DatabaseConfiguration {
 
-    private final Logger logger = LoggerFactory.getLogger(DatabaseConfiguration.class);
-
     @Bean
-    public StagingAreaService stagingAreaService(StagingAreaRepository repository){
-        return new StagingAreaServiceImpl(repository);
+    public StagingAreaService stagingAreaService(StagingAreaRepository stagingAreaRepository,
+                                                 StagingAreaFileRepository stagingAreaFileRepository) {
+        return new StagingAreaServiceImpl(stagingAreaRepository, stagingAreaFileRepository);
     }
 
 }
