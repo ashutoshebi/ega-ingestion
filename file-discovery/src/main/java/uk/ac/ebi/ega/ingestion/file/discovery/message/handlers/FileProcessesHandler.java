@@ -15,14 +15,13 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.ingestion.file.discovery.models;
-
-import org.springframework.integration.core.MessageSource;
+package uk.ac.ebi.ega.ingestion.file.discovery.message.handlers;
 
 import java.io.File;
+import java.io.IOException;
 
-public class FileInStaging {
-    public FileInStaging(StagingArea source, File file) {
+public interface FileProcessesHandler {
 
-    }
+    void changeFileGroup(File file) throws IOException;
+
 }

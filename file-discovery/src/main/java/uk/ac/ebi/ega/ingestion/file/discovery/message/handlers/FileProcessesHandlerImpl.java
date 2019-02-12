@@ -15,7 +15,7 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.ingestion.file.discovery.handlers;
+package uk.ac.ebi.ega.ingestion.file.discovery.message.handlers;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

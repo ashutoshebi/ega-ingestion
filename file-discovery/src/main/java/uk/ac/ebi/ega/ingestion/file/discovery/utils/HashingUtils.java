@@ -15,11 +15,7 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.ingestion.file.discovery.handlers;
+package uk.ac.ebi.ega.ingestion.file.discovery.utils;
 
-import java.io.File;
-import java.io.IOException;
-
-public interface FileProcessesHandler {
-    void changeFileGroup(File file) throws IOException;
+public class HashingUtils {
 }

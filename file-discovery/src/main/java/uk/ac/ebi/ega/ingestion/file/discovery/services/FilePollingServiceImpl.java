@@ -25,10 +25,10 @@ import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.IntegrationFlows;
 import org.springframework.integration.dsl.Pollers;
 import org.springframework.integration.dsl.context.IntegrationFlowContext;
-import org.springframework.integration.file.FileReadingMessageSource;
 import org.springframework.integration.file.filters.IgnoreHiddenFileListFilter;
 import org.springframework.messaging.MessageChannel;
-import uk.ac.ebi.ega.ingestion.file.discovery.models.FileInStaging;
+import uk.ac.ebi.ega.ingestion.file.discovery.message.FileEvent;
+import uk.ac.ebi.ega.ingestion.file.discovery.message.sources.FileEventMessageSource;
 import uk.ac.ebi.ega.ingestion.file.discovery.models.StagingArea;
 import uk.ac.ebi.ega.ingestion.file.discovery.persistence.StagingAreaService;
 import uk.ac.ebi.ega.ingestion.file.discovery.utils.CustomRecursiveDirectoryScanner;
@@ -65,7 +65,7 @@ public class FilePollingServiceImpl implements FilePollingService {
 
     private void registerFilePoller(StagingArea stagingArea) {
         String flowName = getFlowName(stagingArea);
-        MessageSource<File> source = buildFileReadingMessageSource(stagingArea.getPath());
+        MessageSource<FileEvent> source = buildFileReadingMessageSource(stagingArea.getPath());
         IntegrationFlow flow = getIntegrationFlow(source, stagingArea);
         integrationFlowContext.registration(flow)
                 .id(stagingArea.getId())
@@ -77,13 +77,12 @@ public class FilePollingServiceImpl implements FilePollingService {
         logger.info("File poller registered as {}", stagingArea.getId());
     }
 
-    private IntegrationFlow getIntegrationFlow(MessageSource<File> source, StagingArea stagingArea) {
+    private IntegrationFlow getIntegrationFlow(MessageSource<FileEvent> source, StagingArea stagingArea) {
         return IntegrationFlows
                 .from(source,
                         c -> c.poller(Pollers.fixedDelay(stagingArea.getPollingPeriod(), 0)
                                 .taskExecutor(taskExecutor))
                                 .autoStartup(false))
-                .transform((File file) -> new FileInStaging(stagingArea, file))
                 .channel(inboundChannel)
                 .get();
     }
@@ -110,10 +109,11 @@ public class FilePollingServiceImpl implements FilePollingService {
         integrationFlowContext.getRegistrationById(stagingArea.getId()).stop();
     }
 
-    private MessageSource<File> buildFileReadingMessageSource(String path) {
+    private MessageSource<FileEvent> buildFileReadingMessageSource(String path) {
         CustomRecursiveDirectoryScanner scanner = new CustomRecursiveDirectoryScanner();
         scanner.setFilter(new IgnoreHiddenFileListFilter());
-        FileReadingMessageSource source = new FileReadingMessageSource();
+        FileEventMessageSource source = new FileEventMessageSource();
+        source.setStagingAreaService(stagingAreaService);
         source.setDirectory(new File(path));
         source.setScanner(scanner);
         return source;

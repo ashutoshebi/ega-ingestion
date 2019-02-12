@@ -15,7 +15,7 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.ingestion.file.discovery;
+package uk.ac.ebi.ega.ingestion.file.discovery.message.sources;
 
 import org.springframework.context.Lifecycle;
 import org.springframework.integration.endpoint.AbstractMessageSource;
@@ -25,9 +25,11 @@ import org.springframework.integration.file.FileReadingMessageSource;
 import org.springframework.integration.file.filters.FileListFilter;
 import org.springframework.integration.support.AbstractIntegrationMessageBuilder;
 import org.springframework.util.Assert;
-import uk.ac.ebi.ega.ingestion.file.discovery.models.FileEvent;
+import uk.ac.ebi.ega.ingestion.file.discovery.message.FileEvent;
+import uk.ac.ebi.ega.ingestion.file.discovery.persistence.StagingAreaService;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -54,6 +56,8 @@ public class FileEventMessageSource extends AbstractMessageSource<FileEvent>
     private final HashMap<String, Long> currentFiles = new HashMap<>();
 
     private final ReentrantLock lock = new ReentrantLock();
+
+    private volatile StagingAreaService stagingAreaService;
 
     private volatile File directory;
 
@@ -87,6 +91,10 @@ public class FileEventMessageSource extends AbstractMessageSource<FileEvent>
                 ((Lifecycle) this.scanner).start();
             }
         }
+    }
+
+    public void setStagingAreaService(StagingAreaService stagingAreaService) {
+        this.stagingAreaService = stagingAreaService;
     }
 
     /**
@@ -200,33 +208,48 @@ public class FileEventMessageSource extends AbstractMessageSource<FileEvent>
     }
 
     private void updateFiles(List<File> newCurrentFiles) {
-//        List<File> newFiles = new ArrayList<>();
-//        List<File> updatedFiles = new ArrayList<>();
-//        List<File> deletedFiles = new ArrayList<>();
+        List<File> newFiles = new ArrayList<>();
+        List<File> updatedFiles = new ArrayList<>();
+        List<String> deletedFiles = new ArrayList<>();
         Set<String> stableFileNames = new HashSet<>();
         long cutOff = System.currentTimeMillis() - olderThan;
 
         newCurrentFiles.forEach(file -> {
             String absolutePath = file.getAbsolutePath();
+            long lastModified = file.lastModified();
             if (currentFiles.containsKey(absolutePath)) {
-                if (file.lastModified() > currentFiles.get(absolutePath)) {
-                    addUpdatedEvent(absolutePath);
+                if (lastModified > currentFiles.get(absolutePath)) {
+                    addUpdatedEvent(absolutePath, lastModified);
+                    updatedFiles.add(file);
                 } else {
-                    if (file.lastModified() < cutOff) {
+                    if (lastModified < cutOff) {
                         stableFileNames.add(absolutePath);
                         if (checkIfFileAndMd5ArePresent(stableFileNames, absolutePath)) {
-                            addFileToIngestEvent(absolutePath);
+                            addFileToIngestEvent(removeDotMd5IfNeeded(absolutePath), lastModified);
                         }
                     }
                 }
             } else {
-                addCreatedEvent(absolutePath);
+                addCreatedEvent(absolutePath, lastModified);
+                newFiles.add(file);
             }
             currentFiles.remove(absolutePath);
         });
-        currentFiles.keySet().forEach(this::addDeletedEvent);
+        currentFiles.forEach((absolutePath, lastModified) -> {
+            addDeletedEvent(absolutePath, lastModified);
+            deletedFiles.add(absolutePath);
+        });
         currentFiles.clear();
         newCurrentFiles.forEach(file -> currentFiles.put(file.getAbsolutePath(), file.lastModified()));
+//        stagingAreaService.update();
+    }
+
+    private String removeDotMd5IfNeeded(String absolutePath) {
+        if (absolutePath.endsWith(".md5")) {
+            return absolutePath.substring(0, absolutePath.length() - 4);
+        } else {
+            return absolutePath;
+        }
     }
 
     private boolean checkIfFileAndMd5ArePresent(Set<String> stableFileNames, String absolutePath) {
@@ -237,20 +260,20 @@ public class FileEventMessageSource extends AbstractMessageSource<FileEvent>
         }
     }
 
-    private void addFileToIngestEvent(String absolutePath) {
-        toBeReceived.add(FileEvent.ingest(absolutePath));
+    private void addFileToIngestEvent(String absolutePath, long lastModified) {
+        toBeReceived.add(FileEvent.ingest(absolutePath, lastModified));
     }
 
-    private void addCreatedEvent(String absolutePath) {
-        toBeReceived.add(FileEvent.created(directory, absolutePath));
+    private void addCreatedEvent(String absolutePath, long lastModified) {
+        toBeReceived.add(FileEvent.created(absolutePath, lastModified));
     }
 
-    private void addUpdatedEvent(String absolutePath) {
-        toBeReceived.add(FileEvent.updated(directory, absolutePath));
+    private void addUpdatedEvent(String absolutePath, long lastModified) {
+        toBeReceived.add(FileEvent.updated(absolutePath, lastModified));
     }
 
-    private void addDeletedEvent(String absolutePath) {
-        toBeReceived.add(FileEvent.deleted(directory, absolutePath));
+    private void addDeletedEvent(String absolutePath, long lastModified) {
+        toBeReceived.add(FileEvent.deleted(absolutePath, lastModified));
     }
 
     @Override
@@ -271,5 +294,4 @@ public class FileEventMessageSource extends AbstractMessageSource<FileEvent>
             this.scanner.setFilter(this.filter);
         }
     }
-
 }

@@ -26,10 +26,9 @@ import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.IntegrationFlows;
 import org.springframework.integration.dsl.MessageChannels;
 import org.springframework.integration.dsl.context.IntegrationFlowContext;
+import org.springframework.integration.handler.LoggingHandler;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-import uk.ac.ebi.ega.ingestion.file.discovery.handlers.FileProcessesHandler;
-import uk.ac.ebi.ega.ingestion.file.discovery.handlers.FileProcessesHandlerImpl;
 import uk.ac.ebi.ega.ingestion.file.discovery.persistence.StagingAreaService;
 import uk.ac.ebi.ega.ingestion.file.discovery.services.FilePollingService;
 import uk.ac.ebi.ega.ingestion.file.discovery.services.FilePollingServiceImpl;
@@ -56,7 +55,7 @@ public class FileDiscoveryConfiguration {
     public IntegrationFlow changeUser() {
         return IntegrationFlows.from(inboundFilePollingChannel())
                 .log()
-                .handle(FileProcessesHandler())
+                .handle(loggingHandler())
                 .get();
     }
 
@@ -67,9 +66,14 @@ public class FileDiscoveryConfiguration {
         return taskExecutor;
     }
 
+//    @Bean
+//    public FileProcessesHandler fileProcessesHandler(){
+//        return new FileProcessesHandlerImpl();
+//    }
+
     @Bean
-    public FileProcessesHandler FileProcessesHandler(){
-        return new FileProcessesHandlerImpl();
+    public LoggingHandler loggingHandler() {
+        return new LoggingHandler(LoggingHandler.Level.INFO);
     }
 
 }
