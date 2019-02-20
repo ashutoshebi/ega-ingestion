@@ -25,10 +25,6 @@ public class FileDiscoveryApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(FileDiscoveryApplication.class, args);
-//        new SpringApplicationBuilder()
-//                .web(WebApplicationType.NONE)
-//                .sources(FileDiscoveryApplication.class)
-//                .run(args);
     }
 
 }

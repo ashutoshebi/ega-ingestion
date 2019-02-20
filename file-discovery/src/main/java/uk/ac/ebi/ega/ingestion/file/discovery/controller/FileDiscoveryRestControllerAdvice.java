@@ -55,8 +55,4 @@ public class FileDiscoveryRestControllerAdvice {
 
     }
 
-//    private ResponseEntity<ErrorMessage> buildResponseEntity(HttpStatus status, Exception ex, String message) {
-//        return new ResponseEntity<>(new ErrorMessage(status, ex, message), status);
-//    }
-
 }
