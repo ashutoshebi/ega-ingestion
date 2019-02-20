@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2018 EMBL - European Bioinformatics Institute
+ * Copyright 2019 EMBL - European Bioinformatics Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,27 +15,7 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.ingestion.file.discovery.models;
+package uk.ac.ebi.ega.ingestion.file.discovery.controller.exceptions;
 
-import java.time.LocalDateTime;
-
-public interface StagingArea {
-
-    String getId();
-
-    String getPath();
-
-    boolean isDiscoveryEnabled();
-
-    boolean isIngestionEnabled();
-
-    String getAccount();
-
-    long getDiscoveryPollingPeriod();
-
-    long getIngestionPollingPeriod();
-
-    LocalDateTime getCreateDate();
-
-    LocalDateTime getUpdateDate();
+public class StagingAreaNotFoundException extends Exception {
 }

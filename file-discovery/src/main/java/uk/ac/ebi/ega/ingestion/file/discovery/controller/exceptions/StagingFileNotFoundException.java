@@ -15,13 +15,7 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.ingestion.file.discovery.message.handlers;
+package uk.ac.ebi.ega.ingestion.file.discovery.controller.exceptions;
 
-import java.io.File;
-import java.io.IOException;
-
-public interface FileProcessesHandler {
-
-    void changeFileGroup(File file) throws IOException;
-
+public class StagingFileNotFoundException extends Exception{
 }

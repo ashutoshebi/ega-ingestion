@@ -17,9 +17,21 @@
  */
 package uk.ac.ebi.ega.ingestion.file.discovery.services;
 
+import uk.ac.ebi.ega.ingestion.file.discovery.controller.exceptions.StagingAreaNotFoundException;
+import uk.ac.ebi.ega.ingestion.file.discovery.models.StagingArea;
+import uk.ac.ebi.ega.ingestion.file.discovery.persistence.exceptions.StagingAreaAlreadyExistsException;
+
+import java.io.FileNotFoundException;
+
 public interface FilePollingService {
 
     void startAllEnabled();
 
     void stopAll();
+
+    StagingArea newStagingArea(StagingArea stagingArea) throws FileNotFoundException, StagingAreaAlreadyExistsException;
+
+    StagingArea updateStagingArea(String stagingId, Boolean discoveryEnabled, Boolean ingestionEnabled,
+                                  Long discoveryPollingPeriod, Long ingestionPollingPeriod) throws StagingAreaNotFoundException;
+
 }

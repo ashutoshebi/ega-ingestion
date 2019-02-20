@@ -15,7 +15,20 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.ingestion.file.discovery.utils;
+package uk.ac.ebi.ega.ingestion.file.discovery.models;
 
-public class HashingUtils {
+import java.time.LocalDateTime;
+
+public interface StagingFile {
+
+    String getId();
+
+    String getRelativePath();
+
+    String getStagingAreaId();
+
+    Long getFileSize();
+
+    LocalDateTime getUpdateDate();
+
 }

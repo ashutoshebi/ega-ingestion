@@ -17,24 +17,26 @@
  */
 package uk.ac.ebi.ega.ingestion.file.discovery;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import uk.ac.ebi.ega.ingestion.file.discovery.persistence.StagingAreaService;
 import uk.ac.ebi.ega.ingestion.file.discovery.persistence.StagingAreaServiceImpl;
-import uk.ac.ebi.ega.ingestion.file.discovery.persistence.repositories.StagingAreaFileRepository;
 import uk.ac.ebi.ega.ingestion.file.discovery.persistence.repositories.StagingAreaRepository;
+import uk.ac.ebi.ega.ingestion.file.discovery.persistence.repositories.StagingFileRepository;
 
 @Configuration
-@EnableJdbcRepositories
+@EnableJpaRepositories
+@EnableJpaAuditing
 public class DatabaseConfiguration {
 
     @Bean
-    public StagingAreaService stagingAreaService(StagingAreaRepository stagingAreaRepository,
-                                                 StagingAreaFileRepository stagingAreaFileRepository) {
-        return new StagingAreaServiceImpl(stagingAreaRepository, stagingAreaFileRepository);
+    public StagingAreaService stagingAreaService(NamedParameterJdbcTemplate namedParameterJdbcTemplate,
+                                                 StagingAreaRepository stagingAreaRepository,
+                                                 StagingFileRepository stagingFileRepository) {
+        return new StagingAreaServiceImpl(namedParameterJdbcTemplate, stagingAreaRepository, stagingFileRepository);
     }
 
 }

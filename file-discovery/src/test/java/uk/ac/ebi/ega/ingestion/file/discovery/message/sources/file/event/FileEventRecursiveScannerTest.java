@@ -15,14 +15,14 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.ingestion.file.discovery.persistence.repositories;
+package uk.ac.ebi.ega.ingestion.file.discovery.message.sources.file.event;
 
-import org.springframework.data.jdbc.repository.query.Query;
-import org.springframework.data.repository.CrudRepository;
+import org.junit.Test;
 
-public interface StagingAreaFileRepository extends CrudRepository<StagingAreaFileImpl, String> {
+public class FileEventRecursiveScannerTest {
 
-    @Query("select * from STAGING_AREA_FILES u where u.stagingAreaId = :stagingAreaId")
-    Iterable<StagingAreaFileImpl> findAllByStagingAreaId(String stagingAreaId);
+    @Test
+    public void test1(){
 
+    }
 }

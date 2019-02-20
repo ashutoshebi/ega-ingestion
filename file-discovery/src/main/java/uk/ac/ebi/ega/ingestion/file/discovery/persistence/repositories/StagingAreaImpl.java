@@ -17,34 +17,52 @@
  */
 package uk.ac.ebi.ega.ingestion.file.discovery.persistence.repositories;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.core.mapping.Table;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.domain.Persistable;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import uk.ac.ebi.ega.ingestion.file.discovery.models.StagingArea;
 
-@Table("STAGING_AREAS")
-public class StagingAreaImpl implements StagingArea {
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
+import javax.persistence.Id;
+import java.time.LocalDateTime;
+
+@Entity(name = "STAGING_AREAS")
+@EntityListeners(AuditingEntityListener.class)
+public class StagingAreaImpl implements StagingArea, Persistable<String> {
+
+    private transient boolean forceInsert;
 
     @Id
     private String id;
 
     private String path;
 
-    private boolean enabled;
+    private boolean discoveryEnabled;
+
+    private boolean ingestionEnabled;
 
     private String account;
 
-    private long pollingPeriod;
+    private long discoveryPollingPeriod;
 
-    private long filesPerPoll;
+    private long ingestionPollingPeriod;
 
-    public StagingAreaImpl(String id, String path, boolean enabled, String account, long pollingPeriod,
-                           long filesPerPoll) {
-        this.id = id;
-        this.path = path;
-        this.enabled = enabled;
-        this.account = account;
-        this.pollingPeriod = pollingPeriod;
-        this.filesPerPoll = filesPerPoll;
+    @Column(nullable = false, updatable = false)
+    @CreatedDate
+    private LocalDateTime createDate;
+
+    @LastModifiedDate
+    private LocalDateTime updateDate;
+
+    public StagingAreaImpl() {
+        this(false);
+    }
+
+    public StagingAreaImpl(boolean forceInsert) {
+        forceInsert = true;
     }
 
     @Override
@@ -53,13 +71,23 @@ public class StagingAreaImpl implements StagingArea {
     }
 
     @Override
+    public boolean isNew() {
+        return forceInsert;
+    }
+
+    @Override
     public String getPath() {
         return path;
     }
 
     @Override
-    public boolean isEnabled() {
-        return enabled;
+    public boolean isDiscoveryEnabled() {
+        return discoveryEnabled;
+    }
+
+    @Override
+    public boolean isIngestionEnabled() {
+        return ingestionEnabled;
     }
 
     @Override
@@ -68,12 +96,59 @@ public class StagingAreaImpl implements StagingArea {
     }
 
     @Override
-    public long getPollingPeriod() {
-        return pollingPeriod;
+    public long getDiscoveryPollingPeriod() {
+        return discoveryPollingPeriod;
     }
 
     @Override
-    public long getFilesPerPoll() {
-        return filesPerPoll;
+    public long getIngestionPollingPeriod() {
+        return ingestionPollingPeriod;
     }
+
+    @Override
+    public LocalDateTime getCreateDate() {
+        return createDate;
+    }
+
+    @Override
+    public LocalDateTime getUpdateDate() {
+        return updateDate;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
+    }
+
+    public void setDiscoveryEnabled(boolean discoveryEnabled) {
+        this.discoveryEnabled = discoveryEnabled;
+    }
+
+    public void setIngestionEnabled(boolean ingestionEnabled) {
+        this.ingestionEnabled = ingestionEnabled;
+    }
+
+    public void setAccount(String account) {
+        this.account = account;
+    }
+
+    public void setDiscoveryPollingPeriod(long discoveryPollingPeriod) {
+        this.discoveryPollingPeriod = discoveryPollingPeriod;
+    }
+
+    public void setIngestionPollingPeriod(long ingestionPollingPeriod) {
+        this.ingestionPollingPeriod = ingestionPollingPeriod;
+    }
+
+    public void setCreateDate(LocalDateTime createDate) {
+        this.createDate = createDate;
+    }
+
+    public void setUpdateDate(LocalDateTime updateDate) {
+        this.updateDate = updateDate;
+    }
+
 }

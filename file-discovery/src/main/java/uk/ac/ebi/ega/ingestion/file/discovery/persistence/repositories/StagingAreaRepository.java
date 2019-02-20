@@ -17,12 +17,20 @@
  */
 package uk.ac.ebi.ega.ingestion.file.discovery.persistence.repositories;
 
-import org.springframework.data.jdbc.repository.query.Query;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.querydsl.QuerydslPredicateExecutor;
+import org.springframework.data.querydsl.binding.QuerydslBinderCustomizer;
+import org.springframework.data.querydsl.binding.QuerydslBindings;
+import org.springframework.data.repository.PagingAndSortingRepository;
 
-public interface StagingAreaRepository extends CrudRepository<StagingAreaImpl,String> {
+public interface StagingAreaRepository extends PagingAndSortingRepository<StagingAreaImpl, String>,
+        QuerydslPredicateExecutor<StagingAreaImpl>, QuerydslBinderCustomizer<QStagingAreaImpl> {
 
-    @Query("select * from STAGING_AREAS u where u.enabled = :enabled")
-    Iterable<StagingAreaImpl> findAllByEnabled(boolean enabled);
+    Iterable<StagingAreaImpl> findAllByDiscoveryEnabled(boolean enabled);
+
+    @Override
+    default void customize(QuerydslBindings bindings, QStagingAreaImpl stagingArea) {
+        bindings.bind(stagingArea.path).first((path, value) -> path.containsIgnoreCase(value));
+    }
 
 }

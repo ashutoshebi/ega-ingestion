@@ -17,11 +17,15 @@
  */
 package uk.ac.ebi.ega.ingestion.file.discovery.message;
 
-import java.io.File;
+import uk.ac.ebi.ega.ingestion.file.discovery.message.sources.file.event.FileStatic;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class FileEvent implements Comparable<FileEvent> {
 
     public enum Type {
+
         CREATED(1),
 
         UPDATED(2),
@@ -35,34 +39,74 @@ public class FileEvent implements Comparable<FileEvent> {
         Type(int priority) {
             this.priority = priority;
         }
+
     }
 
     private Type type;
 
-    private String absolutePath;
+    private String locationId;
+
+    private String locationPath;
+
+    private String relativePath;
+
+    private long size;
 
     private long lastModified;
 
-    public FileEvent(Type type, String absolutePath, long lastModified) {
+    public FileEvent(Type type, String locationId, Path directory, FileStatic file) {
+        this(type, locationId, directory.toString(), directory.relativize(Paths.get(file.getAbsolutePath())).toString(),
+                file.length(), file.lastModified());
+    }
+
+    public FileEvent(Type type, String locationId, String locationPath, String relativePath, long size,
+                     long lastModified) {
         this.type = type;
-        this.absolutePath = absolutePath;
+        this.locationId = locationId;
+        this.locationPath = locationPath;
+        this.relativePath = relativePath;
+        this.size = size;
         this.lastModified = lastModified;
     }
 
-    public static FileEvent ingest(String absolutePath, long lastModified) {
-        return new FileEvent(Type.INGEST, absolutePath, lastModified);
+    public Type getType() {
+        return type;
     }
 
-    public static FileEvent updated(String absolutePath, long lastModified) {
-        return new FileEvent(Type.UPDATED, absolutePath, lastModified);
+    public String getLocationId() {
+        return locationId;
     }
 
-    public static FileEvent created(String absolutePath, long lastModified) {
-        return new FileEvent(Type.CREATED, absolutePath, lastModified);
+    public String getLocationPath() {
+        return locationPath;
     }
 
-    public static FileEvent deleted(String absolutePath, long lastModified) {
-        return new FileEvent(Type.DELETED, absolutePath, lastModified);
+    public String getRelativePath() {
+        return relativePath;
+    }
+
+    public long getSize() {
+        return size;
+    }
+
+    public long getLastModified() {
+        return lastModified;
+    }
+
+    public static FileEvent ingest(String locationId, Path directory, FileStatic file) {
+        return new FileEvent(Type.INGEST, locationId, directory, file);
+    }
+
+    public static FileEvent updated(String locationId, Path directory, FileStatic file) {
+        return new FileEvent(Type.UPDATED, locationId, directory, file);
+    }
+
+    public static FileEvent created(String locationId, Path directory, FileStatic file) {
+        return new FileEvent(Type.CREATED, locationId, directory, file);
+    }
+
+    public static FileEvent deleted(String locationId, Path directory, FileStatic file) {
+        return new FileEvent(Type.DELETED, locationId, directory, file);
     }
 
     @Override
@@ -71,14 +115,17 @@ public class FileEvent implements Comparable<FileEvent> {
         if (value != 0) {
             return value;
         }
-        return absolutePath.compareTo(fileEvent.absolutePath);
+        return relativePath.compareTo(fileEvent.relativePath);
     }
 
     @Override
     public String toString() {
         return "FileEvent{" +
                 "type=" + type +
-                ", absolutePath='" + absolutePath + '\'' +
+                ", locationId='" + locationId + '\'' +
+                ", locationPath='" + locationPath + '\'' +
+                ", relative='" + relativePath + '\'' +
+                ", size=" + size +
                 ", lastModified=" + lastModified +
                 '}';
     }

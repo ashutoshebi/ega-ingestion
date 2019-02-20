@@ -29,9 +29,14 @@ import org.springframework.integration.dsl.context.IntegrationFlowContext;
 import org.springframework.integration.handler.LoggingHandler;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import uk.ac.ebi.ega.ingestion.file.discovery.message.FileEvent;
+import uk.ac.ebi.ega.ingestion.file.discovery.message.handlers.PersistStagingFileChangesHandler;
+import uk.ac.ebi.ega.ingestion.file.discovery.message.handlers.PersistStagingFileChangesHandlerImpl;
 import uk.ac.ebi.ega.ingestion.file.discovery.persistence.StagingAreaService;
 import uk.ac.ebi.ega.ingestion.file.discovery.services.FilePollingService;
 import uk.ac.ebi.ega.ingestion.file.discovery.services.FilePollingServiceImpl;
+
+import static uk.ac.ebi.ega.ingestion.file.discovery.message.FileEvent.Type.INGEST;
 
 @Configuration
 @EnableIntegration
@@ -40,22 +45,62 @@ public class FileDiscoveryConfiguration {
     @Autowired
     private IntegrationFlowContext integrationFlowContext;
 
+    @Autowired
+    private StagingAreaService stagingAreaService;
+
     @Bean
     public MessageChannel inboundFilePollingChannel() {
         return MessageChannels.direct().get();
     }
 
     @Bean
-    public FilePollingService filePollingService(StagingAreaService stagingAreaService) {
+    public MessageChannel ingestionChannel() {
+        return MessageChannels.direct().get();
+    }
+
+    @Bean
+    public MessageChannel stagingLogChannel() {
+        return MessageChannels.direct().get();
+    }
+
+    @Bean
+    public FilePollingService filePollingService() {
         return new FilePollingServiceImpl(stagingAreaService, integrationFlowContext, taskExecutor(),
                 inboundFilePollingChannel());
     }
 
     @Bean
-    public IntegrationFlow changeUser() {
+    public IntegrationFlow flowDistributeFileEvents() {
         return IntegrationFlows.from(inboundFilePollingChannel())
-                .log()
-                .handle(loggingHandler())
+                .route(FileEvent.class, fileEvent -> {
+                    if (fileEvent.getType().equals(INGEST)) {
+                        return ingestionChannel();
+                    } else {
+                        return stagingLogChannel();
+                    }
+                })
+                .get();
+    }
+
+    @Bean
+    public IntegrationFlow flowStagingLogToLog() {
+        return IntegrationFlows.from(stagingLogChannel())
+                .publishSubscribeChannel(s -> s.applySequence(true)
+                        .subscribe(f -> f.aggregate(aggregatorSpec -> aggregatorSpec.correlationStrategy(message -> true)
+                                .releaseStrategy(releaseStrategy -> releaseStrategy.size() >= 5)
+                                .sendPartialResultOnExpiry(true)
+                                .groupTimeout(10000)
+                                .expireGroupsUponCompletion(true)
+                                .expireGroupsUponTimeout(true))
+                                .handle(persistStagingFileChangesHandler()))
+                        .subscribe(f -> f.handle(infoLoggingHandler())))
+                .get();
+    }
+
+    @Bean
+    public IntegrationFlow flowIngestion() {
+        return IntegrationFlows.from(ingestionChannel())
+                .handle(errorLoggingHandler())
                 .get();
     }
 
@@ -66,14 +111,24 @@ public class FileDiscoveryConfiguration {
         return taskExecutor;
     }
 
-//    @Bean
-//    public FileProcessesHandler fileProcessesHandler(){
-//        return new FileProcessesHandlerImpl();
-//    }
+    @Bean
+    public LoggingHandler infoLoggingHandler() {
+        return new LoggingHandler(LoggingHandler.Level.INFO);
+    }
 
     @Bean
-    public LoggingHandler loggingHandler() {
-        return new LoggingHandler(LoggingHandler.Level.INFO);
+    public LoggingHandler warnLoggingHandler() {
+        return new LoggingHandler(LoggingHandler.Level.WARN);
+    }
+
+    @Bean
+    public LoggingHandler errorLoggingHandler() {
+        return new LoggingHandler(LoggingHandler.Level.ERROR);
+    }
+
+    @Bean
+    public PersistStagingFileChangesHandler persistStagingFileChangesHandler(){
+        return new PersistStagingFileChangesHandlerImpl(stagingAreaService);
     }
 
 }

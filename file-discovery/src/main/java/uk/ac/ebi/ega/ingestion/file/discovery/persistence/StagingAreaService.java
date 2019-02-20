@@ -17,14 +17,42 @@
  */
 package uk.ac.ebi.ega.ingestion.file.discovery.persistence;
 
+import com.querydsl.core.types.Predicate;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import uk.ac.ebi.ega.ingestion.file.discovery.controller.exceptions.StagingAreaNotFoundException;
+import uk.ac.ebi.ega.ingestion.file.discovery.message.FileEvent;
 import uk.ac.ebi.ega.ingestion.file.discovery.models.FileSystemNode;
 import uk.ac.ebi.ega.ingestion.file.discovery.models.StagingArea;
+import uk.ac.ebi.ega.ingestion.file.discovery.models.StagingFile;
+import uk.ac.ebi.ega.ingestion.file.discovery.persistence.exceptions.StagingAreaAlreadyExistsException;
+import uk.ac.ebi.ega.ingestion.file.discovery.persistence.repositories.StagingAreaImpl;
+
+import java.io.FileNotFoundException;
+import java.util.List;
+import java.util.Optional;
 
 public interface StagingAreaService {
 
-    Iterable<? extends StagingArea> findAll();
+    Optional<? extends StagingAreaImpl> findById(String boxId);
+
+    Iterable<? extends StagingArea> findAll(Predicate predicate);
+
+    Page<? extends StagingArea> findAll(Predicate predicate, Pageable pageable);
 
     Iterable<? extends StagingArea> findAllEnabled();
 
     FileSystemNode getFilesOfStagingArea(String stagingAreaId);
+
+    void update(List<FileEvent> fileEvents);
+
+    Iterable<? extends StagingFile> findAllFilesByStagingId(String stagingId);
+
+    Page<? extends StagingFile> findAllFilesByStagingId(String stagingId, Predicate predicate,
+                                                        Pageable pageable);
+
+    StagingArea newStagingArea(StagingArea stagingArea) throws FileNotFoundException, StagingAreaAlreadyExistsException;
+
+    StagingArea updateStagingArea(String stagingId, Boolean discoveryEnabled, Boolean ingestionEnabled,
+                                  Long discoveryPollingPeriod, Long ingestionPollingPeriod) throws StagingAreaNotFoundException;
 }
