@@ -29,9 +29,11 @@ import org.springframework.integration.dsl.context.IntegrationFlowContext;
 import org.springframework.messaging.MessageChannel;
 import uk.ac.ebi.ega.ingestion.file.discovery.controller.exceptions.StagingAreaNotFoundException;
 import uk.ac.ebi.ega.ingestion.file.discovery.message.FileEvent;
+import uk.ac.ebi.ega.ingestion.file.discovery.message.IngestionEvent;
 import uk.ac.ebi.ega.ingestion.file.discovery.message.sources.file.event.FileEventMessageSource;
 import uk.ac.ebi.ega.ingestion.file.discovery.message.sources.file.event.FileEventRecursiveDirectoryScanner;
 import uk.ac.ebi.ega.ingestion.file.discovery.message.sources.file.event.FileStatic;
+import uk.ac.ebi.ega.ingestion.file.discovery.message.sources.ingestion.IngestionMessageSource;
 import uk.ac.ebi.ega.ingestion.file.discovery.models.StagingArea;
 import uk.ac.ebi.ega.ingestion.file.discovery.persistence.StagingAreaService;
 import uk.ac.ebi.ega.ingestion.file.discovery.persistence.exceptions.StagingAreaAlreadyExistsException;
@@ -43,6 +45,8 @@ import java.nio.file.Paths;
 import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.Executor;
 
 public class FilePollingServiceImpl implements FilePollingService {
 
@@ -52,71 +56,132 @@ public class FilePollingServiceImpl implements FilePollingService {
 
     private IntegrationFlowContext integrationFlowContext;
 
-    private TaskExecutor taskExecutor;
+    private TaskExecutor fileDiscoveryExecutor;
 
-    private MessageChannel inboundChannel;
+    private TaskExecutor fileIngestionExecutor;
+
+    private MessageChannel inboundDiscoveryChannel;
+
+    private MessageChannel inboundIngestionChannel;
 
     public FilePollingServiceImpl(StagingAreaService stagingAreaService, IntegrationFlowContext integrationFlowContext,
-                                  TaskExecutor taskExecutor, MessageChannel inboundChannel) {
+                                  TaskExecutor fileDiscoveryExecutor, MessageChannel inboundDiscoveryChannel,
+                                  TaskExecutor fileIngestionExecutor, MessageChannel inboundIngestionChannel) {
         this.stagingAreaService = stagingAreaService;
         this.integrationFlowContext = integrationFlowContext;
-        this.taskExecutor = taskExecutor;
-        this.inboundChannel = inboundChannel;
+        this.fileDiscoveryExecutor = fileDiscoveryExecutor;
+        this.fileIngestionExecutor = fileIngestionExecutor;
+        this.inboundDiscoveryChannel = inboundDiscoveryChannel;
+        this.inboundIngestionChannel = inboundIngestionChannel;
     }
 
     @PostConstruct
     private void init() {
         logger.info("File poller registration");
-        stagingAreaService.findAll(null, Pageable.unpaged()).forEach(this::registerFilePoller);
+        stagingAreaService.findAll(null, Pageable.unpaged()).forEach(this::register);
         logger.info("File poller registration finished successfully");
     }
 
-    private StagingArea registerFilePoller(StagingArea stagingArea) {
-        String flowName = getFlowName(stagingArea);
-        MessageSource<FileEvent> source = buildFileReadingMessageSource(stagingArea);
-        IntegrationFlow flow = getIntegrationFlow(source, stagingArea);
-        integrationFlowContext.registration(flow)
-                .id(stagingArea.getId())
+    private void register(StagingArea stagingArea) {
+        registerFileDiscovery(stagingArea);
+        registerFileIngestion(stagingArea);
+    }
+
+    private void registerFileIngestion(StagingArea stagingArea) {
+        String messageSourceName = getIngestionMessageSourceName(stagingArea);
+        String flowId = getIngestionFlowId(stagingArea);
+        registerPollFlow(buildFileIngestionMessageSource(stagingArea), stagingArea.getIngestionPollingPeriod(),
+                messageSourceName, flowId, fileIngestionExecutor, inboundIngestionChannel);
+        logger.info("File ingestion for staging area {} registered as {}", stagingArea.getId(), flowId);
+    }
+
+    private String getIngestionMessageSourceName(StagingArea stagingArea) {
+        return "ingestion-messageSource-" + stagingArea.getId();
+    }
+
+    private String getIngestionFlowId(StagingArea stagingArea) {
+        return "ingestion-flow-" + stagingArea.getId();
+    }
+
+    private MessageSource<IngestionEvent> buildFileIngestionMessageSource(StagingArea stagingArea) {
+        IngestionMessageSource ingestionMessageSource =
+                new IngestionMessageSource(stagingAreaService::findAllFilesOfStagingAreaOlderThan);
+        ingestionMessageSource.setLocationId(stagingArea.getId());
+        ingestionMessageSource.setAccountId(stagingArea.getAccount());
+        ingestionMessageSource.setDirectory(Paths.get(stagingArea.getPath()));
+        return ingestionMessageSource;
+    }
+
+    private void registerFileDiscovery(StagingArea stagingArea) {
+        String messageSourceName = getDiscoveryMessageSourceName(stagingArea);
+        String flowId = getDiscoveryFlowId(stagingArea);
+        registerPollFlow(buildFileEventMessageSource(stagingArea), stagingArea.getDiscoveryPollingPeriod(),
+                messageSourceName, flowId, fileDiscoveryExecutor, inboundDiscoveryChannel);
+        logger.info("File discovery for staging area {} registered as {}", stagingArea.getId(), flowId);
+    }
+
+    private String getDiscoveryMessageSourceName(StagingArea stagingArea) {
+        return "discovery-messageSource-" + stagingArea.getId();
+    }
+
+    private String getDiscoveryFlowId(StagingArea stagingArea) {
+        return "discovery-flow-" + stagingArea.getId();
+    }
+
+    private void registerPollFlow(MessageSource<?> source, long period, String messageSourceName, String flowId,
+                                  Executor executor, MessageChannel messageChannel) {
+        integrationFlowContext.registration(getPoller(source, period, executor, messageChannel))
+                .id(flowId)
                 .useFlowIdAsPrefix()
                 .autoStartup(false)
-                .addBean(flowName, source)
+                .addBean(messageSourceName, source)
                 .register();
-        logger.info("File poller registered as {}", stagingArea.getId());
-        return stagingArea;
     }
 
-    private IntegrationFlow getIntegrationFlow(MessageSource<FileEvent> source, StagingArea stagingArea) {
+    private IntegrationFlow getPoller(MessageSource<?> source, long period, Executor taskExecutor,
+                                      MessageChannel channel) {
         return IntegrationFlows
                 .from(source,
-                        c -> c.poller(Pollers.fixedDelay(stagingArea.getDiscoveryPollingPeriod(), 0)
+                        c -> c.poller(Pollers.fixedDelay(period, 0)
                                 .taskExecutor(taskExecutor))
                                 .autoStartup(false))
-                .channel(inboundChannel)
+                .channel(channel)
                 .get();
-    }
-
-    private String getFlowName(StagingArea stagingArea) {
-        return stagingArea.getId() + "-messageSource";
     }
 
     @Override
     public void startAllEnabled() {
-        stagingAreaService.findAllEnabled().forEach(this::start);
+        stagingAreaService.findAll(null, Pageable.unpaged()).forEach(this::start);
     }
 
     private void start(StagingArea stagingArea) {
-        integrationFlowContext.getRegistrationById(stagingArea.getId()).start();
+        if (stagingArea.isDiscoveryEnabled()) {
+            getDiscoveryFlow(stagingArea).ifPresent(flow -> {
+                flow.start();
+                logger.info("File discovery for staging area {} started", stagingArea.getId());
+            });
+        }
+        if (stagingArea.isIngestionEnabled()) {
+            getIngestionFlow(stagingArea).ifPresent(flow -> {
+                flow.start();
+                logger.info("File ingestion for staging area {} started", stagingArea.getId());
+            });
+        }
+    }
+
+    private Optional<IntegrationFlowContext.IntegrationFlowRegistration> getIngestionFlow(StagingArea stagingArea) {
+        return Optional.ofNullable(integrationFlowContext.getRegistrationById(getIngestionFlowId(stagingArea)));
     }
 
     @Override
     public void stopAll() {
-        stagingAreaService.findAllEnabled().forEach(this::stop);
+        stagingAreaService.findAll(null, Pageable.unpaged()).forEach(this::stop);
     }
 
     @Override
     public StagingArea newStagingArea(StagingArea stagingArea) throws FileNotFoundException,
             StagingAreaAlreadyExistsException {
-        return registerFilePoller(stagingAreaService.newStagingArea(stagingArea));
+        return stagingAreaService.newStagingArea(stagingArea);
     }
 
     @Override
@@ -125,24 +190,32 @@ public class FilePollingServiceImpl implements FilePollingService {
             throws StagingAreaNotFoundException {
         StagingArea stagingArea = stagingAreaService.updateStagingArea(stagingId, discoveryEnabled, ingestionEnabled,
                 discoveryPollingPeriod, ingestionPollingPeriod);
-        deregisterFilePoller(stagingArea);
-        registerFilePoller(stagingArea);
-        if (stagingArea.isDiscoveryEnabled()) {
-            start(stagingArea);
-        }
+        deregister(stagingArea);
+        register(stagingArea);
+        start(stagingArea);
         return stagingArea;
     }
 
-    private void deregisterFilePoller(StagingArea stagingArea) {
-        integrationFlowContext.getRegistrationById(stagingArea.getId()).destroy();
-        logger.info("File poller {} destroyed", stagingArea.getId());
+    private void deregister(StagingArea stagingArea) {
+        getDiscoveryFlow(stagingArea).ifPresent(flow -> {
+            flow.destroy();
+            logger.info("File poller for staging area {} destroyed", stagingArea.getId());
+        });
+        getIngestionFlow(stagingArea).ifPresent(flow -> {
+            flow.destroy();
+            logger.info("File ingestion for staging area {} destroyed", stagingArea.getId());
+        });
+    }
+
+    private Optional<IntegrationFlowContext.IntegrationFlowRegistration> getDiscoveryFlow(StagingArea stagingArea) {
+        return Optional.ofNullable(integrationFlowContext.getRegistrationById(getDiscoveryFlowId(stagingArea)));
     }
 
     private void stop(StagingArea stagingArea) {
         integrationFlowContext.getRegistrationById(stagingArea.getId()).stop();
     }
 
-    private MessageSource<FileEvent> buildFileReadingMessageSource(StagingArea stagingArea) {
+    private MessageSource<FileEvent> buildFileEventMessageSource(StagingArea stagingArea) {
         FileEventRecursiveDirectoryScanner scanner = new FileEventRecursiveDirectoryScanner();
         scanner.initializeDirectoryStatus(getFilesOfStagingArea(stagingArea));
         FileEventMessageSource source = new FileEventMessageSource(scanner);

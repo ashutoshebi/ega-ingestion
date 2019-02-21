@@ -26,6 +26,9 @@ import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 import org.springframework.data.querydsl.binding.QuerydslBinderCustomizer;
 import org.springframework.data.querydsl.binding.QuerydslBindings;
 import org.springframework.data.repository.PagingAndSortingRepository;
+import uk.ac.ebi.ega.ingestion.file.discovery.models.StagingFile;
+
+import java.time.LocalDateTime;
 
 public interface StagingFileRepository extends PagingAndSortingRepository<StagingFileImpl, String>,
         QuerydslPredicateExecutor<StagingFileImpl>, QuerydslBinderCustomizer<QStagingFileImpl> {
@@ -44,9 +47,19 @@ public interface StagingFileRepository extends PagingAndSortingRepository<Stagin
         return findAll(predicateWithStagingArea);
     }
 
+    default Iterable<? extends StagingFile> findAllByStagingAreaIdOlderThan(String stagingAreaId,
+                                                                            LocalDateTime cutOffDate) {
+        Predicate predicateWithStagingArea = Expressions.allOf(
+                Expressions.predicate(Ops.EQ, QStagingFileImpl.stagingFileImpl.stagingAreaId,
+                        Expressions.constant(stagingAreaId)),
+                Expressions.predicate(Ops.LT, QStagingFileImpl.stagingFileImpl.updateDate,
+                        Expressions.asDateTime(cutOffDate))
+        );
+        return findAll(predicateWithStagingArea);
+    }
+
     @Override
     default void customize(QuerydslBindings bindings, QStagingFileImpl stagingArea) {
         bindings.bind(stagingArea.relativePath).first((path, value) -> path.containsIgnoreCase(value));
     }
-
 }

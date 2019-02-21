@@ -39,6 +39,7 @@ import uk.ac.ebi.ega.ingestion.file.discovery.persistence.repositories.StagingFi
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -77,11 +78,6 @@ public class StagingAreaServiceImpl implements StagingAreaService {
     @Override
     public Iterable<? extends StagingArea> findAll(Predicate predicate) {
         return repository.findAll(predicate);
-    }
-
-    @Override
-    public Iterable<? extends StagingArea> findAllEnabled() {
-        return repository.findAllByDiscoveryEnabled(true);
     }
 
     @Override
@@ -171,6 +167,11 @@ public class StagingAreaServiceImpl implements StagingAreaService {
     @Override
     public Iterable<? extends StagingFile> findAllFilesByStagingId(String stagingId) {
         return fileRepository.findAllByStagingAreaId(stagingId);
+    }
+
+    @Override
+    public Iterable<? extends StagingFile> findAllFilesOfStagingAreaOlderThan(String stagingId, LocalDateTime cutOff) {
+        return fileRepository.findAllByStagingAreaIdOlderThan(stagingId, cutOff);
     }
 
     private int[] insertAreaFiles(List<StagingFileImpl> stagingAreaFiles) {

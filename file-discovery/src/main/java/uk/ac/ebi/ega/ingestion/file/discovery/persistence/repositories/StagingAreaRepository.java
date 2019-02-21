@@ -17,7 +17,6 @@
  */
 package uk.ac.ebi.ega.ingestion.file.discovery.persistence.repositories;
 
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 import org.springframework.data.querydsl.binding.QuerydslBinderCustomizer;
 import org.springframework.data.querydsl.binding.QuerydslBindings;
@@ -25,8 +24,6 @@ import org.springframework.data.repository.PagingAndSortingRepository;
 
 public interface StagingAreaRepository extends PagingAndSortingRepository<StagingAreaImpl, String>,
         QuerydslPredicateExecutor<StagingAreaImpl>, QuerydslBinderCustomizer<QStagingAreaImpl> {
-
-    Iterable<StagingAreaImpl> findAllByDiscoveryEnabled(boolean enabled);
 
     @Override
     default void customize(QuerydslBindings bindings, QStagingAreaImpl stagingArea) {

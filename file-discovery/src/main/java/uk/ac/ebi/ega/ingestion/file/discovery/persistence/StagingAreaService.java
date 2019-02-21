@@ -29,6 +29,7 @@ import uk.ac.ebi.ega.ingestion.file.discovery.persistence.exceptions.StagingArea
 import uk.ac.ebi.ega.ingestion.file.discovery.persistence.repositories.StagingAreaImpl;
 
 import java.io.FileNotFoundException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,13 +41,13 @@ public interface StagingAreaService {
 
     Page<? extends StagingArea> findAll(Predicate predicate, Pageable pageable);
 
-    Iterable<? extends StagingArea> findAllEnabled();
-
     FileSystemNode getFilesOfStagingArea(String stagingAreaId);
 
     void update(List<FileEvent> fileEvents);
 
     Iterable<? extends StagingFile> findAllFilesByStagingId(String stagingId);
+
+    Iterable<? extends StagingFile> findAllFilesOfStagingAreaOlderThan(String stagingId, LocalDateTime cutOffDate);
 
     Page<? extends StagingFile> findAllFilesByStagingId(String stagingId, Predicate predicate,
                                                         Pageable pageable);

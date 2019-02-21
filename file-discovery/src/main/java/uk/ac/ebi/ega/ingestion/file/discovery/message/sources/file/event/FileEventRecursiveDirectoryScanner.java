@@ -17,8 +17,6 @@
  */
 package uk.ac.ebi.ega.ingestion.file.discovery.message.sources.file.event;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.integration.file.filters.AbstractFileListFilter;
 import org.springframework.integration.file.filters.IgnoreHiddenFileListFilter;
 import org.springframework.util.Assert;
@@ -39,8 +37,6 @@ import java.util.Set;
 
 public class FileEventRecursiveDirectoryScanner {
 
-    private Logger logger = LoggerFactory.getLogger(FileEventRecursiveDirectoryScanner.class);
-
     private int maxDepth = Integer.MAX_VALUE;
 
     private Set<FileVisitOption> fileVisitOptions = new HashSet<>();
@@ -49,20 +45,9 @@ public class FileEventRecursiveDirectoryScanner {
 
     private volatile Map<String, FileStatic> fileSystemView;
 
-    private volatile long olderThan = 10000;
-
     public FileEventRecursiveDirectoryScanner() {
         this.filter = new IgnoreHiddenFileListFilter();
         this.fileSystemView = new HashMap<>();
-    }
-
-    /**
-     * Set the value for the elapsed time between the last modification to consider a file stable
-     *
-     * @param olderThan
-     */
-    public void setOlderThan(long olderThan) {
-        this.olderThan = olderThan;
     }
 
     /**
@@ -106,7 +91,6 @@ public class FileEventRecursiveDirectoryScanner {
     }
 
     private List<FileEvent> update(String locationId, Path directory, Map<String, FileStatic> newFileSystemView) {
-        long cutOff = System.currentTimeMillis() - olderThan;
         List<FileEvent> events = new ArrayList<>();
         newFileSystemView.forEach((absolutePath, newFile) -> {
             FileStatic currentFile = fileSystemView.get(absolutePath);
@@ -116,13 +100,6 @@ public class FileEventRecursiveDirectoryScanner {
                 fileSystemView.remove(absolutePath);
                 if (currentFile.lastModified() < newFile.lastModified()) {
                     events.add(FileEvent.updated(locationId, directory, newFile));
-                } else {
-                    final String substring = absolutePath.substring(0, absolutePath.length() - 4);
-                    if (absolutePath.endsWith(".md5") && newFile.lastModified() < cutOff &&
-                            newFileSystemView.containsKey(substring) &&
-                            newFileSystemView.get(substring).lastModified() < cutOff) {
-                        events.add(FileEvent.ingest(locationId, directory, newFileSystemView.get(substring)));
-                    }
                 }
             }
         });

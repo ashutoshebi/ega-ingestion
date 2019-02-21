@@ -30,9 +30,7 @@ public class FileEvent implements Comparable<FileEvent> {
 
         UPDATED(2),
 
-        DELETED(3),
-
-        INGEST(0);
+        DELETED(3);
 
         private int priority;
 
@@ -91,10 +89,6 @@ public class FileEvent implements Comparable<FileEvent> {
 
     public long getLastModified() {
         return lastModified;
-    }
-
-    public static FileEvent ingest(String locationId, Path directory, FileStatic file) {
-        return new FileEvent(Type.INGEST, locationId, directory, file);
     }
 
     public static FileEvent updated(String locationId, Path directory, FileStatic file) {

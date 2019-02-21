@@ -29,14 +29,11 @@ import org.springframework.integration.dsl.context.IntegrationFlowContext;
 import org.springframework.integration.handler.LoggingHandler;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-import uk.ac.ebi.ega.ingestion.file.discovery.message.FileEvent;
 import uk.ac.ebi.ega.ingestion.file.discovery.message.handlers.PersistStagingFileChangesHandler;
 import uk.ac.ebi.ega.ingestion.file.discovery.message.handlers.PersistStagingFileChangesHandlerImpl;
 import uk.ac.ebi.ega.ingestion.file.discovery.persistence.StagingAreaService;
 import uk.ac.ebi.ega.ingestion.file.discovery.services.FilePollingService;
 import uk.ac.ebi.ega.ingestion.file.discovery.services.FilePollingServiceImpl;
-
-import static uk.ac.ebi.ega.ingestion.file.discovery.message.FileEvent.Type.INGEST;
 
 @Configuration
 @EnableIntegration
@@ -49,42 +46,24 @@ public class FileDiscoveryConfiguration {
     private StagingAreaService stagingAreaService;
 
     @Bean
-    public MessageChannel inboundFilePollingChannel() {
+    public MessageChannel inboundDiscoveryChannel() {
         return MessageChannels.direct().get();
     }
 
     @Bean
-    public MessageChannel ingestionChannel() {
-        return MessageChannels.direct().get();
-    }
-
-    @Bean
-    public MessageChannel stagingLogChannel() {
+    public MessageChannel inboundIngestionChannel() {
         return MessageChannels.direct().get();
     }
 
     @Bean
     public FilePollingService filePollingService() {
-        return new FilePollingServiceImpl(stagingAreaService, integrationFlowContext, taskExecutor(),
-                inboundFilePollingChannel());
+        return new FilePollingServiceImpl(stagingAreaService, integrationFlowContext, fileDiscoveryExecutor(),
+                inboundDiscoveryChannel(), fileIngestionExecutor(), inboundIngestionChannel());
     }
 
     @Bean
-    public IntegrationFlow flowDistributeFileEvents() {
-        return IntegrationFlows.from(inboundFilePollingChannel())
-                .route(FileEvent.class, fileEvent -> {
-                    if (fileEvent.getType().equals(INGEST)) {
-                        return ingestionChannel();
-                    } else {
-                        return stagingLogChannel();
-                    }
-                })
-                .get();
-    }
-
-    @Bean
-    public IntegrationFlow flowStagingLogToLog() {
-        return IntegrationFlows.from(stagingLogChannel())
+    public IntegrationFlow flowDiscoveryToDatabaseAndLogging() {
+        return IntegrationFlows.from(inboundDiscoveryChannel())
                 .publishSubscribeChannel(s -> s.applySequence(true)
                         .subscribe(f -> f.aggregate(aggregatorSpec -> aggregatorSpec.correlationStrategy(message -> true)
                                 .releaseStrategy(releaseStrategy -> releaseStrategy.size() >= 5)
@@ -99,13 +78,20 @@ public class FileDiscoveryConfiguration {
 
     @Bean
     public IntegrationFlow flowIngestion() {
-        return IntegrationFlows.from(ingestionChannel())
+        return IntegrationFlows.from(inboundIngestionChannel())
                 .handle(errorLoggingHandler())
                 .get();
     }
 
     @Bean
-    public TaskExecutor taskExecutor() {
+    public TaskExecutor fileDiscoveryExecutor() {
+        ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
+        taskExecutor.setCorePoolSize(4);
+        return taskExecutor;
+    }
+
+    @Bean
+    public TaskExecutor fileIngestionExecutor() {
         ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
         taskExecutor.setCorePoolSize(4);
         return taskExecutor;
@@ -127,7 +113,7 @@ public class FileDiscoveryConfiguration {
     }
 
     @Bean
-    public PersistStagingFileChangesHandler persistStagingFileChangesHandler(){
+    public PersistStagingFileChangesHandler persistStagingFileChangesHandler() {
         return new PersistStagingFileChangesHandlerImpl(stagingAreaService);
     }
 
