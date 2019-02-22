@@ -21,14 +21,22 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.TaskExecutor;
+import org.springframework.expression.common.LiteralExpression;
+import org.springframework.integration.IntegrationMessageHeaderAccessor;
 import org.springframework.integration.config.EnableIntegration;
 import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.IntegrationFlows;
 import org.springframework.integration.dsl.MessageChannels;
 import org.springframework.integration.dsl.context.IntegrationFlowContext;
 import org.springframework.integration.handler.LoggingHandler;
+import org.springframework.integration.kafka.dsl.Kafka;
+import org.springframework.integration.kafka.dsl.KafkaProducerMessageHandlerSpec;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.DefaultKafkaHeaderMapper;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import uk.ac.ebi.ega.ingestion.file.discovery.message.FileEvent;
+import uk.ac.ebi.ega.ingestion.file.discovery.message.IngestionEvent;
 import uk.ac.ebi.ega.ingestion.file.discovery.message.handlers.PersistStagingFileChangesHandler;
 import uk.ac.ebi.ega.ingestion.file.discovery.message.handlers.PersistStagingFileChangesHandlerImpl;
 import uk.ac.ebi.ega.ingestion.file.discovery.persistence.StagingAreaService;
@@ -44,6 +52,12 @@ public class FileDiscoveryConfiguration {
 
     @Autowired
     private StagingAreaService stagingAreaService;
+
+    @Autowired
+    private KafkaTemplate<Integer, FileEvent> fileEventKafkaTemplate;
+
+    @Autowired
+    private KafkaTemplate<Integer, IngestionEvent> fileIngestionKafkaTemplate;
 
     @Bean
     public MessageChannel inboundDiscoveryChannel() {
@@ -72,14 +86,14 @@ public class FileDiscoveryConfiguration {
                                 .expireGroupsUponCompletion(true)
                                 .expireGroupsUponTimeout(true))
                                 .handle(persistStagingFileChangesHandler()))
-                        .subscribe(f -> f.handle(infoLoggingHandler())))
+                        .subscribe(f -> f.handle(discoveryMessageHandler())))
                 .get();
     }
 
     @Bean
     public IntegrationFlow flowIngestion() {
         return IntegrationFlows.from(inboundIngestionChannel())
-                .handle(errorLoggingHandler())
+                .handle(ingestionMessageHandler())
                 .get();
     }
 
@@ -98,18 +112,24 @@ public class FileDiscoveryConfiguration {
     }
 
     @Bean
-    public LoggingHandler infoLoggingHandler() {
-        return new LoggingHandler(LoggingHandler.Level.INFO);
+    public KafkaProducerMessageHandlerSpec<Integer, FileEvent, ?> discoveryMessageHandler() {
+        return Kafka.outboundChannelAdapter(fileEventKafkaTemplate)
+                .messageKey(m -> m.getHeaders().get(IntegrationMessageHeaderAccessor.SEQUENCE_NUMBER))
+                .headerMapper(mapper())
+                .topicExpression(new LiteralExpression("file-events"));
     }
 
     @Bean
-    public LoggingHandler warnLoggingHandler() {
-        return new LoggingHandler(LoggingHandler.Level.WARN);
+    public KafkaProducerMessageHandlerSpec<Integer, IngestionEvent, ?> ingestionMessageHandler() {
+        return Kafka.outboundChannelAdapter(fileIngestionKafkaTemplate)
+                .messageKey(m -> m.getHeaders().get(IntegrationMessageHeaderAccessor.SEQUENCE_NUMBER))
+                .headerMapper(mapper())
+                .topicExpression(new LiteralExpression("file-ingestion"));
     }
 
     @Bean
-    public LoggingHandler errorLoggingHandler() {
-        return new LoggingHandler(LoggingHandler.Level.ERROR);
+    public DefaultKafkaHeaderMapper mapper() {
+        return new DefaultKafkaHeaderMapper();
     }
 
     @Bean
