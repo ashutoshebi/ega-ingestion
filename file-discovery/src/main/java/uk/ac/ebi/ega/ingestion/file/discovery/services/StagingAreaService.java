@@ -15,7 +15,7 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.ingestion.file.discovery.persistence;
+package uk.ac.ebi.ega.ingestion.file.discovery.services;
 
 import com.querydsl.core.types.Predicate;
 import org.springframework.data.domain.Page;

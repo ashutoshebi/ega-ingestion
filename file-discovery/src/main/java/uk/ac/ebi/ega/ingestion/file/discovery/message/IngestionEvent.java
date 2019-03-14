@@ -28,9 +28,11 @@ public class IngestionEvent implements Comparable<IngestionEvent> {
 
     private String locationId;
 
-    private Path absolutePathFile;
+    private Path rootPath;
 
-    private Path absolutePathMd5File;
+    private String relativePathFile;
+
+    private String relativePathMd5File;
 
     private long size;
 
@@ -40,23 +42,25 @@ public class IngestionEvent implements Comparable<IngestionEvent> {
 
     private LocalDateTime md5LastModified;
 
-    public IngestionEvent(String accountId, String locationId, Path absolutePathFile, Path absolutePathMd5File,
-                          long size, long md5Size, LocalDateTime lastModified, LocalDateTime md5LastModified) {
+    public IngestionEvent(String accountId, String locationId, Path rootPath, String relativePathFile,
+                          String relativePathMd5File, long size, long md5Size, LocalDateTime lastModified,
+                          LocalDateTime md5LastModified) {
         this.accountId = accountId;
         this.locationId = locationId;
-        this.absolutePathFile = absolutePathFile;
-        this.absolutePathMd5File = absolutePathMd5File;
+        this.rootPath = rootPath;
+        this.relativePathFile = relativePathFile;
+        this.relativePathMd5File = relativePathMd5File;
         this.size = size;
         this.md5Size = md5Size;
         this.lastModified = lastModified;
         this.md5LastModified = md5LastModified;
     }
 
-    public IngestionEvent(String accountId, String locationId, Path rootPath, StagingFile stagingFile,
+    public IngestionEvent(String accountId, String locationId, Path directory, StagingFile stagingFileContent,
                           StagingFile stagingFileMd5) {
-        this(accountId, locationId, rootPath.resolve(stagingFile.getRelativePath()),
-                rootPath.resolve(stagingFileMd5.getRelativePath()), stagingFile.getFileSize(),
-                stagingFileMd5.getFileSize(), stagingFile.getUpdateDate(), stagingFileMd5.getUpdateDate());
+        this(accountId, locationId, directory, stagingFileContent.getRelativePath(), stagingFileMd5.getRelativePath(),
+                stagingFileContent.getFileSize(), stagingFileMd5.getFileSize(), stagingFileContent.getUpdateDate(),
+                stagingFileMd5.getUpdateDate());
     }
 
     public String getAccountId() {
@@ -67,12 +71,16 @@ public class IngestionEvent implements Comparable<IngestionEvent> {
         return locationId;
     }
 
-    public Path getAbsolutePathFile() {
-        return absolutePathFile;
+    public Path getRootPath() {
+        return rootPath;
     }
 
-    public Path getAbsolutePathMd5File() {
-        return absolutePathMd5File;
+    public String getRelativePathFile() {
+        return relativePathFile;
+    }
+
+    public String getRelativePathMd5File() {
+        return relativePathMd5File;
     }
 
     public long getSize() {
@@ -92,20 +100,6 @@ public class IngestionEvent implements Comparable<IngestionEvent> {
     }
 
     @Override
-    public String toString() {
-        return "IngestionEvent{" +
-                "accountId='" + accountId + '\'' +
-                ", locationId='" + locationId + '\'' +
-                ", absolutePathFile=" + absolutePathFile +
-                ", absolutePathMd5File=" + absolutePathMd5File +
-                ", size=" + size +
-                ", md5Size=" + md5Size +
-                ", lastModified=" + lastModified +
-                ", md5LastModified=" + md5LastModified +
-                '}';
-    }
-
-    @Override
     public int compareTo(IngestionEvent ingestionEvent) {
         int older = lastModified.compareTo(ingestionEvent.lastModified);
         if (older != 0) {
@@ -119,6 +113,6 @@ public class IngestionEvent implements Comparable<IngestionEvent> {
         if (location != 0) {
             return location;
         }
-        return absolutePathFile.compareTo(ingestionEvent.absolutePathFile);
+        return relativePathFile.compareTo(ingestionEvent.relativePathFile);
     }
 }

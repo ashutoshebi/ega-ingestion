@@ -36,6 +36,7 @@ import uk.ac.ebi.ega.ingestion.file.discovery.persistence.repositories.StagingAr
 import uk.ac.ebi.ega.ingestion.file.discovery.persistence.repositories.StagingAreaRepository;
 import uk.ac.ebi.ega.ingestion.file.discovery.persistence.repositories.StagingFileImpl;
 import uk.ac.ebi.ega.ingestion.file.discovery.persistence.repositories.StagingFileRepository;
+import uk.ac.ebi.ega.ingestion.file.discovery.services.StagingAreaService;
 
 import java.io.File;
 import java.io.FileNotFoundException;

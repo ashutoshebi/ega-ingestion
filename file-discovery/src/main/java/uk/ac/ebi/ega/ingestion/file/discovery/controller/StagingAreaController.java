@@ -38,7 +38,7 @@ import uk.ac.ebi.ega.ingestion.file.discovery.controller.dto.resources.StagingFi
 import uk.ac.ebi.ega.ingestion.file.discovery.controller.dto.resources.assemblers.StagingAreaResourceAssembler;
 import uk.ac.ebi.ega.ingestion.file.discovery.controller.dto.resources.assemblers.StagingFileResourceAssembler;
 import uk.ac.ebi.ega.ingestion.file.discovery.controller.exceptions.StagingAreaNotFoundException;
-import uk.ac.ebi.ega.ingestion.file.discovery.persistence.StagingAreaService;
+import uk.ac.ebi.ega.ingestion.file.discovery.services.StagingAreaService;
 import uk.ac.ebi.ega.ingestion.file.discovery.persistence.exceptions.StagingAreaAlreadyExistsException;
 import uk.ac.ebi.ega.ingestion.file.discovery.persistence.repositories.StagingAreaImpl;
 import uk.ac.ebi.ega.ingestion.file.discovery.persistence.repositories.StagingFileImpl;

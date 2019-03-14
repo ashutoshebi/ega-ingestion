@@ -35,7 +35,6 @@ import uk.ac.ebi.ega.ingestion.file.discovery.message.sources.file.event.FileEve
 import uk.ac.ebi.ega.ingestion.file.discovery.message.sources.file.event.FileStatic;
 import uk.ac.ebi.ega.ingestion.file.discovery.message.sources.ingestion.IngestionMessageSource;
 import uk.ac.ebi.ega.ingestion.file.discovery.models.StagingArea;
-import uk.ac.ebi.ega.ingestion.file.discovery.persistence.StagingAreaService;
 import uk.ac.ebi.ega.ingestion.file.discovery.persistence.exceptions.StagingAreaAlreadyExistsException;
 
 import javax.annotation.PostConstruct;

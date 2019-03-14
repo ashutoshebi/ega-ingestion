@@ -22,7 +22,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import uk.ac.ebi.ega.ingestion.file.discovery.persistence.StagingAreaService;
+import uk.ac.ebi.ega.ingestion.file.discovery.services.StagingAreaService;
 import uk.ac.ebi.ega.ingestion.file.discovery.persistence.StagingAreaServiceImpl;
 import uk.ac.ebi.ega.ingestion.file.discovery.persistence.repositories.StagingAreaRepository;
 import uk.ac.ebi.ega.ingestion.file.discovery.persistence.repositories.StagingFileRepository;
