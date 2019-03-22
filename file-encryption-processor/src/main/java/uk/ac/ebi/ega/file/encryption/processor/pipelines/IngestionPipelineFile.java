@@ -15,15 +15,27 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.encryption.core.stream;
+package uk.ac.ebi.ega.file.encryption.processor.pipelines;
 
-import java.io.Closeable;
-import java.io.IOException;
+import java.io.File;
 
-public interface StreamSink extends Closeable {
+public class IngestionPipelineFile {
 
-    void write(byte[] buffer, int i, int bytesRead) throws IOException;
+    private File file;
 
-    void flush() throws IOException;
+    private String md5;
+
+    public IngestionPipelineFile(File file, String md5) {
+        this.file = file;
+        this.md5 = md5;
+    }
+
+    public File getFile() {
+        return file;
+    }
+
+    public String getMd5() {
+        return md5;
+    }
 
 }

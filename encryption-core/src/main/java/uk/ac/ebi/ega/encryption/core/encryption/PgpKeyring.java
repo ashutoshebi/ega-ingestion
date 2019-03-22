@@ -34,6 +34,7 @@ import org.bouncycastle.openpgp.operator.jcajce.JcePBESecretKeyDecryptorBuilder;
 import org.bouncycastle.openpgp.operator.jcajce.JcePublicKeyDataDecryptorFactoryBuilder;
 import uk.ac.ebi.ega.encryption.core.encryption.exceptions.AlgorithmInitializationException;
 import uk.ac.ebi.ega.encryption.core.encryption.exceptions.WrongHeaderException;
+import uk.ac.ebi.ega.encryption.core.encryption.exceptions.WrongPassword;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -61,6 +62,9 @@ public class PgpKeyring implements EncryptionAlgorithm {
         PGPEncryptedDataList encryptedDataList = null;
         try {
             encryptedDataList = getPgpEncryptedDataList(inputStream);
+            if(encryptedDataList==null){
+                throw new WrongHeaderException("No Pgp header found");
+            }
         } catch (IOException e) {
             throw new AlgorithmInitializationException("Unexpected exception", e);
         }
@@ -73,8 +77,10 @@ public class PgpKeyring implements EncryptionAlgorithm {
             encryptedPublicKeyData = iterator.next();
             try {
                 privateKey = findSecretKey(encryptedPublicKeyData.getKeyID(), password);
-            } catch (IOException | PGPException e) {
+            } catch (IOException e) {
                 throw new AlgorithmInitializationException("Exception retrieving secret Key", e);
+            } catch (PGPException e){
+                throw new WrongPassword("Error decrypting pgp keyring",e);
             }
         }
 

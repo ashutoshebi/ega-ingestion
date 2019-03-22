@@ -51,7 +51,7 @@ public class PipelineBuilder implements PipelineService {
 
     private IngestionPipeline buildWithSamToolsIndex(File file) {
         File output = changeExtension(file, "gpg", "cip");
-        File index = changeExtension(file, "gpg", "bai");
+        File index = changeExtension(file, "bam.gpg", "bai.cip");
         char[] password = "kiwi".toCharArray();
         return new IngestionSamToolsIndex(file, secretRing, secretRingPassphrase, output, index, password);
     }

@@ -35,10 +35,11 @@ public enum FileType {
     }
 
     private static FileType fromName(String name) {
-        final String[] split = name.split(".");
+        final String[] split = name.split("\\.");
         for (int i = split.length - 2; i >= 0; i--) {
             FileType fileType = possibleExtensions.get(split[i].toLowerCase());
-            switch ((fileType != null) ? fileType : BINARY) {
+            fileType = (fileType != null) ? fileType : BINARY;
+            switch (fileType) {
                 case ENCRYPTED:
                     break;
                 default:

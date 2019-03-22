@@ -26,16 +26,20 @@ import java.io.InputStream;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 
-public class DecryptionInputStream extends InputStream {
+public class DecryptInputStream extends InputStream {
 
     private final MessageDigest messageDigest;
 
+    private final MessageDigest unencryptedMessageDigest;
+
     private final DigestInputStream digestedDecryptedInput;
 
-    public DecryptionInputStream(InputStream input, EncryptionAlgorithm algorithm, char[] password)
+    public DecryptInputStream(InputStream input, EncryptionAlgorithm algorithm, char[] password)
             throws AlgorithmInitializationException {
         this.messageDigest = Hash.getMd5();
-        this.digestedDecryptedInput = new DigestInputStream(algorithm.decrypt(input, password), messageDigest);
+        this.unencryptedMessageDigest = Hash.getMd5();
+        this.digestedDecryptedInput = new DigestInputStream(algorithm.decrypt(
+                new DigestInputStream(input, messageDigest), password), unencryptedMessageDigest);
     }
 
     @Override
@@ -48,8 +52,12 @@ public class DecryptionInputStream extends InputStream {
         digestedDecryptedInput.close();
     }
 
-    public String getUnencryptedMd5() {
+    public String getMd5() {
         return Hash.normalize(messageDigest);
+    }
+
+    public String getUnencryptedMd5() {
+        return Hash.normalize(unencryptedMessageDigest);
     }
 
 }

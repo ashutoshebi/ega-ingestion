@@ -27,17 +27,17 @@ import java.io.OutputStream;
 import java.security.DigestOutputStream;
 import java.security.MessageDigest;
 
-public class EncryptionOutputStream extends OutputStream {
+public class EncryptOutputStream extends OutputStream {
 
-    private final MessageDigest messageDigestEncrypted;
+    private final MessageDigest messageDigest;
 
     private final OutputStream encryptedOutput;
 
-    public EncryptionOutputStream(OutputStream output, EncryptionAlgorithm algorithm, char[] password)
+    public EncryptOutputStream(OutputStream output, EncryptionAlgorithm algorithm, char[] password)
             throws AlgorithmInitializationException {
-        this.messageDigestEncrypted = Hash.getMd5();
+        this.messageDigest = Hash.getMd5();
         this.encryptedOutput = algorithm.encrypt(password,
-                new DigestOutputStream(new ReportingOutputStream(output), messageDigestEncrypted));
+                new DigestOutputStream(new ReportingOutputStream(output), messageDigest));
     }
 
     @Override
@@ -55,8 +55,8 @@ public class EncryptionOutputStream extends OutputStream {
         encryptedOutput.flush();
     }
 
-    public String getEncryptedMd5() {
-        return Hash.normalize(messageDigestEncrypted);
+    public String getMd5() {
+        return Hash.normalize(messageDigest);
     }
 
 }

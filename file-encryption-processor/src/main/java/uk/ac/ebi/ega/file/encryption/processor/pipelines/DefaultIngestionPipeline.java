@@ -17,13 +17,14 @@
  */
 package uk.ac.ebi.ega.file.encryption.processor.pipelines;
 
-import uk.ac.ebi.ega.encryption.core.DecryptionInputStream;
-import uk.ac.ebi.ega.encryption.core.EncryptionOutputStream;
+import uk.ac.ebi.ega.encryption.core.DecryptInputStream;
+import uk.ac.ebi.ega.encryption.core.EncryptOutputStream;
 import uk.ac.ebi.ega.encryption.core.StreamPipelineBuilder;
 import uk.ac.ebi.ega.encryption.core.encryption.AesCtr256Ega;
 import uk.ac.ebi.ega.encryption.core.encryption.PgpKeyring;
 import uk.ac.ebi.ega.encryption.core.encryption.exceptions.AlgorithmInitializationException;
-import uk.ac.ebi.ega.encryption.core.stream.StreamSource;
+import uk.ac.ebi.ega.encryption.core.encryption.exceptions.WrongPassword;
+import uk.ac.ebi.ega.encryption.core.stream.PipelineStream;
 import uk.ac.ebi.ega.encryption.core.utils.io.FileUtils;
 import uk.ac.ebi.ega.file.encryption.processor.pipelines.exceptions.SystemErrorException;
 import uk.ac.ebi.ega.file.encryption.processor.pipelines.exceptions.UserErrorException;
@@ -32,105 +33,101 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DefaultIngestionPipeline implements IngestionPipeline {
 
-    private File origin;
+    private final List<File> outputFiles;
+
+    protected File origin;
 
     private File secretRing;
 
-    private File passphrase;
+    private File secretRingKey;
 
-    private File output;
+    protected File output;
 
-    private File outputPassword;
+    protected char[] password;
 
-    private char[] password;
-
-    public DefaultIngestionPipeline(File origin, File secretRing, File passphrase, File output, char[] password) {
+    public DefaultIngestionPipeline(File origin, File secretRing, File secretRingKey, File output, char[] password) {
+        this.outputFiles = new ArrayList<>();
         this.origin = origin;
         this.secretRing = secretRing;
-        this.passphrase = passphrase;
+        this.secretRingKey = secretRingKey;
         this.output = output;
-        this.outputPassword = new File(output.getAbsolutePath() + ".password");
+        this.password = password;
     }
 
     @Override
-    public void process() throws SystemErrorException, UserErrorException {
+    public final IngestionPipelineResult process() throws SystemErrorException, UserErrorException {
         try {
-            createOutputFiles();
-            doProcess();
+            return doProcess();
         } catch (SystemErrorException | UserErrorException e) {
             deleteOutputFiles();
             throw e;
-        }
-    }
-
-    protected void doProcess() throws SystemErrorException, UserErrorException {
-        try (
-                final EncryptionOutputStream encryptionOutputStream = getEncryptionOutputStream();
-        ) {
-            executePipeline(encryptionOutputStream);
-        } catch (IOException e) {
-            throw new SystemErrorException(e);
-        }
-    }
-
-    protected final void executePipeline(OutputStream... outputStreams) throws SystemErrorException,
-            UserErrorException {
-        try (
-                final DecryptionInputStream decryptionInputStream = getDecryptionInputStream();
-                StreamSource source = StreamPipelineBuilder.source(decryptionInputStream).to(outputStreams);
-        ) {
-            source.execute();
-        } catch (IOException e) {
+        } catch (IOException | WrongPassword e) {
+            //If it is an io error or the pgp keyring password is wrong
+            deleteOutputFiles();
             throw new SystemErrorException(e);
         } catch (AlgorithmInitializationException e) {
+            deleteOutputFiles();
             throw new UserErrorException(e);
         }
     }
 
-    private DecryptionInputStream getDecryptionInputStream() throws AlgorithmInitializationException, IOException {
-        return new DecryptionInputStream(
-                new FileInputStream(origin),
-                new PgpKeyring(new FileInputStream(secretRing)),
-                FileUtils.readPasswordFile(passphrase.toPath()));
+    protected IngestionPipelineResult doProcess() throws SystemErrorException, UserErrorException, IOException,
+            AlgorithmInitializationException {
+        try (
+                final DecryptInputStream decryptInputStream = getDecryptionInputStream();
+                final EncryptOutputStream encryptOutputStream = getEncryptionOutputStream(output);
+                final PipelineStream stream = StreamPipelineBuilder
+                        .source(decryptInputStream)
+                        .to(encryptOutputStream)
+                        .build();
+        ) {
+            stream.execute();
+            return new IngestionPipelineResult(
+                    new IngestionPipelineFile(origin, decryptInputStream.getMd5()),
+                    decryptInputStream.getUnencryptedMd5(),
+                    password,
+                    new IngestionPipelineFile(output, encryptOutputStream.getMd5())
+            );
+        }
     }
 
-    protected EncryptionOutputStream getEncryptionOutputStream() throws SystemErrorException {
+    protected final DecryptInputStream getDecryptionInputStream() throws AlgorithmInitializationException, IOException {
+        return new DecryptInputStream(
+                new FileInputStream(origin),
+                new PgpKeyring(new FileInputStream(secretRing)),
+                FileUtils.readPasswordFile(secretRingKey.toPath()));
+    }
+
+    protected final EncryptOutputStream getEncryptionOutputStream(File file) throws SystemErrorException {
+        createFile(file);
         try {
-            return new EncryptionOutputStream(new FileOutputStream(output), new AesCtr256Ega(), password);
+            return new EncryptOutputStream(new FileOutputStream(file), new AesCtr256Ega(), password);
         } catch (Exception e) {
             throw new SystemErrorException(e);
         }
     }
 
-    protected void deleteOutputFiles() throws SystemErrorException {
-        deleteFiles(output, outputPassword);
-    }
-
-    protected void createOutputFiles() throws SystemErrorException {
-        createFiles(output, outputPassword);
-    }
-
-    protected static void createFiles(File... files) throws SystemErrorException {
-        for (File file : files) {
-            try {
-                if (!file.createNewFile()) {
-                    throw new SystemErrorException("File could not be created '" + file + "'");
-                }
-            } catch (IOException e) {
-                throw new SystemErrorException(e);
+    private void deleteOutputFiles() throws SystemErrorException {
+        for (File file : outputFiles) {
+            if (file.exists() && !file.delete()) {
+                throw new SystemErrorException("File could not be deleted");
             }
         }
     }
 
-    protected static void deleteFiles(File... files) throws SystemErrorException {
-        for (File file : files) {
-            if (file.exists() && !file.delete()) {
-                throw new SystemErrorException("File could not be deleted");
+    protected final void createFile(File file) throws SystemErrorException {
+        try {
+            if (!file.createNewFile()) {
+                throw new SystemErrorException("File could not be created '" + file + "'");
             }
+            outputFiles.add(file);
+        } catch (IOException e) {
+            throw new SystemErrorException(e);
         }
     }
 

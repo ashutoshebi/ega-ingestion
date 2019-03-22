@@ -15,16 +15,15 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.file.encryption.processor.pipelines.exceptions;
+package uk.ac.ebi.ega.file.encryption.processor.pipelines;
 
-public class UserErrorException extends Exception {
+import java.io.File;
+import java.io.IOException;
 
-    public UserErrorException(Exception e) {
-        super(e);
-    }
+public class SamIndexProcessPiped extends CmdLineProcessPiped {
 
-    public UserErrorException(String message) {
-        super(message);
+    public SamIndexProcessPiped(File errorOutput) throws IOException {
+        super(errorOutput, "samtools", "index", "-", "-");
     }
 
 }

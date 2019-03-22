@@ -18,32 +18,52 @@
 package uk.ac.ebi.ega.encryption.core.stream;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
 
-public class MultipleStreamSink implements StreamSink {
+public class ParallelSplitStream implements PipelineStream {
 
-    private final OutputStream sinks[];
+    private final InputStream source;
 
-    public MultipleStreamSink(OutputStream... sinks) {
-        this.sinks = sinks;
+    private final int bufferSize;
+
+    private long totalRead;
+
+    private final List<OutputStream> outputStreams;
+
+    public ParallelSplitStream(InputStream source, int bufferSize, List<OutputStream> outputStreams) {
+        this.source = source;
+        this.bufferSize = bufferSize;
+        this.totalRead = 0;
+        this.outputStreams = outputStreams;
     }
 
     @Override
     public void close() throws IOException {
-        for (OutputStream sink : sinks) {
-            sink.flush();
-            sink.close();
+        for (OutputStream outputStream : outputStreams) {
+            outputStream.flush();
+            outputStream.close();
         }
     }
 
     @Override
+    public void execute() throws IOException {
+        byte[] buffer = new byte[bufferSize];
+        int bytesRead = source.read(buffer);
+        while (bytesRead != -1) {
+            totalRead += bytesRead;
+            write(buffer, 0, bytesRead);
+            bytesRead = source.read(buffer);
+        }
+        flush();
+    }
+
     public void write(byte[] buffer, int i, int bytesRead) throws IOException {
-        final List<CompletableFuture<Void>> futures = Arrays.stream(sinks).map(outputStream -> doWrite(outputStream,
+        final List<CompletableFuture<Void>> futures = outputStreams.stream().map(outputStream -> doWrite(outputStream,
                 buffer, i, bytesRead)).collect(Collectors.toList());
 
         final CompletableFuture[] completableFutures = futures.toArray(new CompletableFuture[futures.size()]);
@@ -57,13 +77,6 @@ public class MultipleStreamSink implements StreamSink {
         }
     }
 
-    @Override
-    public void flush() throws IOException {
-        for (OutputStream sink : sinks) {
-            sink.flush();
-        }
-    }
-
     public CompletableFuture<Void> doWrite(OutputStream outputStream, byte[] buffer, int i, int bytesRead) {
         return CompletableFuture.runAsync(() -> {
             try {
@@ -72,6 +85,12 @@ public class MultipleStreamSink implements StreamSink {
                 throw new CompletionException(e);
             }
         });
+    }
+
+    public void flush() throws IOException {
+        for (OutputStream outputStream : outputStreams) {
+            outputStream.flush();
+        }
     }
 
 }

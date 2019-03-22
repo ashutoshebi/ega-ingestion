@@ -15,33 +15,14 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.encryption.core.stream;
+package uk.ac.ebi.ega.encryption.core.encryption.exceptions;
 
-import java.io.IOException;
-import java.io.OutputStream;
+import org.bouncycastle.openpgp.PGPException;
 
-public class SingleStreamSink implements StreamSink {
+public class WrongPassword extends AlgorithmInitializationException {
 
-    private final OutputStream sink;
-
-    public SingleStreamSink(OutputStream sink) {
-        this.sink = sink;
-    }
-
-    @Override
-    public void close() throws IOException {
-        sink.flush();
-        sink.close();
-    }
-
-    @Override
-    public void write(byte[] buffer, int i, int bytesRead) throws IOException {
-        sink.write(buffer, i, bytesRead);
-    }
-
-    @Override
-    public void flush() throws IOException {
-        sink.flush();
+    public WrongPassword(String message, PGPException e) {
+        super(message, e);
     }
 
 }

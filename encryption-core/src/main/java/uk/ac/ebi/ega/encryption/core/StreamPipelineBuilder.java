@@ -17,12 +17,14 @@
  */
 package uk.ac.ebi.ega.encryption.core;
 
-import uk.ac.ebi.ega.encryption.core.stream.MultipleStreamSink;
-import uk.ac.ebi.ega.encryption.core.stream.SingleStreamSink;
-import uk.ac.ebi.ega.encryption.core.stream.StreamSource;
+import uk.ac.ebi.ega.encryption.core.stream.ParallelSplitStream;
+import uk.ac.ebi.ega.encryption.core.stream.PipelineStream;
+import uk.ac.ebi.ega.encryption.core.stream.SimpleStream;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 public class StreamPipelineBuilder {
 
@@ -32,8 +34,11 @@ public class StreamPipelineBuilder {
 
         private int bufferSize = 8192;
 
+        private final List<OutputStream> outputoutputStreams;
+
         public StreamSourceBuilder(InputStream source) {
             this.source = source;
+            outputoutputStreams = new ArrayList<>();
         }
 
         public StreamSourceBuilder bufferSize(int bufferSize) {
@@ -41,11 +46,16 @@ public class StreamPipelineBuilder {
             return this;
         }
 
-        public StreamSource to(OutputStream... sinks) {
-            if (sinks.length == 1) {
-                return new StreamSource(source, bufferSize, new SingleStreamSink(sinks[0]));
+        public StreamSourceBuilder to(OutputStream outputStream) {
+            outputoutputStreams.add(outputStream);
+            return this;
+        }
+
+        public PipelineStream build() {
+            if (outputoutputStreams.size() == 1) {
+                return new SimpleStream(source, bufferSize, outputoutputStreams.get(0));
             } else {
-                return new StreamSource(source, bufferSize, new MultipleStreamSink(sinks));
+                return new ParallelSplitStream(source, bufferSize, outputoutputStreams);
             }
         }
 

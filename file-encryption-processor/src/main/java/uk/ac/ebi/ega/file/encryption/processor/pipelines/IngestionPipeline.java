@@ -22,6 +22,6 @@ import uk.ac.ebi.ega.file.encryption.processor.pipelines.exceptions.UserErrorExc
 
 public interface IngestionPipeline {
 
-    void process() throws SystemErrorException, UserErrorException;
+    IngestionPipelineResult process() throws SystemErrorException, UserErrorException;
 
 }

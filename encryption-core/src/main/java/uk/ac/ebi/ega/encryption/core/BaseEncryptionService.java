@@ -39,12 +39,12 @@ public class BaseEncryptionService implements EncryptionService {
     @Override
     public String encrypt(InputStream input, Output output) throws AlgorithmInitializationException, IOException {
         try (
-                EncryptionOutputStream encryptedOutput = new EncryptionOutputStream(output.getOutputStream(),
+                EncryptOutputStream encryptedOutput = new EncryptOutputStream(output.getOutputStream(),
                         output.getEncryptionAlgorithm(), output.getPassword());
         ) {
             IOUtils.bufferedPipe(input, encryptedOutput, BUFFER_SIZE);
             encryptedOutput.flush();
-            return encryptedOutput.getEncryptedMd5();
+            return encryptedOutput.getMd5();
         }
     }
 
@@ -57,9 +57,9 @@ public class BaseEncryptionService implements EncryptionService {
 
         try (
                 InputStream digestInput = new DigestInputStream(input.getInputStream(), messageDigestEncrypted);
-                DecryptionInputStream decryptedInput = new DecryptionInputStream(digestInput, decryptionAlgorithm,
+                DecryptInputStream decryptedInput = new DecryptInputStream(digestInput, decryptionAlgorithm,
                         input.getPassword());
-                EncryptionOutputStream encryptedOutput = new EncryptionOutputStream(output.getOutputStream(),
+                EncryptOutputStream encryptedOutput = new EncryptOutputStream(output.getOutputStream(),
                         encryptionAlgorithm, output.getPassword());
         ) {
             long unencryptedSize = IOUtils.bufferedPipe(decryptedInput, encryptedOutput, BUFFER_SIZE);
@@ -68,7 +68,7 @@ public class BaseEncryptionService implements EncryptionService {
             String originalMd5 = Hash.normalize(messageDigestEncrypted);
             String unencryptedMd5 = decryptedInput.getUnencryptedMd5();
             md5Check.check(originalMd5, unencryptedMd5);
-            return new EncryptionReport(originalMd5, unencryptedMd5, encryptedOutput.getEncryptedMd5(), unencryptedSize);
+            return new EncryptionReport(originalMd5, unencryptedMd5, encryptedOutput.getMd5(), unencryptedSize);
         } catch (Exception e) {
             output.onFailure();
             throw e;

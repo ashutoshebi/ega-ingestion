@@ -15,16 +15,13 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.file.encryption.processor.pipelines.exceptions;
+package uk.ac.ebi.ega.encryption.core.stream;
 
-public class UserErrorException extends Exception {
+import java.io.Closeable;
+import java.io.IOException;
 
-    public UserErrorException(Exception e) {
-        super(e);
-    }
+public interface PipelineStream extends Closeable {
 
-    public UserErrorException(String message) {
-        super(message);
-    }
+    void execute() throws IOException;
 
 }
