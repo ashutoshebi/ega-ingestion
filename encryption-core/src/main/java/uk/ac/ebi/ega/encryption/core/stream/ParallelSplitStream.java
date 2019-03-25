@@ -44,6 +44,7 @@ public class ParallelSplitStream implements PipelineStream {
 
     @Override
     public void close() throws IOException {
+        source.close();
         for (OutputStream outputStream : outputStreams) {
             outputStream.flush();
             outputStream.close();
@@ -62,8 +63,8 @@ public class ParallelSplitStream implements PipelineStream {
         flush();
     }
 
-    public void write(byte[] buffer, int i, int bytesRead) throws IOException {
-        final List<CompletableFuture<Void>> futures = outputStreams.stream().map(outputStream -> doWrite(outputStream,
+    private void write(byte[] buffer, int i, int bytesRead) throws IOException {
+        final List<CompletableFuture<Void>> futures = outputStreams.stream().map(outputStream -> futureWrite(outputStream,
                 buffer, i, bytesRead)).collect(Collectors.toList());
 
         final CompletableFuture[] completableFutures = futures.toArray(new CompletableFuture[futures.size()]);
@@ -77,7 +78,7 @@ public class ParallelSplitStream implements PipelineStream {
         }
     }
 
-    public CompletableFuture<Void> doWrite(OutputStream outputStream, byte[] buffer, int i, int bytesRead) {
+    private static CompletableFuture<Void> futureWrite(OutputStream outputStream, byte[] buffer, int i, int bytesRead) {
         return CompletableFuture.runAsync(() -> {
             try {
                 outputStream.write(buffer, i, bytesRead);
@@ -87,6 +88,7 @@ public class ParallelSplitStream implements PipelineStream {
         });
     }
 
+    @Override
     public void flush() throws IOException {
         for (OutputStream outputStream : outputStreams) {
             outputStream.flush();

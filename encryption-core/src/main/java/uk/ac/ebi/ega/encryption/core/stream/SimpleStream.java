@@ -41,6 +41,7 @@ public class SimpleStream implements PipelineStream {
     @Override
     public void close() throws IOException {
         source.close();
+        flush();
         outputStream.close();
     }
 
@@ -53,6 +54,11 @@ public class SimpleStream implements PipelineStream {
             outputStream.write(buffer, 0, bytesRead);
             bytesRead = source.read(buffer);
         }
+        outputStream.flush();
+    }
+
+    @Override
+    public void flush() throws IOException {
         outputStream.flush();
     }
 

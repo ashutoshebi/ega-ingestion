@@ -24,4 +24,5 @@ public interface PipelineStream extends Closeable {
 
     void execute() throws IOException;
 
+    void flush() throws IOException;
 }
