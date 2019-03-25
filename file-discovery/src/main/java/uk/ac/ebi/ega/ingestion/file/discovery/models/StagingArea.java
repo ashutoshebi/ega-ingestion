@@ -25,6 +25,8 @@ public interface StagingArea {
 
     String getPath();
 
+    String getIgnorePathRegex();
+
     boolean isDiscoveryEnabled();
 
     boolean isIngestionEnabled();
@@ -38,4 +40,5 @@ public interface StagingArea {
     LocalDateTime getCreateDate();
 
     LocalDateTime getUpdateDate();
+
 }

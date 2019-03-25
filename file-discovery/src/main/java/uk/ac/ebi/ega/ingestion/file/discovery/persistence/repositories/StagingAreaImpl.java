@@ -40,6 +40,8 @@ public class StagingAreaImpl implements StagingArea, Persistable<String> {
 
     private String path;
 
+    private String ignorePathRegex;
+
     private boolean discoveryEnabled;
 
     private boolean ingestionEnabled;
@@ -115,12 +117,21 @@ public class StagingAreaImpl implements StagingArea, Persistable<String> {
         return updateDate;
     }
 
+    @Override
+    public String getIgnorePathRegex() {
+        return ignorePathRegex;
+    }
+
     public void setId(String id) {
         this.id = id;
     }
 
     public void setPath(String path) {
         this.path = path;
+    }
+
+    public void setIgnorePathRegex(String ignorePathRegex) {
+        this.ignorePathRegex = ignorePathRegex;
     }
 
     public void setDiscoveryEnabled(boolean discoveryEnabled) {
