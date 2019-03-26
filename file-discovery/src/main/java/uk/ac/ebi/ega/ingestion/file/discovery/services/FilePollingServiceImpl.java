@@ -26,16 +26,18 @@ import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.IntegrationFlows;
 import org.springframework.integration.dsl.Pollers;
 import org.springframework.integration.dsl.context.IntegrationFlowContext;
+import org.springframework.integration.file.filters.IgnoreHiddenFileListFilter;
 import org.springframework.messaging.MessageChannel;
 import uk.ac.ebi.ega.ingestion.file.discovery.controller.exceptions.StagingAreaNotFoundException;
 import uk.ac.ebi.ega.ingestion.file.discovery.message.FileEvent;
 import uk.ac.ebi.ega.ingestion.file.discovery.message.IngestionEvent;
+import uk.ac.ebi.ega.ingestion.file.discovery.message.sources.file.event.CompositeAbstractFileListFilter;
+import uk.ac.ebi.ega.ingestion.file.discovery.message.sources.file.event.DirectoryPatternFileListFilter;
 import uk.ac.ebi.ega.ingestion.file.discovery.message.sources.file.event.FileEventMessageSource;
 import uk.ac.ebi.ega.ingestion.file.discovery.message.sources.file.event.FileEventRecursiveDirectoryScanner;
 import uk.ac.ebi.ega.ingestion.file.discovery.message.sources.file.event.FileStatic;
 import uk.ac.ebi.ega.ingestion.file.discovery.message.sources.ingestion.IngestionMessageSource;
 import uk.ac.ebi.ega.ingestion.file.discovery.models.StagingArea;
-import uk.ac.ebi.ega.ingestion.file.discovery.persistence.StagingAreaService;
 import uk.ac.ebi.ega.ingestion.file.discovery.persistence.exceptions.StagingAreaAlreadyExistsException;
 
 import javax.annotation.PostConstruct;
@@ -217,6 +219,8 @@ public class FilePollingServiceImpl implements FilePollingService {
 
     private MessageSource<FileEvent> buildFileEventMessageSource(StagingArea stagingArea) {
         FileEventRecursiveDirectoryScanner scanner = new FileEventRecursiveDirectoryScanner();
+        scanner.setFilter(new CompositeAbstractFileListFilter(new IgnoreHiddenFileListFilter(),
+                new DirectoryPatternFileListFilter(stagingArea.getIgnorePathRegex())));
         scanner.initializeDirectoryStatus(getFilesOfStagingArea(stagingArea));
         FileEventMessageSource source = new FileEventMessageSource(scanner);
         source.setAutoCreateDirectory(false);

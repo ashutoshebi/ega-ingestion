@@ -22,7 +22,6 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.springframework.integration.file.filters.IgnoreHiddenFileListFilter;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.HashSet;
@@ -77,6 +76,36 @@ public class RecursiveFileVisitorTest {
         assertTrue(fileSystemView.containsKey(temporaryFolder.getRoot().getAbsolutePath() + "/folder-1/test3.txt"));
         assertFalse(fileSystemView.containsKey(temporaryFolder.getRoot().getAbsolutePath() + "/.hidden/test4.txt"));
         assertFalse(fileSystemView.containsKey(temporaryFolder.getRoot().getAbsolutePath() + "/.hidden"));
+    }
+
+    @Test
+    public void testVisitorIgnoredFolders() throws IOException {
+        temporaryFolder.newFile("test1.txt");
+        temporaryFolder.newFile("test2.txt");
+        temporaryFolder.newFile(".hidden_file.txt");
+        temporaryFolder.newFolder("folder-1");
+        temporaryFolder.newFolder(".hidden");
+        temporaryFolder.newFile("/folder-1/test3.txt");
+        temporaryFolder.newFile("/.hidden/test4.txt");
+        temporaryFolder.newFolder("kiwi");
+        temporaryFolder.newFile("/kiwi/test5.txt");
+        temporaryFolder.newFolder("ega_metadata");
+        temporaryFolder.newFile("/ega_metadata/test6.txt");
+
+        RecursiveFileVisitor visitor = new RecursiveFileVisitor(new CompositeAbstractFileListFilter(
+                new IgnoreHiddenFileListFilter(), new DirectoryPatternFileListFilter("kiwi|ega_metadata")));
+
+        Files.walkFileTree(temporaryFolder.getRoot().toPath(), new HashSet<>(), Integer.MAX_VALUE, visitor);
+        final Map<String, FileStatic> fileSystemView = visitor.getFiles();
+        assertEquals(3, fileSystemView.keySet().size());
+        String absolutePath = temporaryFolder.getRoot().getAbsolutePath();
+        assertTrue(fileSystemView.containsKey(absolutePath + "/test1.txt"));
+        assertFalse(fileSystemView.containsKey(absolutePath + "/.hidden_file.txt"));
+        assertTrue(fileSystemView.containsKey(absolutePath + "/folder-1/test3.txt"));
+        assertFalse(fileSystemView.containsKey(absolutePath + "/.hidden/test4.txt"));
+        assertFalse(fileSystemView.containsKey(absolutePath + "/.hidden"));
+        assertFalse(fileSystemView.containsKey(absolutePath + "/kiwi/test5.txt"));
+        assertFalse(fileSystemView.containsKey(absolutePath + "/ega_metadata/test6.txt"));
     }
 
 }

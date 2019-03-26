@@ -31,15 +31,17 @@ public class StagingAreaPostRequest implements StagingArea {
     @NotNull
     private String path;
 
+    private String ignorePathRegex;
+
     @NotNull
     private String account;
 
     @NotNull
-    @Min(value = 1,message = "Discovery polling period needs to be greater than 0")
+    @Min(value = 1, message = "Discovery polling period needs to be greater than 0")
     private long discoveryPollingPeriod;
 
     @NotNull
-    @Min(value = 1,message = "Ingestion polling period needs to be greater than 0")
+    @Min(value = 1, message = "Ingestion polling period needs to be greater than 0")
     private long ingestionPollingPeriod;
 
     public String getId() {
@@ -49,6 +51,11 @@ public class StagingAreaPostRequest implements StagingArea {
     @Override
     public String getPath() {
         return path;
+    }
+
+    @Override
+    public String getIgnorePathRegex() {
+        return ignorePathRegex;
     }
 
     @Override

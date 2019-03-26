@@ -17,6 +17,11 @@
  */
 package uk.ac.ebi.ega.ingestion.file.discovery;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.IntegerSerializer;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,12 +45,17 @@ public class KafkaConfiguration {
 
     @Bean
     public ProducerFactory<Integer, FileEvent> fileEventProducerFactory() {
-        return new DefaultKafkaProducerFactory<>(producerConfigs());
+        DefaultKafkaProducerFactory<Integer, FileEvent> factory = new DefaultKafkaProducerFactory<>(producerConfigs());
+        factory.setValueSerializer(new JsonSerializer<>(getObjectMapper()));
+        return factory;
     }
 
     @Bean
     public ProducerFactory<Integer, IngestionEvent> ingestionEventProducerFactory() {
-        return new DefaultKafkaProducerFactory<>(producerConfigs());
+        DefaultKafkaProducerFactory<Integer, IngestionEvent> factory =
+                new DefaultKafkaProducerFactory<>(producerConfigs());
+        factory.setValueSerializer(new JsonSerializer<>(getObjectMapper()));
+        return factory;
     }
 
     @Bean
@@ -63,10 +73,19 @@ public class KafkaConfiguration {
         Map properties = new HashMap();
         properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, IntegerSerializer.class);
-        properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
         // introduce a delay on the send to allow more messages to accumulate
         properties.put(ProducerConfig.LINGER_MS_CONFIG, 1);
         return properties;
+    }
+
+    private ObjectMapper getObjectMapper() {
+        final ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.configure(MapperFeature.DEFAULT_VIEW_INCLUSION, false);
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+        objectMapper.configure(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
+        return objectMapper;
     }
 
 }

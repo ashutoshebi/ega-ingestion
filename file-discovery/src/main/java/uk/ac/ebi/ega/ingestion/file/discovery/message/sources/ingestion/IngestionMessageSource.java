@@ -30,15 +30,12 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Queue;
 import java.util.concurrent.PriorityBlockingQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiFunction;
 
 public class IngestionMessageSource extends AbstractMessageSource<IngestionEvent> {
 
     private static final int DEFAULT_INTERNAL_QUEUE_CAPACITY = 5;
-
-    private final AtomicBoolean running = new AtomicBoolean();
 
     private final BiFunction<String, LocalDateTime, Iterable<? extends StagingFile>> supplier;
 
@@ -108,9 +105,9 @@ public class IngestionMessageSource extends AbstractMessageSource<IngestionEvent
                 stagingFileMd5 = stagingFiles.get(pathToSearch.concat(".md5"));
             }
             if (stagingFileContent != null && stagingFileMd5 != null) {
-                events.add(new IngestionEvent(locationId, accountId, directory, stagingFileContent, stagingFileMd5));
-            }else{
-                stagingFiles.put(stagingFile.getRelativePath(),stagingFile);
+                events.add(new IngestionEvent(accountId, locationId, directory, stagingFileContent, stagingFileMd5));
+            } else {
+                stagingFiles.put(stagingFile.getRelativePath(), stagingFile);
             }
         });
         return events;

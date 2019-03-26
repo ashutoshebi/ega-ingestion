@@ -20,7 +20,7 @@ package uk.ac.ebi.ega.ingestion.file.discovery.message.handlers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.ac.ebi.ega.ingestion.file.discovery.message.FileEvent;
-import uk.ac.ebi.ega.ingestion.file.discovery.persistence.StagingAreaService;
+import uk.ac.ebi.ega.ingestion.file.discovery.services.StagingAreaService;
 
 import java.util.List;
 
