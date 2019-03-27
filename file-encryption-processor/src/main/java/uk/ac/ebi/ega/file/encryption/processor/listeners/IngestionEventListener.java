@@ -35,7 +35,7 @@ public class IngestionEventListener {
     @Autowired
     private ProcessEncryptionFileService processEncryptionFileService;
 
-    @KafkaListener(id = "${spring.kafka.client-id}", topics = "file-ingestion", groupId = "encryption",
+    @KafkaListener(id = "${spring.kafka.client-id}", topics = "${spring.kafka.file.ingestion.queue.name}", groupId = "encryption",
             clientIdPrefix = "executor", autoStartup = "false")
     public void listen(IngestionEvent data) {
         logger.error("Received {}", data);
