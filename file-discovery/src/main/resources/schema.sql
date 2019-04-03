@@ -5,7 +5,7 @@ create table STAGING_AREAS
 (
     ID                       varchar(255) primary key,
     PATH                     varchar(255) not null unique,
-    IGNORE_PATH_REGEX        varchar(255),
+    IGNORE_PATH_REGEX        varchar(255) not null,
     DISCOVERY_ENABLED        boolean      not null,
     INGESTION_ENABLED        boolean      not null,
     ACCOUNT                  varchar(255) not null,

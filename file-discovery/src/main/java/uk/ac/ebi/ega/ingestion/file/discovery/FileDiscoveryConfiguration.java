@@ -18,6 +18,7 @@
 package uk.ac.ebi.ega.ingestion.file.discovery;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.TaskExecutor;
@@ -38,13 +39,19 @@ import uk.ac.ebi.ega.ingestion.file.discovery.message.FileEvent;
 import uk.ac.ebi.ega.ingestion.file.discovery.message.IngestionEvent;
 import uk.ac.ebi.ega.ingestion.file.discovery.message.handlers.PersistStagingFileChangesHandler;
 import uk.ac.ebi.ega.ingestion.file.discovery.message.handlers.PersistStagingFileChangesHandlerImpl;
-import uk.ac.ebi.ega.ingestion.file.discovery.services.StagingAreaService;
 import uk.ac.ebi.ega.ingestion.file.discovery.services.FilePollingService;
 import uk.ac.ebi.ega.ingestion.file.discovery.services.FilePollingServiceImpl;
+import uk.ac.ebi.ega.ingestion.file.discovery.services.StagingAreaService;
 
 @Configuration
 @EnableIntegration
 public class FileDiscoveryConfiguration {
+
+    @Value("${spring.kafka.file.events.queue.name}")
+    private String fileEventQueueName;
+
+    @Value("${spring.kafka.file.ingestion.queue.name}")
+    private String fileIngestionQueueName;
 
     @Autowired
     private IntegrationFlowContext integrationFlowContext;
@@ -115,7 +122,7 @@ public class FileDiscoveryConfiguration {
         return Kafka.outboundChannelAdapter(fileEventKafkaTemplate)
                 .messageKey(m -> m.getHeaders().get(IntegrationMessageHeaderAccessor.SEQUENCE_NUMBER))
                 .headerMapper(mapper())
-                .topicExpression(new LiteralExpression("file-events"));
+                .topicExpression(new LiteralExpression(fileEventQueueName));
     }
 
     @Bean
@@ -123,7 +130,7 @@ public class FileDiscoveryConfiguration {
         return Kafka.outboundChannelAdapter(fileIngestionKafkaTemplate)
                 .messageKey(m -> m.getHeaders().get(IntegrationMessageHeaderAccessor.SEQUENCE_NUMBER))
                 .headerMapper(mapper())
-                .topicExpression(new LiteralExpression("file-ingestion"));
+                .topicExpression(new LiteralExpression(fileIngestionQueueName));
     }
 
     @Bean
