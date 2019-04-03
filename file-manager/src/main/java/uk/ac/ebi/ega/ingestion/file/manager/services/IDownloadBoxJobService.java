@@ -15,13 +15,18 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.ingestion.file.manager.persistence.repository;
+package uk.ac.ebi.ega.ingestion.file.manager.services;
 
-import org.springframework.data.repository.CrudRepository;
-import org.springframework.data.rest.core.annotation.RepositoryRestResource;
-import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.DownloadBoxAssignation;
+import org.springframework.transaction.annotation.Transactional;
+import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileJobNotFound;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.DownloadBoxJob;
 
-@RepositoryRestResource
-public interface DownloadBoxAssignationRepository extends CrudRepository<DownloadBoxAssignation, String> {
+public interface IDownloadBoxJobService {
+
+    @Transactional
+    DownloadBoxJob createJob(DownloadBoxJob downloadBoxJob);
+
+    @Transactional
+    void finishFileJob(long id) throws FileJobNotFound;
 
 }

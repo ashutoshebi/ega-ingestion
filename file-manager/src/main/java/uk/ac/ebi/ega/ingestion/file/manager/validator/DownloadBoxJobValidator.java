@@ -19,23 +19,20 @@ package uk.ac.ebi.ega.ingestion.file.manager.validator;
 
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
-import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.DownloadBoxAssignation;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.DownloadBoxJob;
 
-import java.time.LocalDateTime;
-
-public class DownloadBoxAssignationValidator implements Validator {
+public class DownloadBoxJobValidator implements Validator {
 
     @Override
     public boolean supports(Class<?> aClass) {
-        return DownloadBoxAssignation.class.equals(aClass);
+        return DownloadBoxJob.class.equals(aClass);
     }
 
     @Override
     public void validate(Object object, Errors errors) {
-        DownloadBoxAssignation downloadBoxAssignation = (DownloadBoxAssignation) object;
-        if (downloadBoxAssignation.getUntilDate() != null &&
-                LocalDateTime.now().isAfter(downloadBoxAssignation.getUntilDate())) {
-            errors.rejectValue("untilDate", "download.box.until.date", "Until date must be in the future");
+        DownloadBoxJob downloadBoxJob = (DownloadBoxJob) object;
+        if (downloadBoxJob.getAssignedDownloadBox() == null) {
+            errors.rejectValue("assignedDownloadBox", "download.box.not.found", "Download box could not be found.");
         }
     }
 }

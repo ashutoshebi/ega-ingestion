@@ -19,9 +19,16 @@ package uk.ac.ebi.ega.ingestion.file.manager.persistence.repository;
 
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
-import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.DownloadBoxAssignation;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.DownloadBoxFileJob;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.DownloadBoxJob;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.JobStatus;
+
+import java.util.stream.Stream;
 
 @RepositoryRestResource
-public interface DownloadBoxAssignationRepository extends CrudRepository<DownloadBoxAssignation, String> {
+public interface DownloadBoxFileJobRepository extends CrudRepository<DownloadBoxFileJob, Long> {
 
+    long countByDownloadBoxJobAndAndStatus(DownloadBoxJob job, JobStatus status);
+
+    Stream<DownloadBoxFileJob> findAllByDownloadBoxJob(DownloadBoxJob downloadBoxJob);
 }

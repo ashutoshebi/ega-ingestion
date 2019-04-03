@@ -19,13 +19,22 @@ package uk.ac.ebi.ega.ingestion.file.manager;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.convert.support.ConfigurableConversionService;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.data.rest.core.config.RepositoryRestConfiguration;
 import org.springframework.data.rest.core.event.ValidatingRepositoryEventListener;
+import org.springframework.data.rest.core.mapping.ExposureConfiguration;
 import org.springframework.data.rest.webmvc.config.RepositoryRestConfigurer;
-import uk.ac.ebi.ega.ingestion.file.manager.converter.BoxAssignationConverter;
+import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.DownloadBoxFileJob;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.DownloadBoxJob;
 import uk.ac.ebi.ega.ingestion.file.manager.validator.DownloadBoxAssignationValidator;
+import uk.ac.ebi.ega.ingestion.file.manager.validator.DownloadBoxJobValidator;
+
+import static org.springframework.http.HttpMethod.DELETE;
+import static org.springframework.http.HttpMethod.PATCH;
+import static org.springframework.http.HttpMethod.POST;
+import static org.springframework.http.HttpMethod.PUT;
 
 @Configuration
 @EnableJpaRepositories
@@ -33,22 +42,28 @@ import uk.ac.ebi.ega.ingestion.file.manager.validator.DownloadBoxAssignationVali
 public class DatabaseConfiguration {
 
     @Bean
-    public BoxAssignationConverter boxAssignationConverter() {
-        return new BoxAssignationConverter();
-    }
-
-    @Bean
-    public RepositoryRestConfigurer repositoryRestConfigurer() {
+    public RepositoryRestConfigurer repositoryRestConfigurer(LocalValidatorFactoryBean beanValidator) {
         return new RepositoryRestConfigurer() {
 
             @Override
-            public void configureConversionService(ConfigurableConversionService conversionService) {
-                conversionService.addConverter(boxAssignationConverter());
+            public void configureRepositoryRestConfiguration(RepositoryRestConfiguration repositoryRestConfiguration) {
+                ExposureConfiguration config = repositoryRestConfiguration.getExposureConfiguration();
+                config.disablePutForCreation();
+                config.forDomainType(DownloadBoxJob.class)
+                        .withItemExposure((metadata, httpMethods) -> httpMethods.disable(PATCH, DELETE));
+                config.forDomainType(DownloadBoxFileJob.class)
+                        .withItemExposure((metadata, httpMethods) -> httpMethods.disable(POST, PUT, PATCH, DELETE));
             }
 
             @Override
             public void configureValidatingRepositoryEventListener(ValidatingRepositoryEventListener listener) {
+                listener.addValidator("beforeCreate", beanValidator);
                 listener.addValidator("beforeCreate", new DownloadBoxAssignationValidator());
+                listener.addValidator("beforeCreate", new DownloadBoxJobValidator());
+
+                listener.addValidator("beforeSave", beanValidator);
+                listener.addValidator("beforeSave", new DownloadBoxAssignationValidator());
+                listener.addValidator("beforeSave", new DownloadBoxJobValidator());
             }
 
         };

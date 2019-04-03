@@ -40,7 +40,7 @@ public class DownloadBoxAssignation {
     private String boxId;
 
     @MapsId
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "BOX_ID")
     private DownloadBox downloadBox;
 

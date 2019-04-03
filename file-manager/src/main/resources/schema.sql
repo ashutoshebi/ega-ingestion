@@ -8,7 +8,11 @@ drop table if exists DOWNLOAD_BOX_JOB cascade;
 drop table if exists HISTORIC_DOWNLOAD_BOX_ASSIGNATION cascade;
 drop table if exists DOWNLOAD_BOX_ASSIGNATION cascade;
 drop table if exists DOWNLOAD_BOX cascade;
+
+drop type if exists JOB_STATUS;
 end transaction;
+
+CREATE TYPE JOB_STATUS AS ENUM ('PENDING', 'ERROR', 'COMPLETED');
 
 create table STAGING_AREAS
 (
@@ -64,13 +68,18 @@ create table HISTORIC_DOWNLOAD_BOX_ASSIGNATION
 
 create table DOWNLOAD_BOX_JOB
 (
-    ID           bigserial primary key,
-    BOX_ID       varchar(255) not null,
-    DATASET_ID   varchar(255) not null,
-    TICKET_ID    varchar(255) not null,
-    PASSWORD     varchar(255) not null,
-    GENERATED_BY varchar(255) not null,
-    START_DATE   timestamp    not null,
+    ID              bigserial primary key,
+    BOX_ID          varchar(255) not null,
+    DATASET_ID      varchar(255) not null,
+    TICKET_ID       varchar(255) not null,
+    PASSWORD        varchar(255) not null,
+    GENERATED_BY    varchar(255) not null,
+    MAIL            text         not null,
+    PROCESSED_FILES int          not null,
+    /*PROCESSED_FILES is only for query optimization, COUNT */
+    TOTAL_FILES     int          not null,
+    START_DATE      timestamp    not null,
+    UPDATE_DATE     timestamp    not null,
     CONSTRAINT FK_DOWNLOAD_BOX_JOB_TO_DOWNLOAD_BOX_ASSIGNATION FOREIGN KEY (BOX_ID)
         REFERENCES DOWNLOAD_BOX_ASSIGNATION (BOX_ID)
 );
@@ -78,9 +87,11 @@ create table DOWNLOAD_BOX_JOB
 create table DOWNLOAD_BOX_FILE_JOB
 (
     ID            bigserial primary key,
-    JOB_ID        bigserial    not null,
-    FILE          text         not null,
-    INSTANCE_ID   varchar(255) not null,
+    JOB_ID        bigint       not null,
+    FILE_ID       varchar(255) not null,
+    FILE_PATH     text         not null,
+    STATUS        JOB_STATUS   not null,
+    ERROR_MESSAGE text,
     PROCESS_START timestamp,
     PROCESS_END   timestamp,
     CONSTRAINT FK_DOWNLOAD_BOX_FILE_JOB_TO_DOWNLOAD_BOX_JOB FOREIGN KEY (JOB_ID) REFERENCES DOWNLOAD_BOX_JOB (ID)
@@ -89,24 +100,25 @@ create table DOWNLOAD_BOX_FILE_JOB
 create table HISTORIC_DOWNLOAD_BOX_JOB
 (
     ID           bigint primary key,
-    DATASET_ID   varchar(255) not null,
     BOX_ID       varchar(255) not null,
+    DATASET_ID   varchar(255) not null,
+    TICKET_ID    varchar(255) not null,
+    USER_ID      varchar(255) not null,
     BOX_PATH     varchar(255) not null,
-    REQUESTED_BY varchar(255) not null,
-    GENERATED_BY varchar(255) not null,
     PASSWORD     varchar(255) not null,
+    GENERATED_BY varchar(255) not null,
     START_DATE   timestamp    not null,
     END_DATE     timestamp    not null
 );
 
 create table HISTORIC_DOWNLOAD_BOX_FILE_JOB
 (
-    ID            bigserial primary key,
-    JOB_ID        bigserial    not null,
-    FILE          text         not null,
-    INSTANCE_ID   varchar(255) not null,
-    PROCESS_START timestamp,
-    PROCESS_END   timestamp,
+    ID            bigint primary key,
+    JOB_ID        bigint       not null,
+    FILE_ID       varchar(255) not null,
+    FILE_PATH     text         not null,
+    PROCESS_START timestamp    not null,
+    PROCESS_END   timestamp    not null,
     CONSTRAINT FK_HISTORIC_DOWNLOAD_BOX_FILE_JOB_TO_HISTORIC_DOWNLOAD_BOX_JOB FOREIGN KEY (JOB_ID)
         REFERENCES DOWNLOAD_BOX_JOB (ID)
 );

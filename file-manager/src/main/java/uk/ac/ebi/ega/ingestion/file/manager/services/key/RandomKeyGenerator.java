@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2019 EMBL - European Bioinformatics Institute
+ * Copyright 2018 EMBL - European Bioinformatics Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,23 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.ingestion.file.manager.persistence.repository;
+package uk.ac.ebi.ega.ingestion.file.manager.services.key;
 
-import org.springframework.data.repository.CrudRepository;
-import org.springframework.data.rest.core.annotation.RepositoryRestResource;
-import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.DownloadBoxAssignation;
 
-@RepositoryRestResource
-public interface DownloadBoxAssignationRepository extends CrudRepository<DownloadBoxAssignation, String> {
+import uk.ac.ebi.ega.ingestion.file.manager.services.IKeyGenerator;
+import uk.ac.ebi.ega.ingestion.file.manager.utils.Random;
+
+public class RandomKeyGenerator implements IKeyGenerator {
+
+    private int randomSize;
+
+    public RandomKeyGenerator(int randomSize) {
+        this.randomSize = randomSize;
+    }
+
+    @Override
+    public char[] generateKey() {
+        return Random.getRandomString(randomSize);
+    }
 
 }

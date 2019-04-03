@@ -18,8 +18,25 @@
 package uk.ac.ebi.ega.ingestion.file.manager;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.integration.config.EnableIntegration;
+import org.springframework.mail.javamail.JavaMailSender;
+import uk.ac.ebi.ega.ingestion.file.manager.models.EgaFile;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.DownloadBoxFileJobRepository;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.DownloadBoxJobRepository;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.HistoricDownloadBoxFileJobRepository;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.HistoricDownloadBoxJobRepository;
+import uk.ac.ebi.ega.ingestion.file.manager.services.DownloadBoxJobService;
+import uk.ac.ebi.ega.ingestion.file.manager.services.IDatasetService;
+import uk.ac.ebi.ega.ingestion.file.manager.services.IDownloadBoxJobService;
+import uk.ac.ebi.ega.ingestion.file.manager.services.IKeyGenerator;
+import uk.ac.ebi.ega.ingestion.file.manager.services.IMailingService;
+import uk.ac.ebi.ega.ingestion.file.manager.services.MailingService;
+import uk.ac.ebi.ega.ingestion.file.manager.services.key.RandomKeyGenerator;
+
+import java.util.Arrays;
+import java.util.Collection;
 
 @Configuration
 @EnableIntegration
@@ -33,5 +50,36 @@ public class FileManagerConfiguration {
 
     @Value("${spring.kafka.file.re-encryption.queue.name}")
     private String fileReEncryptionQueueName;
+
+    @Value("${file.manager.download.box.password.size}")
+    private int passwordKeySize;
+
+    @Bean
+    public IKeyGenerator keyGenerator() {
+        return new RandomKeyGenerator(passwordKeySize);
+    }
+
+    @Bean
+    public IMailingService mailingService(JavaMailSender javaMailSender) {
+        return new MailingService(javaMailSender);
+    }
+
+    @Bean
+    public IDownloadBoxJobService downloadBoxJobService(DownloadBoxJobRepository downloadBoxJobRepository,
+                                                        DownloadBoxFileJobRepository downloadBoxFileJobRepository,
+                                                        HistoricDownloadBoxJobRepository historicBoxJobRepository,
+                                                        HistoricDownloadBoxFileJobRepository historicBoxFileJobRepository,
+                                                        IMailingService mailingService) {
+        return new DownloadBoxJobService(downloadBoxJobRepository, downloadBoxFileJobRepository,
+                historicBoxJobRepository, historicBoxFileJobRepository,
+                new IDatasetService() {
+                    @Override
+                    public Collection<EgaFile> getFiles(String datasetId) {
+                        return Arrays.asList(new EgaFile("kiwi", "/kiwi"), new EgaFile("kiwi2", "/kiwi2"));
+                    }
+                },
+                mailingService
+        );
+    }
 
 }

@@ -15,20 +15,7 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.ingestion.file.manager.converter;
+package uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions;
 
-import org.springframework.core.convert.converter.Converter;
-
-public class BoxAssignationConverter implements Converter<String, BoxAssignationId> {
-
-    @Override
-    public BoxAssignationId convert(String s) {
-        final String[] s1 = s.split("_");
-        assert (s1.length == 2);
-        BoxAssignationId boxAssignationId = new BoxAssignationId();
-        boxAssignationId.setBoxId(s1[0]);
-        boxAssignationId.setUserId(s1[1]);
-        return boxAssignationId;
-    }
-
+public class FileJobNotFound extends Exception {
 }

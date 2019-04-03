@@ -25,31 +25,41 @@ import org.springframework.data.rest.core.event.BeforeCreateEvent;
 import org.springframework.data.rest.webmvc.PersistentEntityResource;
 import org.springframework.data.rest.webmvc.PersistentEntityResourceAssembler;
 import org.springframework.data.rest.webmvc.RepositoryRestController;
+import org.springframework.hateoas.Resource;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
-import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.DownloadBox;
-import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.DownloadBoxRepository;
+import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileJobNotFound;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.DownloadBoxJob;
+import uk.ac.ebi.ega.ingestion.file.manager.services.IDownloadBoxJobService;
+import uk.ac.ebi.ega.ingestion.file.manager.services.IKeyGenerator;
 
 import javax.validation.Valid;
 
 @RepositoryRestController
-public class DownloadBoxController implements ApplicationEventPublisherAware {
+public class DownloadBoxJobController implements ApplicationEventPublisherAware {
 
     @Autowired
-    private DownloadBoxRepository repository;
+    private IDownloadBoxJobService service;
+
+    @Autowired
+    private IKeyGenerator passwordGenerator;
 
     private ApplicationEventPublisher publisher;
 
-    @PostMapping(value = "/downloadBoxes")
+    @PostMapping(value = "/downloadBoxJobs")
     @ResponseBody
-    public PersistentEntityResource postDownloadBox(@Valid @RequestBody DownloadBox downloadBox,
+    public PersistentEntityResource postDownloadBox(@Valid @RequestBody Resource<DownloadBoxJob> downloadBoxJobResource,
                                                     PersistentEntityResourceAssembler assembler) {
-        downloadBox.persist();
-        publisher.publishEvent(new BeforeCreateEvent(downloadBox));
-        downloadBox = repository.save(downloadBox);
-        publisher.publishEvent(new AfterCreateEvent(downloadBox));
-        return assembler.toFullResource(downloadBox);
+        DownloadBoxJob downloadBoxJob = downloadBoxJobResource.getContent();
+        if (downloadBoxJob.getPassword() == null) {
+            downloadBoxJob.setPassword(new String(passwordGenerator.generateKey()));
+        }
+        publisher.publishEvent(new BeforeCreateEvent(downloadBoxJob));
+        downloadBoxJob = service.createJob(downloadBoxJob);
+        publisher.publishEvent(new AfterCreateEvent(downloadBoxJob));
+        return assembler.toFullResource(downloadBoxJob);
     }
 
     @Override
@@ -57,4 +67,10 @@ public class DownloadBoxController implements ApplicationEventPublisherAware {
         this.publisher = applicationEventPublisher;
     }
 
+    @PostMapping(value = "/downloadBoxJobs/{id}/finished")
+    @ResponseBody
+    public String downloadBoxFileJobFinished(@Valid @PathVariable long id) throws FileJobNotFound {
+        service.finishFileJob(id);
+        return "OK";
+    }
 }

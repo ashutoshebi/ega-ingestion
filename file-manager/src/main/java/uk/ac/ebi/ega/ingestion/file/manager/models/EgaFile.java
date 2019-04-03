@@ -15,13 +15,24 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.ingestion.file.manager.persistence.repository;
+package uk.ac.ebi.ega.ingestion.file.manager.models;
 
-import org.springframework.data.repository.CrudRepository;
-import org.springframework.data.rest.core.annotation.RepositoryRestResource;
-import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.DownloadBoxAssignation;
+public class EgaFile {
 
-@RepositoryRestResource
-public interface DownloadBoxAssignationRepository extends CrudRepository<DownloadBoxAssignation, String> {
+    private String id;
 
+    private String path;
+
+    public EgaFile(String id, String path) {
+        this.id = id;
+        this.path = path;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public String getPath() {
+        return path;
+    }
 }
