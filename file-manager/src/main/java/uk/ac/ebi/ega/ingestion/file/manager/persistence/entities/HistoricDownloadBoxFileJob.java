@@ -34,7 +34,7 @@ import java.time.LocalDateTime;
 public class HistoricDownloadBoxFileJob {
 
     @Id
-    private Long id;
+    private String id;
 
     @ManyToOne(optional = false, fetch = FetchType.EAGER)
     @JoinColumn(name = "JOB_ID", nullable = false)
@@ -67,11 +67,11 @@ public class HistoricDownloadBoxFileJob {
         this.processEnd = downloadBoxFileJob.getProcessEnd();
     }
 
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 

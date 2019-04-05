@@ -86,7 +86,7 @@ create table DOWNLOAD_BOX_JOB
 
 create table DOWNLOAD_BOX_FILE_JOB
 (
-    ID            bigserial primary key,
+    ID            varchar(255) primary key,
     JOB_ID        bigint       not null,
     FILE_ID       varchar(255) not null,
     FILE_PATH     text         not null,
@@ -113,7 +113,7 @@ create table HISTORIC_DOWNLOAD_BOX_JOB
 
 create table HISTORIC_DOWNLOAD_BOX_FILE_JOB
 (
-    ID            bigint primary key,
+    ID            varchar(255) primary key,
     JOB_ID        bigint       not null,
     FILE_ID       varchar(255) not null,
     FILE_PATH     text         not null,

@@ -26,8 +26,6 @@ import javax.persistence.EntityListeners;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
@@ -38,8 +36,7 @@ import java.time.LocalDateTime;
 public class DownloadBoxFileJob {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
     @ManyToOne(optional = false, fetch = FetchType.EAGER)
     @JoinColumn(name = "JOB_ID", nullable = false)
@@ -68,13 +65,14 @@ public class DownloadBoxFileJob {
     }
 
     public DownloadBoxFileJob(DownloadBoxJob downloadBoxJob, String fileId, String filePath) {
+        this.id = downloadBoxJob.getId() + "_" + fileId;
         this.downloadBoxJob = downloadBoxJob;
         this.fileId = fileId;
         this.filePath = filePath;
         this.status = JobStatus.PENDING;
     }
 
-    public Long getId() {
+    public String getId() {
         return id;
     }
 

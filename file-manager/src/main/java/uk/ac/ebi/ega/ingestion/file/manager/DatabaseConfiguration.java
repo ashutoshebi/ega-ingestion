@@ -17,19 +17,32 @@
  */
 package uk.ac.ebi.ega.ingestion.file.manager;
 
+import com.zaxxer.hikari.HikariDataSource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.data.rest.core.config.RepositoryRestConfiguration;
 import org.springframework.data.rest.core.event.ValidatingRepositoryEventListener;
 import org.springframework.data.rest.core.mapping.ExposureConfiguration;
 import org.springframework.data.rest.webmvc.config.RepositoryRestConfigurer;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.DownloadBoxFileJob;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.DownloadBoxJob;
+import uk.ac.ebi.ega.ingestion.file.manager.utils.CustomDataSourceInitialization;
 import uk.ac.ebi.ega.ingestion.file.manager.validator.DownloadBoxAssignationValidator;
 import uk.ac.ebi.ega.ingestion.file.manager.validator.DownloadBoxJobValidator;
+
+import javax.persistence.EntityManagerFactory;
+import javax.sql.DataSource;
 
 import static org.springframework.http.HttpMethod.DELETE;
 import static org.springframework.http.HttpMethod.PATCH;
@@ -37,9 +50,59 @@ import static org.springframework.http.HttpMethod.POST;
 import static org.springframework.http.HttpMethod.PUT;
 
 @Configuration
-@EnableJpaRepositories
+@EnableJpaRepositories(
+        transactionManagerRef = "fileManager_transactionManager")
 @EnableJpaAuditing
 public class DatabaseConfiguration {
+
+    @Autowired
+    private ConfigurableApplicationContext applicationContext;
+
+    @Bean("fileManager_datasource_properties")
+    @ConfigurationProperties("datasource.file-manager")
+    public DataSourceProperties fileManagerDataSourceProperties() {
+        return new DataSourceProperties();
+    }
+
+    @Bean("fileManager_datasource")
+    @Primary
+    @ConfigurationProperties("datasource.file-manager.hikari")
+    public DataSource fileManagerDataSource() {
+        return fileManagerDataSourceProperties().initializeDataSourceBuilder().type(HikariDataSource.class).build();
+    }
+
+    @Bean("fileManager_transactionManager")
+    public JpaTransactionManager fileManagerTransactionManager(EntityManagerFactory entityManagerFactory) {
+        return new JpaTransactionManager(entityManagerFactory);
+    }
+
+    @Bean
+    public CustomDataSourceInitialization customDatasourceInitializer(){
+        return new CustomDataSourceInitialization(fileManagerDataSource(),fileManagerDataSourceProperties(),
+                applicationContext);
+    }
+
+    @Bean("pea_datasource_properties")
+    @ConfigurationProperties("datasource.pea")
+    public DataSourceProperties peaDataSourceProperties() {
+        return new DataSourceProperties();
+    }
+
+    @Bean("pea_datasource")
+    @ConfigurationProperties("datasource.pea.hikari")
+    public DataSource peaDataSource() {
+        return peaDataSourceProperties().initializeDataSourceBuilder().type(HikariDataSource.class).build();
+    }
+
+    @Bean("pea_jdbc_template")
+    public NamedParameterJdbcTemplate peaJdbcTemplate() {
+        return new NamedParameterJdbcTemplate(peaDataSource());
+    }
+
+    @Bean("pea_transaction_manager")
+    public DataSourceTransactionManager peaTransactionManager() {
+        return new DataSourceTransactionManager(peaDataSource());
+    }
 
     @Bean
     public RepositoryRestConfigurer repositoryRestConfigurer(LocalValidatorFactoryBean beanValidator) {
@@ -68,4 +131,5 @@ public class DatabaseConfiguration {
 
         };
     }
+
 }

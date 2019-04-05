@@ -23,10 +23,10 @@ import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.DownloadBoxJob;
 
 public interface IDownloadBoxJobService {
 
-    @Transactional
+    @Transactional(transactionManager = "fileManager_transactionManager")
     DownloadBoxJob createJob(DownloadBoxJob downloadBoxJob);
 
-    @Transactional
+    @Transactional(transactionManager = "fileManager_transactionManager")
     void finishFileJob(long id) throws FileJobNotFound;
 
 }

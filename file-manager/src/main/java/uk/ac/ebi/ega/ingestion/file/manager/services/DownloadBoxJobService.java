@@ -105,6 +105,7 @@ public class DownloadBoxJobService implements IDownloadBoxJobService {
             historicBoxFileJobRepository.save(new HistoricDownloadBoxFileJob(historicJob, downloadBoxFileJob));
             boxFileJobRepository.delete(downloadBoxFileJob);
         });
+        boxJobRepository.delete(downloadBoxJob);
     }
 
     private void reportFinishedJob(DownloadBoxJob downloadBoxJob) {
