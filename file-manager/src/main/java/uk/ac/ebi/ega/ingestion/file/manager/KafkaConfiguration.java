@@ -27,6 +27,11 @@ import org.apache.kafka.common.serialization.IntegerSerializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.kafka.core.DefaultKafkaProducerFactory;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.core.ProducerFactory;
+import org.springframework.kafka.support.serializer.JsonSerializer;
+import uk.ac.ebi.ega.ingestion.file.manager.message.DownloadBoxFileProcess;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -55,6 +60,19 @@ public class KafkaConfiguration {
         objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         objectMapper.configure(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
         return objectMapper;
+    }
+
+    @Bean
+    public ProducerFactory<String, DownloadBoxFileProcess> producerFactory() {
+        DefaultKafkaProducerFactory<String, DownloadBoxFileProcess> factory =
+                new DefaultKafkaProducerFactory<>(producerConfigs());
+        factory.setValueSerializer(new JsonSerializer<>(getObjectMapper()));
+        return factory;
+    }
+
+    @Bean
+    public KafkaTemplate<String, DownloadBoxFileProcess> kafkaTemplate() {
+        return new KafkaTemplate<>(producerFactory());
     }
 
 }

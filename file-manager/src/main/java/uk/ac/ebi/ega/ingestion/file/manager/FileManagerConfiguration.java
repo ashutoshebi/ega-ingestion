@@ -20,9 +20,10 @@ package uk.ac.ebi.ega.ingestion.file.manager;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.integration.config.EnableIntegration;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.mail.javamail.JavaMailSender;
+import uk.ac.ebi.ega.ingestion.file.manager.message.DownloadBoxFileProcess;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.DownloadBoxFileJobRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.DownloadBoxJobRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.HistoricDownloadBoxFileJobRepository;
@@ -37,7 +38,6 @@ import uk.ac.ebi.ega.ingestion.file.manager.services.MailingService;
 import uk.ac.ebi.ega.ingestion.file.manager.services.key.RandomKeyGenerator;
 
 @Configuration
-@EnableIntegration
 public class FileManagerConfiguration {
 
     @Value("${spring.kafka.file.events.queue.name}")
@@ -48,6 +48,9 @@ public class FileManagerConfiguration {
 
     @Value("${spring.kafka.file.re-encryption.queue.name}")
     private String fileReEncryptionQueueName;
+
+    @Value("${spring.kafka.download-box.queue.name}")
+    private String downloadBoxQueueName;
 
     @Value("${file.manager.download.box.password.size}")
     private int passwordKeySize;
@@ -67,13 +70,11 @@ public class FileManagerConfiguration {
                                                         DownloadBoxFileJobRepository downloadBoxFileJobRepository,
                                                         HistoricDownloadBoxJobRepository historicBoxJobRepository,
                                                         HistoricDownloadBoxFileJobRepository historicBoxFileJobRepository,
-                                                        IDatasetService datasetService,
-                                                        IMailingService mailingService) {
+                                                        IDatasetService datasetService, IMailingService mailingService,
+                                                        KafkaTemplate<String, DownloadBoxFileProcess> kafkaTemplate) {
         return new DownloadBoxJobService(downloadBoxJobRepository, downloadBoxFileJobRepository,
                 historicBoxJobRepository, historicBoxFileJobRepository,
-                datasetService,
-                mailingService
-        );
+                datasetService, mailingService, kafkaTemplate, downloadBoxQueueName);
     }
 
     @Bean

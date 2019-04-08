@@ -19,7 +19,9 @@ package uk.ac.ebi.ega.ingestion.file.manager.services;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.kafka.core.KafkaTemplate;
 import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileJobNotFound;
+import uk.ac.ebi.ega.ingestion.file.manager.message.DownloadBoxFileProcess;
 import uk.ac.ebi.ega.ingestion.file.manager.models.EgaFile;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.DownloadBoxFileJob;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.DownloadBoxJob;
@@ -50,17 +52,25 @@ public class DownloadBoxJobService implements IDownloadBoxJobService {
 
     private IMailingService mailingService;
 
+    private KafkaTemplate<String, DownloadBoxFileProcess> kafkaTemplate;
+
+    private String downloadBoxQueueName;
+
     public DownloadBoxJobService(DownloadBoxJobRepository downloadBoxJobRepository,
                                  DownloadBoxFileJobRepository downloadBoxFileJobRepository,
                                  HistoricDownloadBoxJobRepository historicBoxJobRepository,
                                  HistoricDownloadBoxFileJobRepository historicBoxFileJobRepository,
-                                 IDatasetService datasetService, IMailingService mailingService) {
+                                 IDatasetService datasetService, IMailingService mailingService,
+                                 KafkaTemplate<String, DownloadBoxFileProcess> kafkaTemplate,
+                                 String downloadBoxQueueName) {
         this.boxJobRepository = downloadBoxJobRepository;
         this.boxFileJobRepository = downloadBoxFileJobRepository;
         this.historicBoxJobRepository = historicBoxJobRepository;
         this.historicBoxFileJobRepository = historicBoxFileJobRepository;
         this.datasetService = datasetService;
         this.mailingService = mailingService;
+        this.kafkaTemplate = kafkaTemplate;
+        this.downloadBoxQueueName = downloadBoxQueueName;
     }
 
     @Override
@@ -69,8 +79,12 @@ public class DownloadBoxJobService implements IDownloadBoxJobService {
         downloadBoxJob.setProcessedFiles(0);
         downloadBoxJob.setTotalFiles(files.size());
         final DownloadBoxJob savedDownloadBoxJob = boxJobRepository.save(downloadBoxJob);
-        files.stream().forEach(egaFile ->
-                boxFileJobRepository.save(new DownloadBoxFileJob(savedDownloadBoxJob, egaFile.getId(), egaFile.getPath())));
+        files.stream().forEach(egaFile -> {
+            DownloadBoxFileJob downloadBoxFileJob = new DownloadBoxFileJob(savedDownloadBoxJob, egaFile.getId(), egaFile.getPath());
+            boxFileJobRepository.save(downloadBoxFileJob);
+            kafkaTemplate.send(downloadBoxQueueName, downloadBoxFileJob.getId(),
+                    new DownloadBoxFileProcess(savedDownloadBoxJob, downloadBoxFileJob));
+        });
         return savedDownloadBoxJob;
     }
 
