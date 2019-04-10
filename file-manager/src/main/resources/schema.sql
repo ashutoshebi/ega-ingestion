@@ -86,14 +86,15 @@ create table DOWNLOAD_BOX_JOB
 
 create table DOWNLOAD_BOX_FILE_JOB
 (
-    ID            varchar(255) primary key,
-    JOB_ID        bigint       not null,
-    FILE_ID       varchar(255) not null,
-    FILE_PATH     text         not null,
-    STATUS        JOB_STATUS   not null,
-    ERROR_MESSAGE text,
-    PROCESS_START timestamp,
-    PROCESS_END   timestamp,
+    ID             varchar(255) primary key,
+    JOB_ID         bigint       not null,
+    FILE_ID        varchar(255) not null,
+    FILE_EXTENSION text         not null,
+    DOS_ID         text         not null,
+    STATUS         JOB_STATUS   not null,
+    ERROR_MESSAGE  text,
+    PROCESS_START  timestamp,
+    PROCESS_END    timestamp,
     CONSTRAINT FK_DOWNLOAD_BOX_FILE_JOB_TO_DOWNLOAD_BOX_JOB FOREIGN KEY (JOB_ID) REFERENCES DOWNLOAD_BOX_JOB (ID)
 );
 
@@ -113,12 +114,13 @@ create table HISTORIC_DOWNLOAD_BOX_JOB
 
 create table HISTORIC_DOWNLOAD_BOX_FILE_JOB
 (
-    ID            varchar(255) primary key,
-    JOB_ID        bigint       not null,
-    FILE_ID       varchar(255) not null,
-    FILE_PATH     text         not null,
-    PROCESS_START timestamp    not null,
-    PROCESS_END   timestamp    not null,
+    ID             varchar(255) primary key,
+    JOB_ID         bigint       not null,
+    FILE_ID        varchar(255) not null,
+    FILE_EXTENSION text         not null,
+    DOS_ID         text         not null,
+    PROCESS_START  timestamp    not null,
+    PROCESS_END    timestamp    not null,
     CONSTRAINT FK_HISTORIC_DOWNLOAD_BOX_FILE_JOB_TO_HISTORIC_DOWNLOAD_BOX_JOB FOREIGN KEY (JOB_ID)
         REFERENCES DOWNLOAD_BOX_JOB (ID)
 );

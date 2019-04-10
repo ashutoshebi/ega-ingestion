@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.IntegerSerializer;
+import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -46,7 +47,7 @@ public class KafkaConfiguration {
     public Map producerConfigs() {
         Map properties = new HashMap();
         properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, IntegerSerializer.class);
+        properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         // introduce a delay on the send to allow more messages to accumulate
         properties.put(ProducerConfig.LINGER_MS_CONFIG, 1);
         return properties;

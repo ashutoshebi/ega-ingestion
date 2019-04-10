@@ -23,6 +23,9 @@ import uk.ac.ebi.ega.ingestion.file.manager.models.EgaFile;
 
 import java.util.Collection;
 
+import static uk.ac.ebi.ega.ingestion.file.manager.utils.FileExtensionUtils.getFileExtension;
+import static uk.ac.ebi.ega.ingestion.file.manager.utils.FileExtensionUtils.removeEncryptionExtension;
+
 public class DatasetService implements IDatasetService {
 
     private NamedParameterJdbcTemplate jdbcTemplate;
@@ -38,8 +41,11 @@ public class DatasetService implements IDatasetService {
                 "WHERE dataset_stable_id=:dataset_stableId";
         MapSqlParameterSource parameters = new MapSqlParameterSource();
         parameters.addValue("dataset_stableId", datasetId);
-        return jdbcTemplate.query(sql, parameters, (resultSet, i) ->
-                new EgaFile(resultSet.getString("stable_id"), normalizeFirePath(resultSet.getString("file_name")))
+        return jdbcTemplate.query(sql, parameters, (resultSet, i) -> {
+                    String dosId = normalizeFirePath(resultSet.getString("file_name"));
+                    String fileExtension = removeEncryptionExtension(getFileExtension(dosId));
+                    return new EgaFile(resultSet.getString("stable_id"), dosId, fileExtension);
+                }
         );
     }
 

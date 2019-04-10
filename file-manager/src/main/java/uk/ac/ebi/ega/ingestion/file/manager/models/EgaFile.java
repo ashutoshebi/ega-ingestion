@@ -21,18 +21,26 @@ public class EgaFile {
 
     private String id;
 
-    private String path;
+    private String dosId;
 
-    public EgaFile(String id, String path) {
+    private String fileExtension;
+
+    public EgaFile(String id, String dosId, String fileExtension) {
         this.id = id;
-        this.path = path;
+        this.dosId = dosId;
+        this.fileExtension = fileExtension;
     }
 
     public String getId() {
         return id;
     }
 
-    public String getPath() {
-        return path;
+    public String getDosId() {
+        return dosId;
     }
+
+    public String getFileExtension() {
+        return fileExtension;
+    }
+
 }

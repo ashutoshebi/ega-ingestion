@@ -15,9 +15,28 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.file.re.encryption.processor.persistence.repository;
+package uk.ac.ebi.ega.ingestion.file.manager.utils;
 
-import org.springframework.data.repository.CrudRepository;
+public enum FileType {
 
-public interface FileEncryptionJobImplRepository extends CrudRepository<FileEncryptionJobImpl,Long> {
+    ENCRYPTED,
+
+    COMPRESSED,
+
+    BAM,
+
+    CRAM,
+
+    FASTA,
+
+    VCF,
+
+    GTC,
+
+    TABIX_INDEX,
+
+    PLAIN_TEXT,
+
+    BINARY;
+
 }

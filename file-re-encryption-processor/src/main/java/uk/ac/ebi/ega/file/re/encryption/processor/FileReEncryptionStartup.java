@@ -24,12 +24,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
+import org.springframework.kafka.listener.ContainerProperties;
+import org.springframework.kafka.listener.MessageListenerContainer;
 import org.springframework.stereotype.Component;
 
 @Component
-public class FileEncryptionStartup implements ApplicationListener<ApplicationReadyEvent> {
+public class FileReEncryptionStartup implements ApplicationListener<ApplicationReadyEvent> {
 
-    private Logger logger = LoggerFactory.getLogger(FileEncryptionStartup.class);
+    private Logger logger = LoggerFactory.getLogger(FileReEncryptionStartup.class);
 
     @Value("${spring.kafka.client-id}")
     private String instanceId;
@@ -43,7 +45,9 @@ public class FileEncryptionStartup implements ApplicationListener<ApplicationRea
         logger.info("Recovering last known status");
 
         logger.info("File encryption instance-id {} starting kafka listener", instanceId);
-        kafkaListenerEndpointRegistry.getListenerContainer(instanceId).start();
+        final MessageListenerContainer container = kafkaListenerEndpointRegistry.getListenerContainer(instanceId);
+        container.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
+        container.start();
         logger.info("File encryption instance-id {} starting kafka started", instanceId);
     }
 

@@ -34,7 +34,7 @@ import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
 import org.springframework.kafka.support.converter.StringJsonMessageConverter;
-import uk.ac.ebi.ega.file.re.encryption.processor.messages.IngestionEvent;
+import uk.ac.ebi.ega.file.re.encryption.processor.messages.DownloadBoxFileProcess;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -48,9 +48,9 @@ public class KafkaConfiguration {
 
 
     @Bean
-    public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String, IngestionEvent>>
+    public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String, DownloadBoxFileProcess>>
     kafkaListenerContainerFactory() {
-        ConcurrentKafkaListenerContainerFactory<String, IngestionEvent> factory =
+        ConcurrentKafkaListenerContainerFactory<String, DownloadBoxFileProcess> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
         factory.setConcurrency(1);
@@ -70,7 +70,7 @@ public class KafkaConfiguration {
     }
 
     @Bean
-    public ConsumerFactory<String, IngestionEvent> consumerFactory() {
+    public ConsumerFactory<String, DownloadBoxFileProcess> consumerFactory() {
         return new DefaultKafkaConsumerFactory<>(consumerConfigs());
     }
 

@@ -15,13 +15,7 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.ingestion.file.manager.message;
-
-import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.DownloadBoxFileJob;
-import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.DownloadBoxJob;
-import uk.ac.ebi.ega.ingestion.file.manager.utils.FileExtensionUtils;
-
-import java.nio.file.Paths;
+package uk.ac.ebi.ega.file.re.encryption.processor.messages;
 
 public class DownloadBoxFileProcess {
 
@@ -30,14 +24,6 @@ public class DownloadBoxFileProcess {
     private String dosId;
 
     private String password;
-
-    public DownloadBoxFileProcess(DownloadBoxJob boxJob, DownloadBoxFileJob boxFileJob) {
-        FileExtensionUtils.removeEncryptionExtension(FileExtensionUtils.getFileExtension(boxFileJob.getDosId()));
-        this.resultPath = Paths.get(boxJob.getAssignedDownloadBox().getDownloadBox().getPath(), boxJob.getDatasetId())
-                .resolve(boxFileJob.getFileId() + "." + boxFileJob.getFileExtension()).toString();
-        this.dosId = boxFileJob.getDosId();
-        this.password = boxJob.getPassword();
-    }
 
     public String getResultPath() {
         return resultPath;
@@ -61,6 +47,15 @@ public class DownloadBoxFileProcess {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    @Override
+    public String toString() {
+        return "DownloadBoxFileProcess{" +
+                "resultPath='" + resultPath + '\'' +
+                ", dosId='" + dosId + '\'' +
+                ", password='******'" +
+                '}';
     }
 
 }

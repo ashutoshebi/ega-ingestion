@@ -80,7 +80,7 @@ public class DownloadBoxJobService implements IDownloadBoxJobService {
         downloadBoxJob.setTotalFiles(files.size());
         final DownloadBoxJob savedDownloadBoxJob = boxJobRepository.save(downloadBoxJob);
         files.stream().forEach(egaFile -> {
-            DownloadBoxFileJob downloadBoxFileJob = new DownloadBoxFileJob(savedDownloadBoxJob, egaFile.getId(), egaFile.getPath());
+            DownloadBoxFileJob downloadBoxFileJob = new DownloadBoxFileJob(savedDownloadBoxJob,egaFile);
             boxFileJobRepository.save(downloadBoxFileJob);
             kafkaTemplate.send(downloadBoxQueueName, downloadBoxFileJob.getId(),
                     new DownloadBoxFileProcess(savedDownloadBoxJob, downloadBoxFileJob));

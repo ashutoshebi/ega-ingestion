@@ -15,27 +15,16 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.file.re.encryption.processor.pipelines;
+package uk.ac.ebi.ega.file.re.encryption.processor;
 
-import java.io.File;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-public class IngestionPipelineFile {
+@SpringBootApplication
+public class FileReEncryptionApplication {
 
-    private File file;
-
-    private String md5;
-
-    public IngestionPipelineFile(File file, String md5) {
-        this.file = file;
-        this.md5 = md5;
-    }
-
-    public File getFile() {
-        return file;
-    }
-
-    public String getMd5() {
-        return md5;
+    public static void main(String[] args) {
+        SpringApplication.run(FileReEncryptionApplication.class, args);
     }
 
 }

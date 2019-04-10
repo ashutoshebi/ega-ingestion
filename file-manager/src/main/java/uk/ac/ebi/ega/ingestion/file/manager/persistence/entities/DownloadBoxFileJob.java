@@ -19,6 +19,7 @@ package uk.ac.ebi.ega.ingestion.file.manager.persistence.entities;
 
 import org.hibernate.annotations.Type;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import uk.ac.ebi.ega.ingestion.file.manager.models.EgaFile;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -46,7 +47,10 @@ public class DownloadBoxFileJob {
     private String fileId;
 
     @Column(nullable = false)
-    private String filePath;
+    private String fileExtension;
+
+    @Column(nullable = false)
+    private String dosId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -64,11 +68,12 @@ public class DownloadBoxFileJob {
     DownloadBoxFileJob() {
     }
 
-    public DownloadBoxFileJob(DownloadBoxJob downloadBoxJob, String fileId, String filePath) {
-        this.id = downloadBoxJob.getId() + "_" + fileId;
+    public DownloadBoxFileJob(DownloadBoxJob downloadBoxJob, EgaFile file) {
+        this.id = downloadBoxJob.getId() + "_" + file.getId();
         this.downloadBoxJob = downloadBoxJob;
-        this.fileId = fileId;
-        this.filePath = filePath;
+        this.fileId = file.getId();
+        this.fileExtension = file.getFileExtension();
+        this.dosId = file.getDosId();
         this.status = JobStatus.PENDING;
     }
 
@@ -84,8 +89,8 @@ public class DownloadBoxFileJob {
         return fileId;
     }
 
-    public String getFilePath() {
-        return filePath;
+    public String getDosId() {
+        return dosId;
     }
 
     public LocalDateTime getProcessStart() {
@@ -108,8 +113,8 @@ public class DownloadBoxFileJob {
         this.fileId = fileId;
     }
 
-    public void setFilePath(String filePath) {
-        this.filePath = filePath;
+    public void setDosId(String dosId) {
+        this.dosId = dosId;
     }
 
     public JobStatus getStatus() {
@@ -140,4 +145,11 @@ public class DownloadBoxFileJob {
         this.processEnd = processEnd;
     }
 
+    public String getFileExtension() {
+        return fileExtension;
+    }
+
+    public void setFileExtension(String fileExtension) {
+        this.fileExtension = fileExtension;
+    }
 }

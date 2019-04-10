@@ -15,16 +15,11 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.file.re.encryption.processor.pipelines.exceptions;
+package uk.ac.ebi.ega.file.re.encryption.processor.persistence.repository;
 
-public class UserErrorException extends Exception {
+import org.springframework.data.repository.CrudRepository;
+import uk.ac.ebi.ega.file.re.encryption.processor.persistence.entity.ProcessDownloadBoxFile;
 
-    public UserErrorException(Exception e) {
-        super(e);
-    }
-
-    public UserErrorException(String message) {
-        super(message);
-    }
+public interface ProcessDownloadBoxFileRepository extends CrudRepository<ProcessDownloadBoxFile, String> {
 
 }

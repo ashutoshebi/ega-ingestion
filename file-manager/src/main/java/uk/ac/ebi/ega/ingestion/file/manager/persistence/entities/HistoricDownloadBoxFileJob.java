@@ -44,7 +44,10 @@ public class HistoricDownloadBoxFileJob {
     private String fileId;
 
     @Column(nullable = false)
-    private String filePath;
+    private String fileExtension;
+
+    @Column(nullable = false)
+    private String dosId;
 
     @NotNull
     @Column(nullable = false)
@@ -62,7 +65,7 @@ public class HistoricDownloadBoxFileJob {
         this.id = downloadBoxFileJob.getId();
         this.downloadBoxJob = historicDownloadBoxJob;
         this.fileId = downloadBoxFileJob.getFileId();
-        this.filePath = downloadBoxFileJob.getFilePath();
+        this.dosId = downloadBoxFileJob.getDosId();
         this.processStart = downloadBoxFileJob.getProcessStart();
         this.processEnd = downloadBoxFileJob.getProcessEnd();
     }
@@ -91,12 +94,12 @@ public class HistoricDownloadBoxFileJob {
         this.fileId = fileId;
     }
 
-    public String getFilePath() {
-        return filePath;
+    public String getDosId() {
+        return dosId;
     }
 
-    public void setFilePath(String filePath) {
-        this.filePath = filePath;
+    public void setDosId(String dosId) {
+        this.dosId = dosId;
     }
 
     public LocalDateTime getProcessStart() {
@@ -114,4 +117,13 @@ public class HistoricDownloadBoxFileJob {
     public void setProcessEnd(LocalDateTime processEnd) {
         this.processEnd = processEnd;
     }
+
+    public String getFileExtension() {
+        return fileExtension;
+    }
+
+    public void setFileExtension(String fileExtension) {
+        this.fileExtension = fileExtension;
+    }
+
 }

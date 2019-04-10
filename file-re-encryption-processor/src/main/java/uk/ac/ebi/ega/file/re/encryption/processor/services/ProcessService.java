@@ -15,15 +15,19 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.file.re.encryption.processor.utils;
+package uk.ac.ebi.ega.file.re.encryption.processor.services;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import uk.ac.ebi.ega.file.re.encryption.processor.messages.DownloadBoxFileProcess;
 
-public class DateUtils {
+public interface ProcessService {
 
-    public static long toEpochMilliseconds(LocalDateTime time) {
-        return time.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
-    }
+    @Transactional(isolation = Isolation.SERIALIZABLE, propagation = Propagation.REQUIRES_NEW)
+    void lock(String key, DownloadBoxFileProcess data);
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    void unlock(String key);
 
 }

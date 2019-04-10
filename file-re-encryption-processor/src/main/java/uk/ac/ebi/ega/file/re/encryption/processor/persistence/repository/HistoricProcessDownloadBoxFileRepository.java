@@ -15,15 +15,11 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.file.re.encryption.processor.services;
+package uk.ac.ebi.ega.file.re.encryption.processor.persistence.repository;
 
-import uk.ac.ebi.ega.file.encryption.processor.pipelines.IngestionPipeline;
-import uk.ac.ebi.ega.file.re.encryption.processor.pipelines.IngestionPipeline;
+import org.springframework.data.repository.CrudRepository;
+import uk.ac.ebi.ega.file.re.encryption.processor.persistence.entity.HistoricProcessDownloadBoxFile;
 
-import java.io.File;
-
-public interface PipelineService {
-
-    IngestionPipeline getPipeline(File fileOrigin);
+public interface HistoricProcessDownloadBoxFileRepository extends CrudRepository<HistoricProcessDownloadBoxFile, String> {
 
 }

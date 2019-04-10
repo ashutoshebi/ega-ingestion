@@ -17,13 +17,22 @@
  */
 package uk.ac.ebi.ega.file.re.encryption.processor;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import uk.ac.ebi.ega.file.re.encryption.processor.persistence.repository.ProcessDownloadBoxFileRepository;
+import uk.ac.ebi.ega.file.re.encryption.processor.services.ProcessDownloadService;
+import uk.ac.ebi.ega.file.re.encryption.processor.services.ProcessService;
 
 @Configuration
-@EnableJpaRepositories
-@EnableJpaAuditing
-public class DatabaseConfiguration {
+public class FileReEncryptionConfiguration {
+
+    @Value("${spring.kafka.client-id}")
+    private String instanceId;
+
+    @Bean
+    public ProcessService processDownloadService(ProcessDownloadBoxFileRepository processDownloadBoxFileRepository) {
+        return new ProcessDownloadService(instanceId, processDownloadBoxFileRepository);
+    }
 
 }
