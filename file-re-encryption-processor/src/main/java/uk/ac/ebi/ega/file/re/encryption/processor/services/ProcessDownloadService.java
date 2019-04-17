@@ -25,8 +25,6 @@ import uk.ac.ebi.ega.file.re.encryption.processor.persistence.entity.ProcessDown
 import uk.ac.ebi.ega.file.re.encryption.processor.persistence.repository.HistoricProcessDownloadBoxFileRepository;
 import uk.ac.ebi.ega.file.re.encryption.processor.persistence.repository.ProcessDownloadBoxFileRepository;
 
-import java.time.LocalDateTime;
-
 public class ProcessDownloadService implements ProcessService {
 
     private static final Logger logger = LoggerFactory.getLogger(ProcessDownloadService.class);
@@ -37,24 +35,23 @@ public class ProcessDownloadService implements ProcessService {
 
     private HistoricProcessDownloadBoxFileRepository historicRepository;
 
-    public ProcessDownloadService(String instanceId, ProcessDownloadBoxFileRepository processDownloadBoxFileRepository) {
+    public ProcessDownloadService(String instanceId, ProcessDownloadBoxFileRepository processDownloadBoxFileRepository,
+                                  HistoricProcessDownloadBoxFileRepository historicRepository) {
         this.instanceId = instanceId;
         this.repository = processDownloadBoxFileRepository;
+        this.historicRepository = historicRepository;
     }
 
     @Override
     public void lock(String key, DownloadBoxFileProcess data) {
-        repository.save(new ProcessDownloadBoxFile(LocalDateTime.now().toString(), instanceId, data.getResultPath(),
-                data.getDosId(),
-                data.getPassword()));
         repository.save(new ProcessDownloadBoxFile(key, instanceId, data.getResultPath(), data.getDosId(), data.getPassword()));
     }
 
     @Override
-    public void unlock(String key) {
+    public void unlock(String key, String message) {
         final ProcessDownloadBoxFile process = repository.findById(key).orElseThrow(RuntimeException::new);
-        historicRepository.save(new HistoricProcessDownloadBoxFile(process.getId(), instanceId,
-                process.getResultPath(), process.getDosId()));
+        final HistoricProcessDownloadBoxFile save = historicRepository.save(new HistoricProcessDownloadBoxFile(process.getId(), instanceId,
+                process.getResultPath(), process.getDosId(), message, process.getStartTime()));
         repository.deleteById(key);
     }
 

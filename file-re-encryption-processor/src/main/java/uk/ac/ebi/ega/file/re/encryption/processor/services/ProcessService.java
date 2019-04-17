@@ -28,6 +28,6 @@ public interface ProcessService {
     void lock(String key, DownloadBoxFileProcess data);
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    void unlock(String key);
+    void unlock(String key, String message);
 
 }

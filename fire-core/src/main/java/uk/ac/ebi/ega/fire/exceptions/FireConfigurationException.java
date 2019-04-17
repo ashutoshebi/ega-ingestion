@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2018 EMBL - European Bioinformatics Institute
+ * Copyright 2019 EMBL - European Bioinformatics Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,38 +15,15 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.fire.properties;
+package uk.ac.ebi.ega.fire.exceptions;
 
-public class FireProperties {
+public class FireConfigurationException extends Exception {
 
-    private String url;
-
-    private String user;
-
-    private String key;
-
-    public String getUrl() {
-        return url;
+    public FireConfigurationException(Exception e) {
+        super(e);
     }
 
-    public void setUrl(String url) {
-        this.url = url;
+    public FireConfigurationException(String message) {
+        super(message);
     }
-
-    public String getUser() {
-        return user;
-    }
-
-    public void setUser(String user) {
-        this.user = user;
-    }
-
-    public String getKey() {
-        return key;
-    }
-
-    public void setKey(String key) {
-        this.key = key;
-    }
-
 }

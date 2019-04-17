@@ -60,17 +60,23 @@ public class HistoricProcessDownloadBoxFile {
     public HistoricProcessDownloadBoxFile() {
     }
 
-    public HistoricProcessDownloadBoxFile(String messageId, String instanceId, String resultPath, String dosId) {
-        this(messageId, instanceId, resultPath, dosId, null);
+    public HistoricProcessDownloadBoxFile(String messageId, String instanceId, String resultPath, String dosId,
+                                          LocalDateTime startTime) {
+        this(messageId, instanceId, resultPath, dosId, null, startTime);
     }
 
     public HistoricProcessDownloadBoxFile(String messageId, String instanceId, String resultPath, String dosId,
-                                          String message) {
+                                          String message, LocalDateTime startTime) {
         this.messageId = messageId;
         this.instanceId = instanceId;
         this.resultPath = resultPath;
         this.dosId = dosId;
         this.message = message;
+        this.startTime = startTime;
+    }
+
+    public LocalDateTime getEndTime() {
+        return endTime;
     }
 
 }

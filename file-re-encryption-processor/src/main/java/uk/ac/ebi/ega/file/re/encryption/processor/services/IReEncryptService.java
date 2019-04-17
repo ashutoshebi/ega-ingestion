@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2018 EMBL - European Bioinformatics Institute
+ * Copyright 2019 EMBL - European Bioinformatics Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,38 +15,17 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.fire.properties;
+package uk.ac.ebi.ega.file.re.encryption.processor.services;
 
-public class FireProperties {
+import uk.ac.ebi.ega.file.re.encryption.processor.models.ReEncryptResult;
+import uk.ac.ebi.ega.fire.exceptions.FireConfigurationException;
 
-    private String url;
+import java.io.IOException;
+import java.text.ParseException;
 
-    private String user;
+public interface IReEncryptService {
 
-    private String key;
-
-    public String getUrl() {
-        return url;
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
-    }
-
-    public String getUser() {
-        return user;
-    }
-
-    public void setUser(String user) {
-        this.user = user;
-    }
-
-    public String getKey() {
-        return key;
-    }
-
-    public void setKey(String key) {
-        this.key = key;
-    }
+    ReEncryptResult reEncrypt(String dosId, String resultPath, char[] resultPassword)
+            throws IOException, ParseException, FireConfigurationException;
 
 }

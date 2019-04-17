@@ -18,7 +18,6 @@ create table HISTORIC_PROCESS_DOWNLOAD_BOX_FILE
     INSTANCE_ID        varchar(255) not null,
     RESULT_PATH        text         not null,
     DOS_ID             text         not null,
-    FINISHED_CORRECTLY boolean      not null,
     MESSAGE            text,
     START_TIME         timestamp    not null,
     END_TIME           timestamp    not null

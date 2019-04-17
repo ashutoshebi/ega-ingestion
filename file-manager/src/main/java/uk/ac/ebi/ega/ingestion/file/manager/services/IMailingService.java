@@ -20,5 +20,9 @@ package uk.ac.ebi.ega.ingestion.file.manager.services;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.DownloadBoxJob;
 
 public interface IMailingService {
+
     void sendDownloadBoxFinishedMail(DownloadBoxJob job);
+
+    void sendSimpleMessage(String to, String subject, String text);
+
 }
