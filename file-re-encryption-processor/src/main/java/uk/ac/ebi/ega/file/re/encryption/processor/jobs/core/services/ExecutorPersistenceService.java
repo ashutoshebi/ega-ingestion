@@ -15,21 +15,22 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.file.re.encryption.processor.services;
+package uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.services;
 
+import org.springframework.transaction.annotation.Transactional;
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.JobExecution;
+import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.JobParameters;
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.Result;
-import uk.ac.ebi.ega.file.re.encryption.processor.models.ReEncryptJobParameters;
 
 import java.util.Optional;
 
-public interface IReEncryptService {
+public interface ExecutorPersistenceService {
 
-    Optional<JobExecution<ReEncryptJobParameters>> createJob(String id, String dosId, String resultPath,
-                                                             char[] resultPassword);
+    @Transactional
+    <T extends JobParameters> void assignExecution(String jobId, String jobName, T jobParameters);
 
-    Result reEncrypt(JobExecution<ReEncryptJobParameters> jobExecution);
+    @Transactional
+    void saveResult(String jobId, Result execute);
 
-    Optional<JobExecution<ReEncryptJobParameters>> getUnfinishedJob();
-
+    <T extends JobParameters> Optional<JobExecution<T>> getAssignedExecution(String jobName, Class<T> parameterClass);
 }

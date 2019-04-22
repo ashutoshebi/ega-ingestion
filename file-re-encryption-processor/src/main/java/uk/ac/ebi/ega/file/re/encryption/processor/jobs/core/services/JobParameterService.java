@@ -15,21 +15,16 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.file.re.encryption.processor.services;
+package uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.services;
 
-import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.JobExecution;
-import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.Result;
-import uk.ac.ebi.ega.file.re.encryption.processor.models.ReEncryptJobParameters;
+import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.JobParameters;
 
 import java.util.Optional;
 
-public interface IReEncryptService {
+public interface JobParameterService<T extends JobParameters> {
 
-    Optional<JobExecution<ReEncryptJobParameters>> createJob(String id, String dosId, String resultPath,
-                                                             char[] resultPassword);
+    void persist(String jobId, T jobParameters);
 
-    Result reEncrypt(JobExecution<ReEncryptJobParameters> jobExecution);
-
-    Optional<JobExecution<ReEncryptJobParameters>> getUnfinishedJob();
+    Optional<T> getParameters(String jobId);
 
 }

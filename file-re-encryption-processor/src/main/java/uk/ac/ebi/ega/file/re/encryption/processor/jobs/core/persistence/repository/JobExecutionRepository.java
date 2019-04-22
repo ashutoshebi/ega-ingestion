@@ -15,19 +15,17 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.file.re.encryption.processor.services;
+package uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.persistence.repository;
 
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Propagation;
+import org.springframework.data.repository.CrudRepository;
 import org.springframework.transaction.annotation.Transactional;
-import uk.ac.ebi.ega.file.re.encryption.processor.messages.DownloadBoxFileProcess;
+import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.persistence.entity.JobExecutionEntity;
 
-public interface ProcessService {
+import java.util.Optional;
 
-    @Transactional(isolation = Isolation.SERIALIZABLE, propagation = Propagation.REQUIRES_NEW)
-    void lock(String key, DownloadBoxFileProcess data);
+@Transactional
+public interface JobExecutionRepository extends CrudRepository<JobExecutionEntity, String> {
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    void unlock(String key, String message);
+    Optional<JobExecutionEntity> findByInstanceId(String instanceId);
 
 }

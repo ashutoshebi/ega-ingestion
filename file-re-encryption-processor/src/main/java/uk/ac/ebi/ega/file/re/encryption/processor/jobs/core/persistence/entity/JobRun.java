@@ -15,9 +15,8 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.file.re.encryption.processor.persistence.entity;
+package uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.persistence.entity;
 
-import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import javax.persistence.Column;
@@ -26,11 +25,13 @@ import javax.persistence.EntityListeners;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Table;
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "JOB_RUN")
 @EntityListeners(AuditingEntityListener.class)
-public class HistoricProcessDownloadBoxFile {
+public class JobRun {
 
     private transient boolean persist = true;
 
@@ -39,40 +40,30 @@ public class HistoricProcessDownloadBoxFile {
     private Long id;
 
     @Column(nullable = false)
-    private String messageId;
+    private String jobId;
 
     @Column(nullable = false)
     private String instanceId;
-
-    @Column(nullable = false)
-    private String resultPath;
-
-    @Column(nullable = false)
-    private String dosId;
 
     private String message;
 
     public LocalDateTime startTime;
 
-    @CreatedDate
     public LocalDateTime endTime;
 
-    public HistoricProcessDownloadBoxFile() {
+    public JobRun() {
     }
 
-    public HistoricProcessDownloadBoxFile(String messageId, String instanceId, String resultPath, String dosId,
-                                          LocalDateTime startTime) {
-        this(messageId, instanceId, resultPath, dosId, null, startTime);
+    public JobRun(String jobId, String instanceId, LocalDateTime startTime, LocalDateTime endTime) {
+        this(jobId, instanceId, null, startTime, endTime);
     }
 
-    public HistoricProcessDownloadBoxFile(String messageId, String instanceId, String resultPath, String dosId,
-                                          String message, LocalDateTime startTime) {
-        this.messageId = messageId;
+    public JobRun(String jobId, String instanceId, String message, LocalDateTime startTime, LocalDateTime endTime) {
+        this.jobId = jobId;
         this.instanceId = instanceId;
-        this.resultPath = resultPath;
-        this.dosId = dosId;
         this.message = message;
         this.startTime = startTime;
+        this.endTime = endTime;
     }
 
     public LocalDateTime getEndTime() {

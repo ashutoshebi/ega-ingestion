@@ -15,24 +15,32 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.file.re.encryption.processor.models;
+package uk.ac.ebi.ega.file.re.encryption.processor.jobs.core;
 
-import java.time.LocalDateTime;
+public class JobExecution<T extends JobParameters> {
 
-public interface FileEncryptionJob {
+    private String jobId;
 
-    long getId();
+    private String jobName;
 
-    String getInstanceId();
+    private T jobParameters;
 
-    String getAccount();
+    public JobExecution(String jobId, String jobName, T jobParameters) {
+        this.jobId = jobId;
+        this.jobName = jobName;
+        this.jobParameters = jobParameters;
+    }
 
-    String getStagingAreaId();
+    public String getJobId() {
+        return jobId;
+    }
 
-    String getFilePath();
+    public String getJobName() {
+        return jobName;
+    }
 
-    String getFilePathMd5();
-
-    LocalDateTime getCreateDate();
+    public T getJobParameters() {
+        return jobParameters;
+    }
 
 }

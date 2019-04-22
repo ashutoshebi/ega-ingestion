@@ -15,45 +15,43 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.file.re.encryption.processor.models;
+package uk.ac.ebi.ega.file.re.encryption.processor.messages;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.Result;
 
-public class ReEncryptResult {
+import java.time.LocalDateTime;
 
-    public enum Status {
+public class ReEncryptComplete {
 
-        CORRECT,
-
-        ERROR,
-
-        RETRY
-
-    }
-
-    private Status status;
+    private String status;
 
     private String message;
 
-    public ReEncryptResult(Status status, String message) {
-        this.status = status;
+    private LocalDateTime startTime;
+
+    private LocalDateTime endTime;
+
+    public ReEncryptComplete(Result.Status status, String message, LocalDateTime startTime, LocalDateTime endTime) {
+        this.status = status.toString();
         this.message = message;
+        this.startTime = startTime;
+        this.endTime = endTime;
     }
 
-    public ReEncryptResult(String message, Exception exception) {
-        this.status = Status.ERROR;
-        StringWriter stringWriter = new StringWriter();
-        exception.printStackTrace(new PrintWriter(stringWriter));
-        this.message = message + "\nTrace:\n" + stringWriter.toString();
-    }
-
-    public Status getStatus() {
+    public String getStatus() {
         return status;
     }
 
     public String getMessage() {
         return message;
+    }
+
+    public LocalDateTime getStartTime() {
+        return startTime;
+    }
+
+    public LocalDateTime getEndTime() {
+        return endTime;
     }
 
 }

@@ -17,117 +17,78 @@
  */
 package uk.ac.ebi.ega.file.re.encryption.processor.services;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import uk.ac.ebi.ega.encryption.core.DecryptInputStream;
-import uk.ac.ebi.ega.encryption.core.EncryptOutputStream;
-import uk.ac.ebi.ega.encryption.core.encryption.AesCtr256Ega;
-import uk.ac.ebi.ega.encryption.core.encryption.exceptions.AlgorithmInitializationException;
-import uk.ac.ebi.ega.encryption.core.utils.io.FileUtils;
-import uk.ac.ebi.ega.file.re.encryption.processor.listeners.IngestionEventListener;
-import uk.ac.ebi.ega.file.re.encryption.processor.models.ReEncryptResult;
-import uk.ac.ebi.ega.fire.IFireFile;
-import uk.ac.ebi.ega.fire.IFireService;
-import uk.ac.ebi.ega.fire.exceptions.FireConfigurationException;
-import uk.ac.ebi.ega.fire.exceptions.MaxRetryOnConnectionReached;
+import org.springframework.kafka.core.KafkaTemplate;
+import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.Job;
+import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.JobExecution;
+import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.JobExecutor;
+import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.Result;
+import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.exceptions.JobNotRegistered;
+import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.services.ExecutorPersistenceService;
+import uk.ac.ebi.ega.file.re.encryption.processor.messages.ReEncryptComplete;
+import uk.ac.ebi.ega.file.re.encryption.processor.models.ReEncryptJobParameters;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.net.SocketTimeoutException;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.text.ParseException;
-import java.util.Objects;
+import java.time.LocalDateTime;
+import java.util.Optional;
 
-public class ReEncryptService implements IReEncryptService {
+public class ReEncryptService extends JobExecutor implements IReEncryptService {
 
-    private final Logger logger = LoggerFactory.getLogger(IngestionEventListener.class);
-
-    private IFireService fireService;
-
-    private String passwordFile;
+    private static final String RE_ENCRYPT_JOB = "re-encrypt-job";
 
     private IMailingService mailingService;
 
     private String reportTo;
 
-    public ReEncryptService(IFireService fireService, String passwordFile, IMailingService mailingService,
-                            String reportTo) {
-        this.fireService = fireService;
-        this.passwordFile = passwordFile;
+    private KafkaTemplate<String, ReEncryptComplete> kafkaTemplate;
+
+    private String completeJobTopic;
+
+    public ReEncryptService(ExecutorPersistenceService persistenceService,
+                            IMailingService mailingService, String reportTo,
+                            Job<ReEncryptJobParameters> job,
+                            KafkaTemplate<String, ReEncryptComplete> kafkaTemplate,
+                            String completeJobTopic) {
+        super(persistenceService);
         this.mailingService = mailingService;
         this.reportTo = reportTo;
+        this.kafkaTemplate = kafkaTemplate;
+        this.completeJobTopic = completeJobTopic;
+        registerJob(RE_ENCRYPT_JOB, ReEncryptJobParameters.class, job);
     }
 
     @Override
-    public ReEncryptResult reEncrypt(String dosId, String resultPath, char[] resultPassword) throws ParseException, IOException, FireConfigurationException {
+    public Optional<JobExecution<ReEncryptJobParameters>> createJob(String id, String dosId, String resultPath,
+                                                                    char[] resultPassword) {
+        return assignExecution(id, RE_ENCRYPT_JOB,
+                new ReEncryptJobParameters(dosId, resultPath, resultPassword));
+    }
+
+    @Override
+    public Result reEncrypt(JobExecution<ReEncryptJobParameters> jobExecution) {
+        Result result;
+        final LocalDateTime startExecution = LocalDateTime.now();
         try {
-            char[] password = FileUtils.readPasswordFile(Paths.get(passwordFile));
-            final IFireFile inputFile = fireService.getFile(dosId);
-            final File outputFile = getOutputFile(resultPath);
-
-            try (DecryptInputStream decryptStream = new DecryptInputStream(inputFile.getStream(), new AesCtr256Ega(),
-                    password);
-                 EncryptOutputStream encryptOutputStream = new EncryptOutputStream(new FileOutputStream(outputFile),
-                         new AesCtr256Ega(), resultPassword);
-            ) {
-                logger.info("File size {}", FileUtils.normalizeSize(inputFile.getSize()));
-                byte[] buffer = new byte[8192];
-                int bytesRead = decryptStream.read(buffer);
-                while (bytesRead != -1) {
-                    encryptOutputStream.write(buffer, 0, bytesRead);
-                    bytesRead = decryptStream.read(buffer);
-                }
-
-                if (!Objects.equals(inputFile.getMd5(), decryptStream.getMd5())) {
-                    return retry("Mismatch of md5: expected %s actual %s", inputFile.getMd5(), decryptStream.getMd5());
-                }
-            }
-        } catch (SocketTimeoutException | MaxRetryOnConnectionReached e) {
-            return retry("Fire is currently down");
-        } catch (FileNotFoundException e) {
-            return error("File could not be found on DOS", e);
-        } catch (AlgorithmInitializationException e) {
-            return error("Error while decrypting the file on DOS", e);
-        } catch (FireConfigurationException | ParseException | IOException e) {
-            reportError("Unrecoverable error", e);
-            throw e;
+            result = execute(jobExecution);
+        } catch (JobNotRegistered jobNotRegistered) {
+            result = Result.abort("Unexpected exception - JobParameters not registered", jobNotRegistered,
+                    LocalDateTime.now());
         }
-        return new ReEncryptResult(ReEncryptResult.Status.CORRECT, null);
-    }
-
-    private ReEncryptResult error(String msg, Exception e) {
-        reportError(msg, e);
-        return new ReEncryptResult(msg, e);
-    }
-
-    private ReEncryptResult retry(String msg, Object... objects) {
-        final String formattedMessage = String.format(msg, objects);
-        logger.warn(formattedMessage);
-        return new ReEncryptResult(ReEncryptResult.Status.RETRY, formattedMessage);
-    }
-
-    private void reportError(String message, Exception e) {
-        logger.error(message, e);
-        mailingService.sendSimpleMessage(reportTo, message, e);
-    }
-
-
-    private File getOutputFile(String resultPath) throws IOException {
-        final Path path = Paths.get(resultPath);
-        Files.createDirectories(path.getParent());
-        File outputFile;
-        try {
-            outputFile = Files.createFile(path).toFile();
-        } catch (FileAlreadyExistsException e) {
-            outputFile = path.toFile();
-            logger.warn("File {} already exists, process will overwrite the file", outputFile);
+        if (result.getStatus() != Result.Status.SUCCESS) {
+            mailingService.sendSimpleMessage(reportTo, result.getMessage(), result.getException());
         }
-        return outputFile;
+        if (result.getStatus() != Result.Status.ABORTED) {
+            // report to file manager if it has finished.
+            reportToFileManager(jobExecution.getJobId(), startExecution, result);
+        }
+        return result;
     }
 
+    @Override
+    public Optional<JobExecution<ReEncryptJobParameters>> getUnfinishedJob() {
+        return getAssignedExecution(RE_ENCRYPT_JOB, ReEncryptJobParameters.class);
+    }
+
+    private void reportToFileManager(String jobId, LocalDateTime startTime, Result result) {
+        kafkaTemplate.send(completeJobTopic, jobId, new ReEncryptComplete(result.getStatus(),
+                result.getMessage(), startTime, result.getEndTime()));
+    }
 }

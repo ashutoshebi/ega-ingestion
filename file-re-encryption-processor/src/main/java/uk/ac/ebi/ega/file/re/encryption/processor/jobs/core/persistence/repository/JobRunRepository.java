@@ -15,15 +15,11 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.file.re.encryption.processor.pipelines.exceptions;
+package uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.persistence.repository;
 
-public class SystemErrorException extends Exception {
+import org.springframework.data.repository.CrudRepository;
+import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.persistence.entity.JobRun;
 
-    public SystemErrorException(Exception e) {
-        super(e);
-    }
+public interface JobRunRepository extends CrudRepository<JobRun, String> {
 
-    public SystemErrorException(String s) {
-        super(s);
-    }
 }

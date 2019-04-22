@@ -15,47 +15,34 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.file.re.encryption.processor.messages;
+package uk.ac.ebi.ega.file.re.encryption.processor.models;
 
-public class DownloadBoxFileProcess {
+import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.JobParameters;
 
-    private String resultPath;
+public class ReEncryptJobParameters implements JobParameters {
 
     private String dosId;
 
-    private String password;
+    private String resultPath;
 
-    public String getResultPath() {
-        return resultPath;
-    }
+    private char[] resultPassword;
 
-    public void setResultPath(String resultPath) {
+    public ReEncryptJobParameters(String dosId, String resultPath, char[] resultPassword) {
+        this.dosId = dosId;
         this.resultPath = resultPath;
+        this.resultPassword = resultPassword;
     }
 
     public String getDosId() {
         return dosId;
     }
 
-    public void setDosId(String dosId) {
-        this.dosId = dosId;
+    public String getResultPath() {
+        return resultPath;
     }
 
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    @Override
-    public String toString() {
-        return "DownloadBoxFileProcess{" +
-                "resultPath='" + resultPath + '\'' +
-                ", dosId='" + dosId + '\'' +
-                ", password='******'" +
-                '}';
+    public char[] getResultPassword() {
+        return resultPassword;
     }
 
 }

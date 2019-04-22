@@ -15,12 +15,13 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.file.re.encryption.processor.services;
+package uk.ac.ebi.ega.file.re.encryption.processor.persistence.repository;
 
-public class ReEncryptFatalError extends Exception {
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.transaction.annotation.Transactional;
+import uk.ac.ebi.ega.file.re.encryption.processor.persistence.entity.ReEncryptParametersEntity;
 
-    public ReEncryptFatalError(String error, Exception e) {
-        super(error, e);
-    }
+@Transactional
+public interface ReEncryptParametersRepository extends CrudRepository<ReEncryptParametersEntity, String> {
 
 }

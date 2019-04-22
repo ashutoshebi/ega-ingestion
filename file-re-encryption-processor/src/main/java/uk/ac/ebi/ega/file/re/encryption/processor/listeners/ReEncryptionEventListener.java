@@ -15,65 +15,55 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.file.re.encryption.processor;
+package uk.ac.ebi.ega.file.re.encryption.processor.listeners;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationListener;
-import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
-import org.springframework.kafka.listener.ContainerProperties;
-import org.springframework.kafka.listener.MessageListenerContainer;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.support.Acknowledgment;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.JobExecution;
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.Result;
+import uk.ac.ebi.ega.file.re.encryption.processor.messages.ReEncryptFile;
 import uk.ac.ebi.ega.file.re.encryption.processor.models.ReEncryptJobParameters;
 import uk.ac.ebi.ega.file.re.encryption.processor.services.IReEncryptService;
 
 import java.util.Optional;
 
 @Component
-public class FileReEncryptionStartup implements ApplicationListener<ApplicationReadyEvent> {
+public class ReEncryptionEventListener {
 
-    private Logger logger = LoggerFactory.getLogger(FileReEncryptionStartup.class);
-
-    @Value("${spring.kafka.client-id}")
-    private String instanceId;
+    private final Logger logger = LoggerFactory.getLogger(ReEncryptionEventListener.class);
 
     @Autowired
     private ApplicationContext applicationContext;
 
     @Autowired
-    private KafkaListenerEndpointRegistry kafkaListenerEndpointRegistry;
-
-    @Autowired
     private IReEncryptService reEncryptService;
 
-    @Override
-    public void onApplicationEvent(ApplicationReadyEvent applicationReadyEvent) {
-        logger.info("File encryption instance-id {} started", instanceId);
-        restartLastAssignedJob();
-        logger.info("File encryption instance-id {} starting kafka listener", instanceId);
-        final MessageListenerContainer container = kafkaListenerEndpointRegistry.getListenerContainer(instanceId);
-        container.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
-        container.start();
-        logger.info("File encryption instance-id {} starting kafka started", instanceId);
-    }
+    @KafkaListener(id = "${spring.kafka.client-id}", topics = "${spring.kafka.file.re.encryption.queue.name}",
+            groupId =
+            "${spring.kafka.consumer.group-id}", clientIdPrefix = "executor", autoStartup = "false")
+    public void listen(@Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) String key, ReEncryptFile data,
+                       Acknowledgment acknowledgment) {
+        logger.info("Process - key: {} data {}", key, data);
 
-    private void restartLastAssignedJob() {
-        final Optional<JobExecution<ReEncryptJobParameters>> job = reEncryptService.getUnfinishedJob();
+        final Optional<JobExecution<ReEncryptJobParameters>> job = reEncryptService.createJob(key, data.getDosId(), data.getResultPath(),
+                data.getResultPath().toCharArray());
+        acknowledgment.acknowledge();
         if (job.isPresent()) {
             final Result result = reEncryptService.reEncrypt(job.get());
             if (result.getStatus() == Result.Status.ABORTED) {
                 logger.error("Process was aborted due to critical error. Unexpected application termination");
                 SpringApplication.exit(applicationContext, () -> 1);
             }
-        }else{
-            logger.info("No process pending execution was found");
+        } else {
+            logger.info("key: {} is being processed, skip event", key);
         }
     }
 

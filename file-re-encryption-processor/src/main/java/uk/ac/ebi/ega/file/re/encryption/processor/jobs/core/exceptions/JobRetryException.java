@@ -15,11 +15,16 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.file.re.encryption.processor.persistence.repository;
+package uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.exceptions;
 
-import org.springframework.data.repository.CrudRepository;
-import uk.ac.ebi.ega.file.re.encryption.processor.persistence.entity.ProcessDownloadBoxFile;
+public class JobRetryException extends RuntimeException {
 
-public interface ProcessDownloadBoxFileRepository extends CrudRepository<ProcessDownloadBoxFile, String> {
+    public JobRetryException(String msg) {
+        super(msg);
+    }
+
+    public JobRetryException(String msg, Throwable throwable) {
+        super(msg, throwable);
+    }
 
 }

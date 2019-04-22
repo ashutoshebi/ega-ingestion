@@ -15,11 +15,8 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.file.re.encryption.processor.persistence.repository;
+package uk.ac.ebi.ega.file.re.encryption.processor.jobs.core;
 
-import org.springframework.data.repository.CrudRepository;
-import uk.ac.ebi.ega.file.re.encryption.processor.persistence.entity.HistoricProcessDownloadBoxFile;
-
-public interface HistoricProcessDownloadBoxFileRepository extends CrudRepository<HistoricProcessDownloadBoxFile, String> {
+public interface JobParameters {
 
 }
