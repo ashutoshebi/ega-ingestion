@@ -26,10 +26,8 @@ import java.util.Optional;
 
 public interface ExecutorPersistenceService {
 
-    @Transactional
     <T extends JobParameters> void assignExecution(String jobId, String jobName, T jobParameters);
 
-    @Transactional
     void saveResult(String jobId, Result execute);
 
     <T extends JobParameters> Optional<JobExecution<T>> getAssignedExecution(String jobName, Class<T> parameterClass);

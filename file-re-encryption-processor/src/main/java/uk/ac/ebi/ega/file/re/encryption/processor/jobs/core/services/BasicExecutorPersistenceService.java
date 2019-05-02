@@ -17,6 +17,8 @@
  */
 package uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.services;
 
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.JobExecution;
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.JobParameters;
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.Result;
@@ -25,9 +27,9 @@ import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.persistence.entity.J
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.persistence.repository.JobExecutionRepository;
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.persistence.repository.JobRunRepository;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class BasicExecutorPersistenceService implements ExecutorPersistenceService {
 
@@ -45,7 +47,7 @@ public class BasicExecutorPersistenceService implements ExecutorPersistenceServi
         this.jobExecutionRepository = jobExecutionRepository;
         this.jobRunRepository = jobRunRepository;
         this.instanceId = instanceId;
-        this.parameterServices = new HashMap<>();
+        this.parameterServices = new ConcurrentHashMap<>();
     }
 
     public <T extends JobParameters> void registerJobParameterServices(String jobName, Class<T> parameterClass,
@@ -54,6 +56,7 @@ public class BasicExecutorPersistenceService implements ExecutorPersistenceServi
     }
 
     @Override
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public <T extends JobParameters> void assignExecution(String jobId, String jobName, T jobParameters) {
         jobExecutionRepository.save(new JobExecutionEntity(jobId, jobName, instanceId));
         getJobParameterService(jobName, (Class<T>) jobParameters.getClass()).persist(jobId, jobParameters);
@@ -65,6 +68,7 @@ public class BasicExecutorPersistenceService implements ExecutorPersistenceServi
     }
 
     @Override
+    @Transactional
     public void saveResult(String jobId, Result execute) {
         jobRunRepository.save(new JobRun(jobId, instanceId, execute.getMessageAndException(), execute.getStartTime(),
                 execute.getEndTime()));

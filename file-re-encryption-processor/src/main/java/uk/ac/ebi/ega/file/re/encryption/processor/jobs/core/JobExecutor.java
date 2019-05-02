@@ -25,9 +25,9 @@ import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.exceptions.JobRetryE
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.services.ExecutorPersistenceService;
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.services.JobDefinition;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class JobExecutor {
 
@@ -39,7 +39,7 @@ public class JobExecutor {
 
     public JobExecutor(ExecutorPersistenceService persistenceService) {
         this.persistenceService = persistenceService;
-        this.jobMap = new HashMap<>();
+        this.jobMap = new ConcurrentHashMap<>();
     }
 
     public <T extends JobParameters> void registerJob(String jobName, Class<T> parameterClass, Job<T> job) {
