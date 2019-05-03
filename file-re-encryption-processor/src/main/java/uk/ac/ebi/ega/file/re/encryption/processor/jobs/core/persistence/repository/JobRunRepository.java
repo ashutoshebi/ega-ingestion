@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2018 EMBL - European Bioinformatics Institute
+ * Copyright 2019 EMBL - European Bioinformatics Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,11 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.fire;
+package uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.persistence.repository;
 
-import java.io.IOException;
-import java.io.InputStream;
+import org.springframework.data.repository.CrudRepository;
+import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.persistence.entity.JobRun;
 
-public interface IFireFile {
-
-    long getSize();
-
-    String getMd5();
-
-    InputStream getStream() throws IOException;
+public interface JobRunRepository extends CrudRepository<JobRun, String> {
 
 }

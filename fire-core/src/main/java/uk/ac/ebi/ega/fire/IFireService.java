@@ -15,24 +15,15 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.file.re.encryption.processor.models;
+package uk.ac.ebi.ega.fire;
 
-import java.time.LocalDateTime;
+import uk.ac.ebi.ega.fire.exceptions.FireConfigurationException;
 
-public interface FileEncryptionJob {
+import java.io.IOException;
+import java.text.ParseException;
 
-    long getId();
+public interface IFireService {
 
-    String getInstanceId();
-
-    String getAccount();
-
-    String getStagingAreaId();
-
-    String getFilePath();
-
-    String getFilePathMd5();
-
-    LocalDateTime getCreateDate();
+    IFireFile getFile(String dosId) throws IOException, FireConfigurationException, ParseException;
 
 }

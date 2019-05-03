@@ -45,6 +45,11 @@ public class FireDirectFile implements IFireFile {
     }
 
     @Override
+    public long getSize() {
+        return size;
+    }
+
+    @Override
     public String getMd5() {
         return md5;
     }

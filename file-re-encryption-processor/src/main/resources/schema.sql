@@ -1,25 +1,29 @@
-drop table if exists PROCESS_DOWNLOAD_BOX_FILE;
-drop table if exists HISTORIC_PROCESS_DOWNLOAD_BOX_FILE;
+drop table if exists JOB_EXECUTION;
+drop table if exists JOB_RUN;
+drop table if exists RE_ENCRYPT_PARAMETERS;
 
-create table PROCESS_DOWNLOAD_BOX_FILE
+create table JOB_EXECUTION
 (
-    ID          varchar(255) primary key,
+    JOB_ID      varchar(255) primary key,
+    JOB_NAME    varchar(255)        not null,
+    INSTANCE_ID varchar(255) unique not null,
+    START_TIME  timestamp           not null
+);
+
+create table JOB_RUN
+(
+    ID          bigserial primary key,
+    JOB_ID      varchar(255) not null,
     INSTANCE_ID varchar(255) not null,
-    RESULT_PATH text         not null,
-    DOS_ID      text         not null,
-    PASSWORD    text         not null,
-    START_TIME  timestamp    not null
+    MESSAGE     text,
+    START_TIME  timestamp    not null,
+    END_TIME    timestamp    not null
 );
 
-create table HISTORIC_PROCESS_DOWNLOAD_BOX_FILE
+create table RE_ENCRYPT_PARAMETERS
 (
-    ID                 bigserial primary key,
-    MESSAGE_ID         varchar(255) not null,
-    INSTANCE_ID        varchar(255) not null,
-    RESULT_PATH        text         not null,
-    DOS_ID             text         not null,
-    FINISHED_CORRECTLY boolean      not null,
-    MESSAGE            text,
-    START_TIME         timestamp    not null,
-    END_TIME           timestamp    not null
-);
+    JOB_ID      varchar(255) primary key,
+    RESULT_PATH text not null,
+    DOS_ID      text not null,
+    PASSWORD    text not null
+)

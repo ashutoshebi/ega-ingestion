@@ -25,19 +25,18 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EntityListeners;
 import javax.persistence.Id;
+import javax.persistence.Table;
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "RE_ENCRYPT_PARAMETERS")
 @EntityListeners(AuditingEntityListener.class)
-public class ProcessDownloadBoxFile implements Persistable<String> {
+public class ReEncryptParametersEntity implements Persistable<String> {
 
     private transient boolean persist = true;
 
     @Id
-    private String id;
-
-    @Column(unique = true, nullable = false)
-    private String instanceId;
+    private String jobId;
 
     @Column(nullable = false)
     private String resultPath;
@@ -48,15 +47,11 @@ public class ProcessDownloadBoxFile implements Persistable<String> {
     @Column(nullable = false)
     private String password;
 
-    @CreatedDate
-    public LocalDateTime startTime;
-
-    public ProcessDownloadBoxFile() {
+    ReEncryptParametersEntity() {
     }
 
-    public ProcessDownloadBoxFile(String id, String instanceId, String resultPath, String dosId, String password) {
-        this.id = id;
-        this.instanceId = instanceId;
+    public ReEncryptParametersEntity(String jobId, String resultPath, String dosId, String password) {
+        this.jobId = jobId;
         this.resultPath = resultPath;
         this.dosId = dosId;
         this.password = password;
@@ -64,7 +59,7 @@ public class ProcessDownloadBoxFile implements Persistable<String> {
 
     @Override
     public String getId() {
-        return id;
+        return jobId;
     }
 
     @Override
@@ -87,9 +82,4 @@ public class ProcessDownloadBoxFile implements Persistable<String> {
     public String getPassword() {
         return password;
     }
-
-    public LocalDateTime getStartTime() {
-        return startTime;
-    }
-
 }

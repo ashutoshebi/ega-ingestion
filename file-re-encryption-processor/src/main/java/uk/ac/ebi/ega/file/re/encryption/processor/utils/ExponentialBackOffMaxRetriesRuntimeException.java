@@ -15,15 +15,7 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.file.re.encryption.processor.pipelines.exceptions;
+package uk.ac.ebi.ega.file.re.encryption.processor.utils;
 
-public class SystemErrorException extends Exception {
-
-    public SystemErrorException(Exception e) {
-        super(e);
-    }
-
-    public SystemErrorException(String s) {
-        super(s);
-    }
+public class ExponentialBackOffMaxRetriesRuntimeException extends RuntimeException {
 }

@@ -19,52 +19,56 @@ package uk.ac.ebi.ega.fire;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.ac.ebi.ega.fire.exceptions.FireConfigurationException;
 import uk.ac.ebi.ega.fire.metadata.FileMetadataParser;
 import uk.ac.ebi.ega.fire.properties.FireProperties;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.ParseException;
 import java.util.List;
 
-public class FireService {
+public class FireService implements IFireService {
 
     private static final Logger logger = LoggerFactory.getLogger(FireService.class);
 
     private FireProperties fireProperties;
 
-    public FireService(FireProperties fireProperties) {
+    private URL fireUrl;
+
+    public FireService(FireProperties fireProperties) throws MalformedURLException {
         this.fireProperties = fireProperties;
+        this.fireUrl = new URL(fireProperties.getUrl());
     }
 
-    public IFireFile getFile(String fireFilePath, boolean useFireDirect) throws FileNotFoundException {
-        if (useFireDirect) {
-            HttpURLConnection connection = null;
-            try {
-                connection = prepareConnection(fireFilePath, new URL(fireProperties.getUrl()));
-                if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+    @Override
+    public IFireFile getFile(String fireFilePath) throws IOException, FireConfigurationException, ParseException {
+        HttpURLConnection connection = null;
+        try {
+            connection = prepareConnection(fireFilePath, fireUrl);
+            switch (connection.getResponseCode()) {
+                case HttpURLConnection.HTTP_OK:
                     FireDirectFile file = getFileOnS3OrFirstOne(FileMetadataParser.parse(connection.getInputStream()));
                     if (file != null) {
                         logger.info("Used file source storage is {}", file.getStorageClass());
                         return file;
                     }
-                } else {
+                case HttpURLConnection.HTTP_NOT_FOUND:
+                    throw new FileNotFoundException("File " + fireFilePath + " could not be find in Fire");
+                case HttpURLConnection.HTTP_FORBIDDEN:
+                    throw new FireConfigurationException("Wrong credentials");
+                default:
                     logger.info("Fire Direct returned {}", connection.getResponseCode());
-                }
-            } catch (IOException | ParseException e) {
-                logger.error(e.getMessage(), e);
-            } finally {
-                if (connection != null) {
-                    connection.disconnect();
-                }
+                    throw new ParseException("Response code not known '" + connection.getResponseCode() + "'", 0);
             }
-        } else {
-            return new FuseFireFile(fireProperties.getMountPath(), fireFilePath);
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
         }
-        throw new FileNotFoundException("File " + fireFilePath + " could not be accessed " +
-                "through Fire Direct");
     }
 
     private FireDirectFile getFileOnS3OrFirstOne(List<FireDirectFile> fileLinks) {
@@ -82,6 +86,7 @@ public class FireService {
 
     private HttpURLConnection prepareConnection(String fireFilePath, URL url) throws IOException {
         HttpURLConnection con = (HttpURLConnection) url.openConnection();
+        con.setConnectTimeout(10000);
         con.setRequestMethod("GET");
         con.setRequestProperty("X-FIRE-Archive", "ega");
         con.setRequestProperty("X-FIRE-Key", fireProperties.getKey());

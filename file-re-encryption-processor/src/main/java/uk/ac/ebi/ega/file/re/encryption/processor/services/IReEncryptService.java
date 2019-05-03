@@ -17,17 +17,19 @@
  */
 package uk.ac.ebi.ega.file.re.encryption.processor.services;
 
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
-import uk.ac.ebi.ega.file.re.encryption.processor.messages.DownloadBoxFileProcess;
+import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.JobExecution;
+import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.Result;
+import uk.ac.ebi.ega.file.re.encryption.processor.models.ReEncryptJobParameters;
 
-public interface ProcessService {
+import java.util.Optional;
 
-    @Transactional(isolation = Isolation.SERIALIZABLE, propagation = Propagation.REQUIRES_NEW)
-    void lock(String key, DownloadBoxFileProcess data);
+public interface IReEncryptService {
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    void unlock(String key);
+    Optional<JobExecution<ReEncryptJobParameters>> createJob(String id, String dosId, String resultPath,
+                                                             char[] resultPassword);
+
+    Result reEncrypt(JobExecution<ReEncryptJobParameters> jobExecution);
+
+    Optional<JobExecution<ReEncryptJobParameters>> getUnfinishedJob();
 
 }

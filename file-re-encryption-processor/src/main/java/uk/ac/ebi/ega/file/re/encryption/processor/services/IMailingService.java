@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2018 EMBL - European Bioinformatics Institute
+ * Copyright 2019 EMBL - European Bioinformatics Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,12 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.fire;
+package uk.ac.ebi.ega.file.re.encryption.processor.services;
 
-import java.io.IOException;
-import java.io.InputStream;
+public interface IMailingService {
 
-public interface IFireFile {
+    void sendSimpleMessage(String to, String subject, Exception e);
 
-    long getSize();
-
-    String getMd5();
-
-    InputStream getStream() throws IOException;
+    void sendSimpleMessage(String to, String subject, String text);
 
 }

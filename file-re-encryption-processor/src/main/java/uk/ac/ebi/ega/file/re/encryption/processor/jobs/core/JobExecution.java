@@ -15,11 +15,32 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.file.re.encryption.processor.persistence.repository;
+package uk.ac.ebi.ega.file.re.encryption.processor.jobs.core;
 
-import org.springframework.data.repository.CrudRepository;
-import uk.ac.ebi.ega.file.re.encryption.processor.persistence.entity.ProcessDownloadBoxFile;
+public class JobExecution<T extends JobParameters> {
 
-public interface ProcessDownloadBoxFileRepository extends CrudRepository<ProcessDownloadBoxFile, String> {
+    private String jobId;
+
+    private String jobName;
+
+    private T jobParameters;
+
+    public JobExecution(String jobId, String jobName, T jobParameters) {
+        this.jobId = jobId;
+        this.jobName = jobName;
+        this.jobParameters = jobParameters;
+    }
+
+    public String getJobId() {
+        return jobId;
+    }
+
+    public String getJobName() {
+        return jobName;
+    }
+
+    public T getJobParameters() {
+        return jobParameters;
+    }
 
 }

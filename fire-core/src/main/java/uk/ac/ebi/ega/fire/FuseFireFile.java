@@ -28,9 +28,14 @@ public class FuseFireFile implements IFireFile {
 
     public FuseFireFile(String firePath, String submittedFileName) throws FileNotFoundException {
         this.file = new File(firePath + submittedFileName);
-        if(!file.exists()){
-            throw new FileNotFoundException("File "+file.getAbsolutePath()+" could not be found");
+        if (!file.exists()) {
+            throw new FileNotFoundException("File " + file.getAbsolutePath() + " could not be found");
         }
+    }
+
+    @Override
+    public long getSize() {
+        return file.length();
     }
 
     @Override

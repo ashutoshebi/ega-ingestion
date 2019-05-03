@@ -50,6 +50,7 @@ public class MailingService implements IMailingService {
         sendSimpleMessage(job.getMail(), subject, text);
     }
 
+    @Override
     public void sendSimpleMessage(String to, String subject, String text) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(to);

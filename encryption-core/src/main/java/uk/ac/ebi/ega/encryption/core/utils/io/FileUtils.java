@@ -20,7 +20,10 @@ package uk.ac.ebi.ega.encryption.core.utils.io;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.Arrays;
+import java.util.Locale;
 
 public class FileUtils {
 
@@ -65,4 +68,40 @@ public class FileUtils {
         return trim(readFile(path));
     }
 
+    public static String normalizeSize(long size) {
+        float normalizedSize = size;
+        int unit = 0;
+        while (normalizedSize > 1024) {
+            normalizedSize /= 1024;
+            unit++;
+        }
+
+        DecimalFormat df = new DecimalFormat();
+        df.setMinimumFractionDigits(0);
+        df.setMaximumFractionDigits(2);
+        df.setDecimalFormatSymbols(DecimalFormatSymbols.getInstance(Locale.UK));
+
+        String textValue = df.format(normalizedSize);
+        switch (unit) {
+            case 0:
+                return textValue + "bytes";
+            case 1:
+                return textValue + "Kb";
+            case 2:
+                return textValue + "Mb";
+            case 3:
+                return textValue + "Gb";
+            case 4:
+                return textValue + "Tb";
+            case 5:
+                return textValue + "Pb";
+            case 6:
+                return textValue + "Eb";
+            case 7:
+                return textValue + "Zb";
+            case 8:
+                return textValue + "Yb";
+        }
+        return Long.toString(size);
+    }
 }
