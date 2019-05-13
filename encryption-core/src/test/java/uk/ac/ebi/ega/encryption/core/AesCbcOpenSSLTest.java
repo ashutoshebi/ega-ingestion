@@ -28,6 +28,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -58,6 +60,15 @@ public class AesCbcOpenSSLTest {
         final byte[] bytes = baos.toByteArray();
         Assert.assertEquals("da20deddddc00a3d267760b718b72a25",
                 DatatypeConverter.printHexBinary(MessageDigest.getInstance("MD5").digest(bytes)).toLowerCase());
+    }
+
+    @Test
+    public void testEncryptDecryptCharArray() throws AlgorithmInitializationException {
+        AesCbcOpenSSL aesCbcOpenSSL = new AesCbcOpenSSL();
+        aesCbcOpenSSL.setFixedSalt(DatatypeConverter.parseHexBinary("B392A696565D0728"));
+        final byte[] encryptedBytes = aesCbcOpenSSL.encrypt("kiwi".toCharArray(), "test file.\n".toCharArray());
+        final char[] decrypt = aesCbcOpenSSL.decrypt("kiwi".toCharArray(), encryptedBytes, UTF_8);
+        assertEquals("test file.\n", new String(decrypt));
     }
 
 }

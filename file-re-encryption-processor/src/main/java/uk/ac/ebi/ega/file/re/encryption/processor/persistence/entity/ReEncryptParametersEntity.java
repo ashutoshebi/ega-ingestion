@@ -17,6 +17,7 @@
  */
 package uk.ac.ebi.ega.file.re.encryption.processor.persistence.entity;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.domain.Persistable;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -54,7 +55,12 @@ public class ReEncryptParametersEntity implements Persistable<String> {
         this.jobId = jobId;
         this.resultPath = resultPath;
         this.dosId = dosId;
-        this.password = password;
+        this.password = encrypt(password);
+    }
+
+    private String encrypt(String password) {
+
+        return null;
     }
 
     @Override

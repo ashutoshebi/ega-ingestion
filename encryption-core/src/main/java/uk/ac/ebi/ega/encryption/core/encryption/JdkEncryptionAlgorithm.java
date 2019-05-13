@@ -18,12 +18,17 @@
 package uk.ac.ebi.ega.encryption.core.encryption;
 
 import uk.ac.ebi.ega.encryption.core.encryption.exceptions.AlgorithmInitializationException;
+import uk.ac.ebi.ega.encryption.core.utils.io.IOUtils;
 
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
 import javax.crypto.CipherOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 
 public abstract class JdkEncryptionAlgorithm implements EncryptionAlgorithm {
 
@@ -37,6 +42,31 @@ public abstract class JdkEncryptionAlgorithm implements EncryptionAlgorithm {
     public InputStream decrypt(InputStream inputStream, char[] password) throws AlgorithmInitializationException {
         initializeRead(inputStream, password);
         return new CipherInputStream(inputStream, getCipher(Cipher.DECRYPT_MODE));
+    }
+
+    public byte[] encrypt(char[] password, char[] content) throws AlgorithmInitializationException {
+        try (final ByteArrayOutputStream outputStream = new ByteArrayOutputStream(content.length)) {
+            initializeWrite(password, outputStream);
+            try (OutputStream encryptStream = new CipherOutputStream(outputStream, getCipher(Cipher.ENCRYPT_MODE))) {
+                encryptStream.write(IOUtils.convertToBytes(content));
+            }
+            outputStream.flush();
+            outputStream.close();
+            return outputStream.toByteArray();
+        } catch (IOException e) {
+            throw new AlgorithmInitializationException(e);
+        }
+    }
+
+    public char[] decrypt(char[] password, byte[] content, Charset encoding) throws AlgorithmInitializationException {
+        try (final ByteArrayInputStream inputStream = new ByteArrayInputStream(content)) {
+            initializeRead(inputStream, password);
+            try (InputStream decryptedStream = new CipherInputStream(inputStream, getCipher(Cipher.DECRYPT_MODE))) {
+                return IOUtils.toCharArray(decryptedStream, encoding);
+            }
+        } catch (IOException e) {
+            throw new AlgorithmInitializationException(e);
+        }
     }
 
     protected abstract void initializeRead(InputStream inputStream, char[] password) throws AlgorithmInitializationException;
