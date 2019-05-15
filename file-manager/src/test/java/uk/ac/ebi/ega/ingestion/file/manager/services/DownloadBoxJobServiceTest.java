@@ -77,7 +77,7 @@ public class DownloadBoxJobServiceTest {
     @Test
     public void createJob_DownloadBoxJobGiven_ShouldReturnSavedDownloadBoxJob() {
 
-        final EgaFile egaFile = new EgaFile(EMPTY_STRING, EMPTY_STRING, EMPTY_STRING);
+        final EgaFile egaFile = new EgaFile(EMPTY_STRING, EMPTY_STRING, EMPTY_STRING, EMPTY_STRING);
         final List<EgaFile> egaFiles = Arrays.asList(egaFile);
         final DownloadBox downloadBox = new DownloadBox();
         downloadBox.setPath(EMPTY_STRING);
@@ -117,7 +117,7 @@ public class DownloadBoxJobServiceTest {
         downloadBoxJob.setAssignedDownloadBox(downloadBoxAssignation);
         downloadBoxJob.setDatasetId(EMPTY_STRING);
 
-        final EgaFile egaFile = new EgaFile(EMPTY_STRING, EMPTY_STRING, EMPTY_STRING);
+        final EgaFile egaFile = new EgaFile(EMPTY_STRING, EMPTY_STRING, EMPTY_STRING, EMPTY_STRING);
         final DownloadBoxFileJob downloadBoxFileJob = new DownloadBoxFileJob(downloadBoxJob, egaFile);
         final HistoricDownloadBoxJob historicDownloadBoxJob = new HistoricDownloadBoxJob(downloadBoxJob);
 

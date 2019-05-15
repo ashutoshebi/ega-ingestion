@@ -39,6 +39,7 @@ public class FileExtensionUtils {
     static {
         possibleExtensions = new HashMap<>();
         possibleExtensions.put("bam", BAM);
+        possibleExtensions.put("bim", BINARY);
         possibleExtensions.put("cram", CRAM);
         possibleExtensions.put("cip", ENCRYPTED);
         possibleExtensions.put("gpg", ENCRYPTED);
@@ -48,6 +49,7 @@ public class FileExtensionUtils {
         possibleExtensions.put("rar", COMPRESSED);
         possibleExtensions.put("zip", COMPRESSED);
         possibleExtensions.put("7zip", COMPRESSED);
+        possibleExtensions.put("fam", PLAIN_TEXT);
         possibleExtensions.put("fastq", FASTA);
         possibleExtensions.put("fasta", FASTA);
         possibleExtensions.put("fas", FASTA);
@@ -92,9 +94,18 @@ public class FileExtensionUtils {
         return String.join(".", (String[]) ArrayUtils.subarray(nameChunks, i, nameChunks.length));
     }
 
+
+    public static String getEncryptionExtension(String fileExtensionWithEncryption) {
+        if (fileExtensionWithEncryption.endsWith("gpg") || fileExtensionWithEncryption.endsWith("cip")) {
+            return fileExtensionWithEncryption.substring(fileExtensionWithEncryption.length() - 3);
+        }
+        return null;
+    }
+
     public static String removeEncryptionExtension(String filenameWithExtensions) {
-        if (filenameWithExtensions.endsWith(".gpg") || filenameWithExtensions.endsWith(".cip")) {
-            return filenameWithExtensions.substring(0, filenameWithExtensions.length() - 4);
+        if (filenameWithExtensions.endsWith("gpg") || filenameWithExtensions.endsWith("cip")) {
+            int itr = filenameWithExtensions.length() > 3 ? 4 : 3;
+            return filenameWithExtensions.substring(0, filenameWithExtensions.length() - itr);
         }
         return filenameWithExtensions;
     }

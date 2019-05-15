@@ -18,6 +18,7 @@
 package uk.ac.ebi.ega.file.re.encryption.processor.services;
 
 import org.springframework.kafka.core.KafkaTemplate;
+import uk.ac.ebi.ega.encryption.core.services.IPasswordEncryptionService;
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.Job;
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.JobExecution;
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.JobExecutor;
@@ -34,6 +35,8 @@ public class ReEncryptService extends JobExecutor implements IReEncryptService {
 
     private static final String RE_ENCRYPT_JOB = "re-encrypt-job";
 
+    private IPasswordEncryptionService passwordService;
+
     private IMailingService mailingService;
 
     private String reportTo;
@@ -43,11 +46,13 @@ public class ReEncryptService extends JobExecutor implements IReEncryptService {
     private String completeJobTopic;
 
     public ReEncryptService(ExecutorPersistenceService persistenceService,
+                            IPasswordEncryptionService passwordService,
                             IMailingService mailingService, String reportTo,
                             Job<ReEncryptJobParameters> job,
                             KafkaTemplate<String, ReEncryptComplete> kafkaTemplate,
                             String completeJobTopic) {
         super(persistenceService);
+        this.passwordService = passwordService;
         this.mailingService = mailingService;
         this.reportTo = reportTo;
         this.kafkaTemplate = kafkaTemplate;
@@ -57,9 +62,9 @@ public class ReEncryptService extends JobExecutor implements IReEncryptService {
 
     @Override
     public Optional<JobExecution<ReEncryptJobParameters>> createJob(String id, String dosId, String resultPath,
-                                                                    char[] resultPassword) {
+                                                                    String encryptedPassword) {
         return assignExecution(id, RE_ENCRYPT_JOB,
-                new ReEncryptJobParameters(dosId, resultPath, resultPassword));
+                new ReEncryptJobParameters(passwordService, dosId, resultPath + ".cip", encryptedPassword));
     }
 
     @Override

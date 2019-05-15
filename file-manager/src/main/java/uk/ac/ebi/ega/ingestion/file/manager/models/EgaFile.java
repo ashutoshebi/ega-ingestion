@@ -25,10 +25,13 @@ public class EgaFile {
 
     private String fileExtension;
 
-    public EgaFile(String id, String dosId, String fileExtension) {
+    private String fileEncryptionExtension;
+
+    public EgaFile(String id, String dosId, String fileExtension, String fileEncryptionExtension) {
         this.id = id;
         this.dosId = dosId;
         this.fileExtension = fileExtension;
+        this.fileEncryptionExtension = fileEncryptionExtension;
     }
 
     public String getId() {
@@ -41,6 +44,10 @@ public class EgaFile {
 
     public String getFileExtension() {
         return fileExtension;
+    }
+
+    public String getFileEncryptionExtension() {
+        return fileEncryptionExtension;
     }
 
 }

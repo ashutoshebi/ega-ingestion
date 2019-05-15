@@ -44,11 +44,12 @@ public abstract class JdkEncryptionAlgorithm implements EncryptionAlgorithm {
         return new CipherInputStream(inputStream, getCipher(Cipher.DECRYPT_MODE));
     }
 
-    public byte[] encrypt(char[] password, char[] content) throws AlgorithmInitializationException {
+    public byte[] encrypt(char[] password, byte[] content) throws AlgorithmInitializationException {
         try (final ByteArrayOutputStream outputStream = new ByteArrayOutputStream(content.length)) {
             initializeWrite(password, outputStream);
             try (OutputStream encryptStream = new CipherOutputStream(outputStream, getCipher(Cipher.ENCRYPT_MODE))) {
-                encryptStream.write(IOUtils.convertToBytes(content));
+                encryptStream.write(content);
+                encryptStream.flush();
             }
             outputStream.flush();
             outputStream.close();

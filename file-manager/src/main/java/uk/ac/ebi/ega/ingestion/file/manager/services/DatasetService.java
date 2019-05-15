@@ -23,6 +23,7 @@ import uk.ac.ebi.ega.ingestion.file.manager.models.EgaFile;
 
 import java.util.Collection;
 
+import static uk.ac.ebi.ega.ingestion.file.manager.utils.FileExtensionUtils.getEncryptionExtension;
 import static uk.ac.ebi.ega.ingestion.file.manager.utils.FileExtensionUtils.getFileExtension;
 import static uk.ac.ebi.ega.ingestion.file.manager.utils.FileExtensionUtils.removeEncryptionExtension;
 
@@ -43,8 +44,10 @@ public class DatasetService implements IDatasetService {
         parameters.addValue("dataset_stableId", datasetId);
         return jdbcTemplate.query(sql, parameters, (resultSet, i) -> {
                     String dosId = normalizeFirePath(resultSet.getString("file_name"));
-                    String fileExtension = removeEncryptionExtension(getFileExtension(dosId));
-                    return new EgaFile(resultSet.getString("stable_id"), dosId, fileExtension);
+                    final String extensionWithEncryption = getFileExtension(dosId);
+                    String extension = removeEncryptionExtension(extensionWithEncryption);
+                    String encryptionExtension = getEncryptionExtension(extensionWithEncryption);
+                    return new EgaFile(resultSet.getString("stable_id"), dosId, extension, encryptionExtension);
                 }
         );
     }

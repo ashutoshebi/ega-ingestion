@@ -57,7 +57,6 @@ public class ReEncryptJob implements Job<ReEncryptJobParameters> {
     public ReEncryptJob(IFireService fireService, char[] password) {
         this.fireService = fireService;
         this.password = password;
-        ;
     }
 
     @Override
@@ -67,10 +66,17 @@ public class ReEncryptJob implements Job<ReEncryptJobParameters> {
             final IFireFile inputFile = fireService.getFile(parameters.getDosId());
             final File outputFile = getOutputFile(parameters.getResultPath());
 
+            char[] newPassword;
+            try {
+                newPassword = parameters.getPassword();
+            } catch (AlgorithmInitializationException e) {
+                return Result.abort("Password could not be decrypted correctly", e, start);
+            }
+
             try (DecryptInputStream decryptStream = new DecryptInputStream(inputFile.getStream(), new AesCtr256Ega(),
                     password);
                  EncryptOutputStream encryptOutputStream = new EncryptOutputStream(new FileOutputStream(outputFile),
-                         new AesCtr256Ega(), parameters.getResultPassword());
+                         new AesCtr256Ega(), newPassword)
             ) {
                 logger.info("File size {}", FileUtils.normalizeSize(inputFile.getSize()));
                 byte[] buffer = new byte[8192];

@@ -26,7 +26,7 @@ import java.util.Optional;
 public interface IReEncryptService {
 
     Optional<JobExecution<ReEncryptJobParameters>> createJob(String id, String dosId, String resultPath,
-                                                             char[] resultPassword);
+                                                             String encryptedPassword);
 
     Result reEncrypt(JobExecution<ReEncryptJobParameters> jobExecution);
 

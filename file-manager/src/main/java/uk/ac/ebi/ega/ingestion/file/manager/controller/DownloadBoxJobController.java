@@ -17,6 +17,8 @@
  */
 package uk.ac.ebi.ega.ingestion.file.manager.controller;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
@@ -30,6 +32,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
+import uk.ac.ebi.ega.encryption.core.encryption.exceptions.AlgorithmInitializationException;
+import uk.ac.ebi.ega.encryption.core.services.IPasswordEncryptionService;
 import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileJobNotFound;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.DownloadBoxJob;
 import uk.ac.ebi.ega.ingestion.file.manager.services.IDownloadBoxJobService;
@@ -40,22 +44,27 @@ import javax.validation.Valid;
 @RepositoryRestController
 public class DownloadBoxJobController implements ApplicationEventPublisherAware {
 
+    private final Logger logger = LoggerFactory.getLogger(DownloadBoxJobController.class);
+
     @Autowired
     private IDownloadBoxJobService service;
 
     @Autowired
     private IKeyGenerator passwordGenerator;
 
+    @Autowired
+    private IPasswordEncryptionService passwordEncryptionService;
+
     private ApplicationEventPublisher publisher;
 
     @PostMapping(value = "/downloadBoxJobs")
     @ResponseBody
     public PersistentEntityResource postDownloadBox(@Valid @RequestBody Resource<DownloadBoxJob> downloadBoxJobResource,
-                                                    PersistentEntityResourceAssembler assembler) {
+                                                    PersistentEntityResourceAssembler assembler)
+            throws AlgorithmInitializationException {
         DownloadBoxJob downloadBoxJob = downloadBoxJobResource.getContent();
-        if (downloadBoxJob.getPassword() == null) {
-            downloadBoxJob.setPassword(new String(passwordGenerator.generateKey()));
-        }
+        downloadBoxJob.setPassword(passwordEncryptionService.encrypt(passwordGenerator.generateKey()));
+
         publisher.publishEvent(new BeforeCreateEvent(downloadBoxJob));
         downloadBoxJob = service.createJob(downloadBoxJob);
         publisher.publishEvent(new AfterCreateEvent(downloadBoxJob));

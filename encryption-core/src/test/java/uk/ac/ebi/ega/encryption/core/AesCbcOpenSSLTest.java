@@ -66,7 +66,7 @@ public class AesCbcOpenSSLTest {
     public void testEncryptDecryptCharArray() throws AlgorithmInitializationException {
         AesCbcOpenSSL aesCbcOpenSSL = new AesCbcOpenSSL();
         aesCbcOpenSSL.setFixedSalt(DatatypeConverter.parseHexBinary("B392A696565D0728"));
-        final byte[] encryptedBytes = aesCbcOpenSSL.encrypt("kiwi".toCharArray(), "test file.\n".toCharArray());
+        final byte[] encryptedBytes = aesCbcOpenSSL.encrypt("kiwi".toCharArray(), "test file.\n".getBytes());
         final char[] decrypt = aesCbcOpenSSL.decrypt("kiwi".toCharArray(), encryptedBytes, UTF_8);
         assertEquals("test file.\n", new String(decrypt));
     }
