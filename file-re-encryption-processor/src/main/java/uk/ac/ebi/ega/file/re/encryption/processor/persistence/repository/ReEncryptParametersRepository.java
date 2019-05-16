@@ -18,10 +18,8 @@
 package uk.ac.ebi.ega.file.re.encryption.processor.persistence.repository;
 
 import org.springframework.data.repository.CrudRepository;
-import org.springframework.transaction.annotation.Transactional;
 import uk.ac.ebi.ega.file.re.encryption.processor.persistence.entity.ReEncryptParametersEntity;
 
-@Transactional
 public interface ReEncryptParametersRepository extends CrudRepository<ReEncryptParametersEntity, String> {
 
 }
