@@ -20,8 +20,9 @@ package uk.ac.ebi.ega.ingestion.file.manager.services;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.transaction.annotation.Transactional;
 import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileJobNotFound;
-import uk.ac.ebi.ega.ingestion.file.manager.message.DownloadBoxFileProcess;
+import uk.ac.ebi.ega.ingestion.file.manager.kafka.message.DownloadBoxFileProcess;
 import uk.ac.ebi.ega.ingestion.file.manager.models.EgaFile;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.DownloadBoxFileJob;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.DownloadBoxJob;
@@ -74,13 +75,16 @@ public class DownloadBoxJobService implements IDownloadBoxJobService {
     }
 
     @Override
+    @Transactional(transactionManager = "fileManager_transactionManager")
     public DownloadBoxJob createJob(DownloadBoxJob downloadBoxJob) {
+        // TODO createJob should only send the jobs to kafka if they have been created successfully into the database
+        // the creation should be transactional.
         final Collection<EgaFile> files = datasetService.getFiles(downloadBoxJob.getDatasetId());
         downloadBoxJob.setProcessedFiles(0);
         downloadBoxJob.setTotalFiles(files.size());
         final DownloadBoxJob savedDownloadBoxJob = boxJobRepository.save(downloadBoxJob);
         files.stream().forEach(egaFile -> {
-            DownloadBoxFileJob downloadBoxFileJob = new DownloadBoxFileJob(savedDownloadBoxJob,egaFile);
+            DownloadBoxFileJob downloadBoxFileJob = new DownloadBoxFileJob(savedDownloadBoxJob, egaFile);
             boxFileJobRepository.save(downloadBoxFileJob);
             kafkaTemplate.send(downloadBoxQueueName, downloadBoxFileJob.getId(),
                     new DownloadBoxFileProcess(savedDownloadBoxJob, downloadBoxFileJob));
@@ -89,8 +93,11 @@ public class DownloadBoxJobService implements IDownloadBoxJobService {
     }
 
     @Override
-    public synchronized void finishFileJob(long id) throws FileJobNotFound {
+    @Transactional(transactionManager = "fileManager_transactionManager")
+    public synchronized void finishFileJob(String id, String message, LocalDateTime start, LocalDateTime finish)
+            throws FileJobNotFound {
         DownloadBoxFileJob downloadBoxFileJob = boxFileJobRepository.findById(id).orElseThrow(FileJobNotFound::new);
+
         downloadBoxFileJob.finish(LocalDateTime.now(), LocalDateTime.now());
         boxFileJobRepository.save(downloadBoxFileJob);
         logger.info("DownloadBoxFileJob with id '{}' has finished.", downloadBoxFileJob.getId());

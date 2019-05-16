@@ -17,19 +17,15 @@
  */
 package uk.ac.ebi.ega.ingestion.file.manager.services;
 
-import org.springframework.transaction.annotation.Transactional;
 import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileJobNotFound;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.DownloadBoxJob;
 
-//TODO createJob database operations should be put into an internal service to isolate the transactions so that only
-// if the jobs have been created properly, then we send the messages to kafka, ideally, for consistence purposes so
-// would be finish job.
+import java.time.LocalDateTime;
+
 public interface IDownloadBoxJobService {
 
-    @Transactional(transactionManager = "fileManager_transactionManager")
     DownloadBoxJob createJob(DownloadBoxJob downloadBoxJob);
 
-    @Transactional(transactionManager = "fileManager_transactionManager")
-    void finishFileJob(long id) throws FileJobNotFound;
+    void finishFileJob(String id, String message, LocalDateTime start, LocalDateTime finish) throws FileJobNotFound;
 
 }

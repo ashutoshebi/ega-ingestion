@@ -26,7 +26,7 @@ import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.JobStatus;
 import java.util.stream.Stream;
 
 @RepositoryRestResource
-public interface DownloadBoxFileJobRepository extends CrudRepository<DownloadBoxFileJob, Long> {
+public interface DownloadBoxFileJobRepository extends CrudRepository<DownloadBoxFileJob, String> {
 
     long countByDownloadBoxJobAndAndStatus(DownloadBoxJob job, JobStatus status);
 

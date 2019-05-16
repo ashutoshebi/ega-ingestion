@@ -65,6 +65,7 @@ public class HistoricDownloadBoxFileJob {
         this.id = downloadBoxFileJob.getId();
         this.downloadBoxJob = historicDownloadBoxJob;
         this.fileId = downloadBoxFileJob.getFileId();
+        this.fileExtension = downloadBoxFileJob.getFileExtension();
         this.dosId = downloadBoxFileJob.getDosId();
         this.processStart = downloadBoxFileJob.getProcessStart();
         this.processEnd = downloadBoxFileJob.getProcessEnd();

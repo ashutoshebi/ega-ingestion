@@ -24,14 +24,20 @@ import org.mockito.Mock;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileJobNotFound;
-import uk.ac.ebi.ega.ingestion.file.manager.message.DownloadBoxFileProcess;
+import uk.ac.ebi.ega.ingestion.file.manager.kafka.message.DownloadBoxFileProcess;
 import uk.ac.ebi.ega.ingestion.file.manager.models.EgaFile;
-import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.*;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.DownloadBox;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.DownloadBoxAssignation;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.DownloadBoxFileJob;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.DownloadBoxJob;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.HistoricDownloadBoxFileJob;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.HistoricDownloadBoxJob;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.DownloadBoxFileJobRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.DownloadBoxJobRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.HistoricDownloadBoxFileJobRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.HistoricDownloadBoxJobRepository;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -121,7 +127,7 @@ public class DownloadBoxJobServiceTest {
         final DownloadBoxFileJob downloadBoxFileJob = new DownloadBoxFileJob(downloadBoxJob, egaFile);
         final HistoricDownloadBoxJob historicDownloadBoxJob = new HistoricDownloadBoxJob(downloadBoxJob);
 
-        when(boxFileJobRepository.findById(any(Long.class))).thenReturn(Optional.ofNullable(downloadBoxFileJob));
+        when(boxFileJobRepository.findById(any(String.class))).thenReturn(Optional.ofNullable(downloadBoxFileJob));
         when(boxFileJobRepository.save(any(DownloadBoxFileJob.class))).thenReturn(null);
         when(historicBoxJobRepository.save(any(HistoricDownloadBoxJob.class))).thenReturn(historicDownloadBoxJob);
 
@@ -133,7 +139,7 @@ public class DownloadBoxJobServiceTest {
         doNothing().when(boxJobRepository).delete(any(DownloadBoxJob.class));
         doNothing().when(mailingService).sendDownloadBoxFinishedMail(any(DownloadBoxJob.class));
 
-        downloadBoxJobService.finishFileJob(Long.valueOf(0));
+        downloadBoxJobService.finishFileJob(EMPTY_STRING, null, LocalDateTime.now(), LocalDateTime.now());
     }
 
     /***** Negative Scenarios Test Cases *****/
@@ -146,8 +152,8 @@ public class DownloadBoxJobServiceTest {
     @Test(expected = FileJobNotFound.class)
     public void finishFileJob_IdWrongGiven_ShouldThrowFileJobNotFoundException() throws FileJobNotFound {
 
-        when(boxFileJobRepository.findById(any(Long.class))).thenReturn(Optional.empty());
+        when(boxFileJobRepository.findById(any(String.class))).thenReturn(Optional.empty());
 
-        downloadBoxJobService.finishFileJob(Long.valueOf(0));
+        downloadBoxJobService.finishFileJob(EMPTY_STRING, null, LocalDateTime.now(), LocalDateTime.now());
     }
 }

@@ -25,4 +25,6 @@ public interface IMailingService {
 
     void sendSimpleMessage(String to, String subject, String text);
 
+    void reportError(String subject, Exception e);
+
 }

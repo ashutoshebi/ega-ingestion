@@ -76,10 +76,4 @@ public class DownloadBoxJobController implements ApplicationEventPublisherAware 
         this.publisher = applicationEventPublisher;
     }
 
-    @PostMapping(value = "/downloadBoxJobs/{id}/finished")
-    @ResponseBody
-    public String downloadBoxFileJobFinished(@Valid @PathVariable long id) throws FileJobNotFound {
-        service.finishFileJob(id);
-        return "OK";
-    }
 }
