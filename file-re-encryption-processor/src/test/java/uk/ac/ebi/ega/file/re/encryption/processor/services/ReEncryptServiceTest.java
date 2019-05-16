@@ -61,7 +61,6 @@ public class ReEncryptServiceTest {
     @Mock
     private ReEncryptParametersRepository reEncryptParametersRepository;
 
-    private ReEncryptJobParameterService reEncryptJobParameterService;
     private ReEncryptService reEncryptService;
 
     private static final String EMPTY_STRING = "";
@@ -73,13 +72,11 @@ public class ReEncryptServiceTest {
     @Before
     public void init() {
 
-        reEncryptJobParameterService = new ReEncryptJobParameterService(reEncryptParametersRepository);
+        final ReEncryptJobParameterService reEncryptJobParameterService = new ReEncryptJobParameterService(reEncryptParametersRepository);
         MockitoAnnotations.initMocks(reEncryptJobParameterService);
 
         final IMailingService mailingService = Mockito.mock(IMailingService.class);
-        final Job<ReEncryptJobParameters> job = new ReEncryptJob(dosId -> {
-            return new LocalStorageFile("b2e6283b2044de260d6df0e854cd3fa2", BASE_PATH + "test_file.txt.gpg");
-        }, PASSWORD.toCharArray());
+        final Job<ReEncryptJobParameters> job = new ReEncryptJob(dosId -> new LocalStorageFile("b2e6283b2044de260d6df0e854cd3fa2", BASE_PATH + "test_file.txt.gpg"), PASSWORD.toCharArray());
 
         final KafkaTemplate<String, ReEncryptComplete> kafkaTemplate = Mockito.mock(KafkaTemplate.class);
         final ReEncryptPersistenceService reEncryptPersistenceService = new ReEncryptPersistenceService(jobExecutionRepository, jobRunRepository, EMPTY_STRING, reEncryptJobParameterService);
@@ -101,7 +98,7 @@ public class ReEncryptServiceTest {
     public void reEncrypt_SuppliedCorrectArgument_ExecutesSuccessfully() {
 
         final ReEncryptJobParameters reEncryptJobParameters = new ReEncryptJobParameters(EMPTY_STRING, new File(BASE_PATH + REENCRYPT_FILE_NAME).getAbsolutePath(), PASSWORD.toCharArray());
-        final JobExecution<ReEncryptJobParameters> jobExecution = new JobExecution(EMPTY_STRING, JOB_NAME, reEncryptJobParameters);
+        final JobExecution<ReEncryptJobParameters> jobExecution = new JobExecution<>(EMPTY_STRING, JOB_NAME, reEncryptJobParameters);
 
         when(jobRunRepository.save(any(JobRun.class))).thenReturn(new JobRun());
 
@@ -113,11 +110,10 @@ public class ReEncryptServiceTest {
     @Test
     public void getUnfinishedJob_ExecutesSuccessfullyAndReturnsUnfinishedJob() {
 
-        when(jobExecutionRepository.findByInstanceId(anyString())).thenReturn(Optional.ofNullable(new JobExecutionEntity(EMPTY_STRING, EMPTY_STRING, EMPTY_STRING)));
-
         final ReEncryptParametersEntity reEncryptParametersEntity = new ReEncryptParametersEntity(EMPTY_STRING, EMPTY_STRING, EMPTY_STRING, EMPTY_STRING);
 
-        when(reEncryptParametersRepository.findById(anyString())).thenReturn(Optional.ofNullable(reEncryptParametersEntity));
+        when(jobExecutionRepository.findByInstanceId(anyString())).thenReturn(Optional.of(new JobExecutionEntity(EMPTY_STRING, EMPTY_STRING, EMPTY_STRING)));
+        when(reEncryptParametersRepository.findById(anyString())).thenReturn(Optional.of(reEncryptParametersEntity));
 
         final Optional<JobExecution<ReEncryptJobParameters>> jobExecutionOptional = reEncryptService.getUnfinishedJob();
 
