@@ -59,14 +59,8 @@ public class JobExecutor {
 
         final Class<? extends JobParameters> parameterClass = jobParameters.getClass();
 
-        if (!isJobAlreadyRegistered(jobName, jobParameters)) {
+        if (isJobNotYetRegistered(jobName, jobParameters)) {
             logger.warn("Job with name {} and parameterClass {} is not yet registered, skipping execution assignment.",
-                    jobName, parameterClass);
-            return Optional.empty();
-        }
-
-        if (isJobAlreadyRegistered(jobName, jobParameters)) {
-            logger.warn("Job with name {} and parameterClass {} is already registered, skipping execution assignment.",
                     jobName, parameterClass);
             return Optional.empty();
         }
@@ -124,10 +118,10 @@ public class JobExecutor {
         return result;
     }
 
-    private <T extends JobParameters> boolean isJobAlreadyRegistered(final String jobName, final T jobParameters) {
+    private <T extends JobParameters> boolean isJobNotYetRegistered(final String jobName, final T jobParameters) {
         final Class<T> parameterClass = (Class<T>) jobParameters.getClass();
         final Job<T> job = getJob(jobName, parameterClass);
-        return job != null;
+        return job == null;
     }
 
     private <T extends JobParameters> boolean isExecutionAlreadyAssigned(final String jobName, final T jobParameters) {
