@@ -52,7 +52,8 @@ public class MailingService implements IMailingService {
             password = passwordEncryptionService.decrypt(job.getPassword());
         } catch (AlgorithmInitializationException e) {
             //TODO this should never happen
-
+            logger.error(e.getMessage(), e);
+            reportError("Error while decrypting database password", e);
         }
 
         String subject = String.format(
