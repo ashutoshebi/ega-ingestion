@@ -56,6 +56,27 @@ public class JobExecutor {
                                                                                T jobParameters) {
         // TODO improve error checking maybe add a method to ask if the job exists in the register with the type and
         //  return the optional empty in that case?
+
+        final Class<? extends JobParameters> parameterClass = jobParameters.getClass();
+
+        if (!isJobAlreadyRegistered(jobName, jobParameters)) {
+            logger.warn("Job with name {} and parameterClass {} is not yet registered, skipping execution assignment.",
+                    jobName, parameterClass);
+            return Optional.empty();
+        }
+
+        if (isJobAlreadyRegistered(jobName, jobParameters)) {
+            logger.warn("Job with name {} and parameterClass {} is already registered, skipping execution assignment.",
+                    jobName, parameterClass);
+            return Optional.empty();
+        }
+
+        if (isExecutionAlreadyAssigned(jobName, jobParameters)) {
+            logger.warn("Job (or Execution?) with name {} and parameterClass {} is already assigned, " +
+                            "skipping execution assignment.", jobName, parameterClass);
+            return Optional.empty();
+        }
+
         try {
             persistenceService.assignExecution(jobId, jobName, jobParameters);
             return Optional.of(new JobExecution<>(jobId, jobName, jobParameters));
@@ -72,6 +93,11 @@ public class JobExecutor {
     public <T extends JobParameters> Result execute(JobExecution<T> jobExecution) throws JobNotRegistered {
         // TODO improve error checking
         final Job<T> job = getJob(jobExecution.getJobName(), (Class<T>) jobExecution.getJobParameters().getClass());
+
+        if (job == null) {
+            throw new JobNotRegistered(jobExecution.getJobId());
+        }
+
         logger.info("Executing job {}", jobExecution.getJobId());
         Result result = null;
         final Delayer delayer = Delayer.create(delayConfiguration);
@@ -96,6 +122,16 @@ public class JobExecutor {
         final Result result = job.execute(jobExecution.getJobParameters());
         persistenceService.saveResult(jobExecution.getJobId(), result);
         return result;
+    }
+
+    private <T extends JobParameters> boolean isJobAlreadyRegistered(final String jobName, final T jobParameters) {
+        final Class<T> parameterClass = (Class<T>) jobParameters.getClass();
+        final Job<T> job = getJob(jobName, parameterClass);
+        return job != null;
+    }
+
+    private <T extends JobParameters> boolean isExecutionAlreadyAssigned(final String jobName, final T jobParameters) {
+        return getAssignedExecution(jobName, jobParameters.getClass()).isPresent();
     }
 
 }
