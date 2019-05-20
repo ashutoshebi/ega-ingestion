@@ -19,18 +19,17 @@ package uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.services;
 
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.JobParameters;
 
-import javax.validation.constraints.NotNull;
 import java.util.Objects;
 
 public class JobDefinition {
 
     private String name;
 
-    private Class<? extends JobParameters> parameterClass;
+    private final Class<? extends JobParameters> parameterClass;
 
-    public JobDefinition(@NotNull String name, @NotNull Class<? extends JobParameters> parameterClass) {
-        this.name = name;
-        this.parameterClass = parameterClass;
+    public JobDefinition(String name, Class<? extends JobParameters> parameterClass) {
+        this.name = Objects.requireNonNull(name);
+        this.parameterClass = Objects.requireNonNull(parameterClass);
     }
 
     @Override

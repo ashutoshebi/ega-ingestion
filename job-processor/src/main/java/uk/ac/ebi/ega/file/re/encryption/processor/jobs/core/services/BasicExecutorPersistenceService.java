@@ -33,13 +33,13 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class BasicExecutorPersistenceService implements ExecutorPersistenceService {
 
-    private JobExecutionRepository jobExecutionRepository;
+    private final JobExecutionRepository jobExecutionRepository;
 
-    private JobRunRepository jobRunRepository;
+    private final JobRunRepository jobRunRepository;
 
     private String instanceId;
 
-    private Map<JobDefinition, JobParameterService> parameterServices;
+    private final Map<JobDefinition, JobParameterService> parameterServices;
 
     public BasicExecutorPersistenceService(JobExecutionRepository jobExecutionRepository,
                                            JobRunRepository jobRunRepository,

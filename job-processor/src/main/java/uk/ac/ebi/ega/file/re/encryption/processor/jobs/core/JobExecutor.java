@@ -33,9 +33,9 @@ public class JobExecutor {
 
     private final Logger logger = LoggerFactory.getLogger(JobExecutor.class);
 
-    private Map<JobDefinition, Job> jobMap;
+    private final Map<JobDefinition, Job> jobMap;
 
-    private ExecutorPersistenceService persistenceService;
+    private final ExecutorPersistenceService persistenceService;
 
     public JobExecutor(ExecutorPersistenceService persistenceService) {
         this.persistenceService = persistenceService;
