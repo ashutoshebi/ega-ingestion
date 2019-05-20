@@ -15,32 +15,15 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.file.re.encryption.processor.jobs.core;
+package uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.persistence.repository;
 
-public class JobExecution<T extends JobParameters> {
+import org.springframework.data.repository.CrudRepository;
+import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.persistence.entity.JobExecutionEntity;
 
-    private String jobId;
+import java.util.Optional;
 
-    private String jobName;
+public interface JobExecutionRepository extends CrudRepository<JobExecutionEntity, String> {
 
-    private T jobParameters;
-
-    public JobExecution(String jobId, String jobName, T jobParameters) {
-        this.jobId = jobId;
-        this.jobName = jobName;
-        this.jobParameters = jobParameters;
-    }
-
-    public String getJobId() {
-        return jobId;
-    }
-
-    public String getJobName() {
-        return jobName;
-    }
-
-    public T getJobParameters() {
-        return jobParameters;
-    }
+    Optional<JobExecutionEntity> findByInstanceId(String instanceId);
 
 }

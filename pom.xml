@@ -32,6 +32,7 @@
         <module>fire-core</module>
         <module>file-manager</module>
         <module>file-re-encryption-processor</module>
+        <module>job-processor</module>
     </modules>
 
     <dependencyManagement>
