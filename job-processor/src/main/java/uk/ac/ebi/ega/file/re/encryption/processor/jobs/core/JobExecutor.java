@@ -53,21 +53,18 @@ public class JobExecutor {
     }
 
     public <T extends JobParameters> Optional<JobExecution<T>> assignExecution(String jobId, String jobName,
-                                                                               T jobParameters) {
-        // TODO improve error checking maybe add a method to ask if the job exists in the register with the type and
-        //  return the optional empty in that case?
-
+                                                                               T jobParameters) throws JobNotRegistered {
         final Class<? extends JobParameters> parameterClass = jobParameters.getClass();
 
-        if (isJobNotYetRegistered(jobName, jobParameters)) {
-            logger.warn("Job with name {} and parameterClass {} is not yet registered, skipping execution assignment.",
+        if (isJobNotYetRegistered(jobName, parameterClass)) {
+            logger.error("Fatal error: Job with name {} and parameterClass {} is not yet registered.",
                     jobName, parameterClass);
-            return Optional.empty();
+            throw new JobNotRegistered(jobId);
         }
 
         if (isExecutionAlreadyAssigned(jobName, jobParameters)) {
-            logger.warn("Job (or Execution?) with name {} and parameterClass {} is already assigned, " +
-                            "skipping execution assignment.", jobName, parameterClass);
+            logger.debug("JobExecution with name {} and parameterClass {} is already assigned, " +
+                    "skipping execution assignment.", jobName, parameterClass);
             return Optional.empty();
         }
 
@@ -85,7 +82,6 @@ public class JobExecutor {
     }
 
     public <T extends JobParameters> Result execute(JobExecution<T> jobExecution) throws JobNotRegistered {
-        // TODO improve error checking
         final Job<T> job = getJob(jobExecution.getJobName(), (Class<T>) jobExecution.getJobParameters().getClass());
 
         if (job == null) {
@@ -118,8 +114,7 @@ public class JobExecutor {
         return result;
     }
 
-    private <T extends JobParameters> boolean isJobNotYetRegistered(final String jobName, final T jobParameters) {
-        final Class<T> parameterClass = (Class<T>) jobParameters.getClass();
+    private <T extends JobParameters> boolean isJobNotYetRegistered(final String jobName, final Class<T> parameterClass) {
         final Job<T> job = getJob(jobName, parameterClass);
         return job == null;
     }
