@@ -19,6 +19,7 @@ package uk.ac.ebi.ega.file.re.encryption.processor.services;
 
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.JobExecution;
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.Result;
+import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.exceptions.JobNotRegistered;
 import uk.ac.ebi.ega.file.re.encryption.processor.models.ReEncryptJobParameters;
 
 import java.util.Optional;
@@ -26,7 +27,7 @@ import java.util.Optional;
 public interface IReEncryptService {
 
     Optional<JobExecution<ReEncryptJobParameters>> createJob(String id, String dosId, String resultPath,
-                                                             String encryptedPassword);
+                                                             String encryptedPassword) throws JobNotRegistered;
 
     Result reEncrypt(JobExecution<ReEncryptJobParameters> jobExecution);
 

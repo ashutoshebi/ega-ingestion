@@ -29,6 +29,7 @@ import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.JobExecution;
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.Result;
+import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.exceptions.JobNotRegistered;
 import uk.ac.ebi.ega.file.re.encryption.processor.messages.ReEncryptFile;
 import uk.ac.ebi.ega.file.re.encryption.processor.models.ReEncryptJobParameters;
 import uk.ac.ebi.ega.file.re.encryption.processor.services.IReEncryptService;
@@ -53,18 +54,30 @@ public class ReEncryptionEventListener {
                        Acknowledgment acknowledgment) {
         logger.info("Process - key: {} data {}", key, data);
 
-        final Optional<JobExecution<ReEncryptJobParameters>> job =
-                reEncryptService.createJob(key, data.getDosId(), data.getResultPath(), data.getPassword());
+        Optional<JobExecution<ReEncryptJobParameters>> optionalJob = Optional.empty();
+
+        try {
+            optionalJob = reEncryptService.createJob(key, data.getDosId(), data.getResultPath(),
+                    data.getPassword());
+        } catch (JobNotRegistered exception) {
+            exitApplication("Critical error: Job is not registered: " + exception.getMessage());
+        }
+
         acknowledgment.acknowledge();
-        if (job.isPresent()) {
-            final Result result = reEncryptService.reEncrypt(job.get());
+
+        if (optionalJob.isPresent()) {
+            final Result result = reEncryptService.reEncrypt(optionalJob.get());
             if (result.getStatus() == Result.Status.ABORTED) {
-                logger.error("Process was aborted due to critical error. Unexpected application termination");
-                SpringApplication.exit(applicationContext, () -> 1);
+                exitApplication("Process was aborted due to critical error. Unexpected application termination");
             }
         } else {
             logger.info("key: {} is being processed, skip event", key);
         }
+    }
+
+    private void exitApplication(final String message) {
+        logger.error(message);
+        SpringApplication.exit(applicationContext, () -> 1);
     }
 
 }
