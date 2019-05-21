@@ -17,11 +17,14 @@
  */
 package uk.ac.ebi.ega.encryption.core.utils.io;
 
+import java.io.CharArrayWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -53,6 +56,22 @@ public class IOUtils {
     public static void skipFully(InputStream inputStream, long totalBytes) throws IOException {
         while (totalBytes > 0) {
             totalBytes -= inputStream.skip(totalBytes);
+        }
+    }
+
+    public static char[] toCharArray(InputStream input, Charset encoding) throws IOException {
+        try (final CharArrayWriter writer = new CharArrayWriter();
+             final InputStreamReader reader = new InputStreamReader(input, encoding)) {
+            copy(reader, writer);
+            return writer.toCharArray();
+        }
+    }
+
+    private static void copy(InputStreamReader reader, CharArrayWriter writer) throws IOException {
+        char[] buffer = new char[1024];
+        int totalRead;
+        while ((totalRead = reader.read(buffer)) != -1) {
+            writer.write(buffer, 0, totalRead);
         }
     }
 

@@ -23,7 +23,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.mail.javamail.JavaMailSender;
-import uk.ac.ebi.ega.ingestion.file.manager.message.DownloadBoxFileProcess;
+import uk.ac.ebi.ega.encryption.core.services.IPasswordEncryptionService;
+import uk.ac.ebi.ega.encryption.core.services.PasswordEncryptionService;
+import uk.ac.ebi.ega.ingestion.file.manager.kafka.message.DownloadBoxFileProcess;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.DownloadBoxFileJobRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.DownloadBoxJobRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.HistoricDownloadBoxFileJobRepository;
@@ -55,14 +57,21 @@ public class FileManagerConfiguration {
     @Value("${file.manager.download.box.password.size}")
     private int passwordKeySize;
 
+    @Value("${file.manager.encryption.password.encryption.key}")
+    private char[] passwordEncryptionKey;
+
+    @Value("${file.manager.mail.alert}")
+    private String mailAlert;
+
     @Bean
     public IKeyGenerator keyGenerator() {
         return new RandomKeyGenerator(passwordKeySize);
     }
 
     @Bean
-    public IMailingService mailingService(JavaMailSender javaMailSender) {
-        return new MailingService(javaMailSender);
+    public IMailingService mailingService(JavaMailSender javaMailSender,
+                                          IPasswordEncryptionService passwordEncryptionService) {
+        return new MailingService(javaMailSender, passwordEncryptionService, mailAlert);
     }
 
     @Bean
@@ -80,6 +89,11 @@ public class FileManagerConfiguration {
     @Bean
     public IDatasetService datasetService(NamedParameterJdbcTemplate jdbcTemplate) {
         return new DatasetService(jdbcTemplate);
+    }
+
+    @Bean
+    public IPasswordEncryptionService passwordEncryptionService() {
+        return new PasswordEncryptionService(passwordEncryptionKey);
     }
 
 }

@@ -21,6 +21,7 @@ import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.services.JobParamete
 import uk.ac.ebi.ega.file.re.encryption.processor.models.ReEncryptJobParameters;
 import uk.ac.ebi.ega.file.re.encryption.processor.persistence.entity.ReEncryptParametersEntity;
 import uk.ac.ebi.ega.file.re.encryption.processor.persistence.repository.ReEncryptParametersRepository;
+import uk.ac.ebi.ega.encryption.core.services.IPasswordEncryptionService;
 
 import java.util.Optional;
 
@@ -28,14 +29,17 @@ public class ReEncryptJobParameterService implements JobParameterService<ReEncry
 
     private ReEncryptParametersRepository repository;
 
-    public ReEncryptJobParameterService(ReEncryptParametersRepository repository) {
+    private IPasswordEncryptionService passwordService;
+
+    public ReEncryptJobParameterService(ReEncryptParametersRepository repository, IPasswordEncryptionService passwordService) {
         this.repository = repository;
+        this.passwordService = passwordService;
     }
 
     @Override
     public void persist(String jobId, ReEncryptJobParameters jobParameters) {
         repository.save(new ReEncryptParametersEntity(jobId, jobParameters.getResultPath(),
-                jobParameters.getDosId(), new String(jobParameters.getResultPassword())));
+                jobParameters.getDosId(), jobParameters.getEncryptedPassword()));
     }
 
     @Override
@@ -43,8 +47,8 @@ public class ReEncryptJobParameterService implements JobParameterService<ReEncry
         final Optional<ReEncryptParametersEntity> optional = repository.findById(jobId);
         if (optional.isPresent()) {
             final ReEncryptParametersEntity jobParameters = optional.get();
-            return Optional.of(new ReEncryptJobParameters(jobParameters.getDosId(),
-                    jobParameters.getResultPath(), jobParameters.getPassword().toCharArray()));
+            return Optional.of(new ReEncryptJobParameters(passwordService, jobParameters.getDosId(),
+                    jobParameters.getResultPath(), jobParameters.getEncryptedPassword()));
         }
         return Optional.empty();
     }

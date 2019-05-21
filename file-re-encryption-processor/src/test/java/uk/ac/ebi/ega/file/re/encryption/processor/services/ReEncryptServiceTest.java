@@ -25,6 +25,9 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import uk.ac.ebi.ega.encryption.core.encryption.exceptions.AlgorithmInitializationException;
+import uk.ac.ebi.ega.encryption.core.services.IPasswordEncryptionService;
+import uk.ac.ebi.ega.encryption.core.services.PasswordEncryptionService;
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.ReEncryptJob;
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.Job;
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.JobExecution;
@@ -52,6 +55,13 @@ import static org.mockito.Mockito.when;
 @RunWith(SpringJUnit4ClassRunner.class)
 public class ReEncryptServiceTest {
 
+    private static final String EMPTY_STRING = "";
+    private static final String BASE_PATH = "src/test/resources/keyPairTest/";
+    private static final String JOB_NAME = "re-encrypt-job";
+    private static final String RE_ENCRYPT_FILE_NAME = "test_file_reencrypt.txt.gpg";
+    private static final String PASSWORD = "test";
+    public static final char[] PASSWORD_KEY = "test_password".toCharArray();
+
     @Mock
     private JobExecutionRepository jobExecutionRepository;
 
@@ -63,24 +73,23 @@ public class ReEncryptServiceTest {
 
     private ReEncryptService reEncryptService;
 
-    private static final String EMPTY_STRING = "";
-    private static final String BASE_PATH = "src/test/resources/keyPairTest/";
-    private static final String JOB_NAME = "re-encrypt-job";
-    private static final String REENCRYPT_FILE_NAME = "test_file_reencrypt.txt.gpg";
-    private static final String PASSWORD = "test";
 
     @Before
     public void init() {
+        final IPasswordEncryptionService passwordEncryptionService = new PasswordEncryptionService(PASSWORD_KEY);
 
-        final ReEncryptJobParameterService reEncryptJobParameterService = new ReEncryptJobParameterService(reEncryptParametersRepository);
+        final ReEncryptJobParameterService reEncryptJobParameterService = new ReEncryptJobParameterService(
+                reEncryptParametersRepository, passwordEncryptionService);
         MockitoAnnotations.initMocks(reEncryptJobParameterService);
 
         final IMailingService mailingService = Mockito.mock(IMailingService.class);
-        final Job<ReEncryptJobParameters> job = new ReEncryptJob(dosId -> new LocalStorageFile("b2e6283b2044de260d6df0e854cd3fa2", BASE_PATH + "test_file.txt.gpg"), PASSWORD.toCharArray());
+        final Job<ReEncryptJobParameters> job = new ReEncryptJob(dosId -> new LocalStorageFile(
+                "b2e6283b2044de260d6df0e854cd3fa2", BASE_PATH + "test_file.txt.gpg"), EMPTY_STRING.toCharArray());
 
         final KafkaTemplate<String, ReEncryptComplete> kafkaTemplate = Mockito.mock(KafkaTemplate.class);
         final ReEncryptPersistenceService reEncryptPersistenceService = new ReEncryptPersistenceService(jobExecutionRepository, jobRunRepository, EMPTY_STRING, reEncryptJobParameterService);
-        reEncryptService = new ReEncryptService(reEncryptPersistenceService, mailingService, EMPTY_STRING, job, kafkaTemplate, EMPTY_STRING);
+        reEncryptService = new ReEncryptService(reEncryptPersistenceService, passwordEncryptionService, mailingService,
+                EMPTY_STRING, job, kafkaTemplate, EMPTY_STRING);
         MockitoAnnotations.initMocks(reEncryptService);
     }
 
@@ -89,15 +98,18 @@ public class ReEncryptServiceTest {
 
         when(jobExecutionRepository.save(any(JobExecutionEntity.class))).thenReturn(new JobExecutionEntity());
 
-        final Optional<JobExecution<ReEncryptJobParameters>> jobExecutionOptional = reEncryptService.createJob(EMPTY_STRING, EMPTY_STRING, EMPTY_STRING, new char[0]);
+        final Optional<JobExecution<ReEncryptJobParameters>> jobExecutionOptional = reEncryptService.createJob(EMPTY_STRING, EMPTY_STRING, EMPTY_STRING, EMPTY_STRING);
 
         assertTrue(jobExecutionOptional.isPresent());
     }
 
     @Test
-    public void reEncrypt_SuppliedCorrectArgument_ExecutesSuccessfully() {
+    public void reEncrypt_SuppliedCorrectArgument_ExecutesSuccessfully() throws AlgorithmInitializationException {
+        final IPasswordEncryptionService passwordEncryptionService = new PasswordEncryptionService(PASSWORD_KEY);
+        String encryptedPassword = passwordEncryptionService.encrypt(PASSWORD.toCharArray());
 
-        final ReEncryptJobParameters reEncryptJobParameters = new ReEncryptJobParameters(EMPTY_STRING, new File(BASE_PATH + REENCRYPT_FILE_NAME).getAbsolutePath(), PASSWORD.toCharArray());
+        final ReEncryptJobParameters reEncryptJobParameters = new ReEncryptJobParameters(passwordEncryptionService,
+                EMPTY_STRING, new File(BASE_PATH + RE_ENCRYPT_FILE_NAME).getAbsolutePath(), encryptedPassword);
         final JobExecution<ReEncryptJobParameters> jobExecution = new JobExecution<>(EMPTY_STRING, JOB_NAME, reEncryptJobParameters);
 
         when(jobRunRepository.save(any(JobRun.class))).thenReturn(new JobRun());

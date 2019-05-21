@@ -15,16 +15,16 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.ingestion.file.manager.services;
+package uk.ac.ebi.ega.encryption.core.services;
 
-import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.DownloadBoxJob;
+import uk.ac.ebi.ega.encryption.core.encryption.exceptions.AlgorithmInitializationException;
 
-public interface IMailingService {
+public interface IPasswordEncryptionService {
 
-    void sendDownloadBoxFinishedMail(DownloadBoxJob job);
+    String encrypt(byte[] password) throws AlgorithmInitializationException;
 
-    void sendSimpleMessage(String to, String subject, String text);
+    String encrypt(char[] password) throws AlgorithmInitializationException;
 
-    void reportError(String subject, Exception e);
+    char[] decrypt(String password) throws AlgorithmInitializationException;
 
 }

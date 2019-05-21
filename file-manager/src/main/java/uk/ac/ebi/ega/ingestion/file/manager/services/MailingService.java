@@ -17,20 +17,45 @@
  */
 package uk.ac.ebi.ega.ingestion.file.manager.services;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import uk.ac.ebi.ega.encryption.core.encryption.exceptions.AlgorithmInitializationException;
+import uk.ac.ebi.ega.encryption.core.services.IPasswordEncryptionService;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.DownloadBoxJob;
+
+import java.io.PrintWriter;
+import java.io.StringWriter;
 
 public class MailingService implements IMailingService {
 
+    private Logger logger = LoggerFactory.getLogger(MailingService.class);
+
     private JavaMailSender mailSender;
 
-    public MailingService(JavaMailSender mailSender) {
+    private IPasswordEncryptionService passwordEncryptionService;
+
+    private String errorMail;
+
+    public MailingService(JavaMailSender mailSender, IPasswordEncryptionService passwordEncryptionService,
+                          String errorMail) {
         this.mailSender = mailSender;
+        this.passwordEncryptionService = passwordEncryptionService;
+        this.errorMail = errorMail;
     }
 
     @Override
     public void sendDownloadBoxFinishedMail(DownloadBoxJob job) {
+        char[] password = null;
+        try {
+            password = passwordEncryptionService.decrypt(job.getPassword());
+        } catch (AlgorithmInitializationException e) {
+            //TODO this should never happen
+            logger.error(e.getMessage(), e);
+            reportError("Error while decrypting database password", e);
+        }
+
         String subject = String.format(
                 "Dataset '%s' is ready to download",
                 job.getDatasetId()
@@ -44,7 +69,7 @@ public class MailingService implements IMailingService {
                 job.getTicketId(),
                 job.getDatasetId(),
                 job.getAssignedDownloadBox().getBoxId(),
-                job.getPassword(),
+                new String(password),
                 job.getAssignedDownloadBox().getUntilDate()
         );
         sendSimpleMessage(job.getMail(), subject, text);
@@ -57,6 +82,13 @@ public class MailingService implements IMailingService {
         message.setSubject(subject);
         message.setText(text);
         mailSender.send(message);
+    }
+
+    @Override
+    public void reportError(String subject, Exception e) {
+        StringWriter stringWriter = new StringWriter();
+        e.printStackTrace(new PrintWriter(stringWriter));
+        sendSimpleMessage(errorMail, subject, stringWriter.toString());
     }
 
 }

@@ -17,20 +17,26 @@
  */
 package uk.ac.ebi.ega.file.re.encryption.processor.models;
 
+import uk.ac.ebi.ega.encryption.core.encryption.exceptions.AlgorithmInitializationException;
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.JobParameters;
+import uk.ac.ebi.ega.encryption.core.services.IPasswordEncryptionService;
 
 public class ReEncryptJobParameters implements JobParameters {
+
+    private IPasswordEncryptionService passwordService;
 
     private String dosId;
 
     private String resultPath;
 
-    private char[] resultPassword;
+    private String encryptedPassword;
 
-    public ReEncryptJobParameters(String dosId, String resultPath, char[] resultPassword) {
+    public ReEncryptJobParameters(IPasswordEncryptionService passwordService, String dosId, String resultPath,
+                                  String encryptedPassword) {
+        this.passwordService = passwordService;
         this.dosId = dosId;
         this.resultPath = resultPath;
-        this.resultPassword = resultPassword;
+        this.encryptedPassword = encryptedPassword;
     }
 
     public String getDosId() {
@@ -41,8 +47,12 @@ public class ReEncryptJobParameters implements JobParameters {
         return resultPath;
     }
 
-    public char[] getResultPassword() {
-        return resultPassword;
+    public String getEncryptedPassword() {
+        return encryptedPassword;
+    }
+
+    public char[] getPassword() throws AlgorithmInitializationException {
+        return passwordService.decrypt(encryptedPassword);
     }
 
 }

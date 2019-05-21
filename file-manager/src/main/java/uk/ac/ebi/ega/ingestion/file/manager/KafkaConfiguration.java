@@ -22,17 +22,25 @@ import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.common.serialization.IntegerSerializer;
+import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
+import org.springframework.kafka.config.KafkaListenerContainerFactory;
+import org.springframework.kafka.core.ConsumerFactory;
+import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
+import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
+import org.springframework.kafka.support.converter.StringJsonMessageConverter;
 import org.springframework.kafka.support.serializer.JsonSerializer;
-import uk.ac.ebi.ega.ingestion.file.manager.message.DownloadBoxFileProcess;
+import uk.ac.ebi.ega.ingestion.file.manager.kafka.message.DownloadBoxFileProcess;
+import uk.ac.ebi.ega.ingestion.file.manager.kafka.message.ReEncryptComplete;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -74,6 +82,34 @@ public class KafkaConfiguration {
     @Bean
     public KafkaTemplate<String, DownloadBoxFileProcess> kafkaTemplate() {
         return new KafkaTemplate<>(producerFactory());
+    }
+
+    @Bean
+    public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String, ReEncryptComplete>>
+    kafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, ReEncryptComplete> factory =
+                new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConcurrency(1);
+        factory.setConsumerFactory(reEncryptCompleteConsumerFactory());
+        factory.setMessageConverter(new StringJsonMessageConverter(getObjectMapper()));
+        return factory;
+    }
+
+    @Bean
+    public Map<String, Object> consumerConfigs() {
+        Map<String, Object> properties = new HashMap<>();
+        properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        properties.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, 3000);
+        properties.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, 10000);
+        properties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest"); //TODO Change to latest
+        return properties;
+    }
+
+    @Bean
+    public ConsumerFactory<String, ReEncryptComplete> reEncryptCompleteConsumerFactory() {
+        return new DefaultKafkaConsumerFactory<>(consumerConfigs());
     }
 
 }

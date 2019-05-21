@@ -15,7 +15,7 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.ingestion.file.manager.message;
+package uk.ac.ebi.ega.ingestion.file.manager.kafka.message;
 
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.DownloadBoxFileJob;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.DownloadBoxJob;

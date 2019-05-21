@@ -48,13 +48,13 @@ public class ReEncryptionEventListener {
 
     @KafkaListener(id = "${spring.kafka.client-id}", topics = "${spring.kafka.file.re.encryption.queue.name}",
             groupId =
-            "${spring.kafka.consumer.group-id}", clientIdPrefix = "executor", autoStartup = "false")
+                    "${spring.kafka.consumer.group-id}", clientIdPrefix = "executor", autoStartup = "false")
     public void listen(@Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) String key, ReEncryptFile data,
                        Acknowledgment acknowledgment) {
         logger.info("Process - key: {} data {}", key, data);
 
-        final Optional<JobExecution<ReEncryptJobParameters>> job = reEncryptService.createJob(key, data.getDosId(), data.getResultPath(),
-                data.getResultPath().toCharArray());
+        final Optional<JobExecution<ReEncryptJobParameters>> job =
+                reEncryptService.createJob(key, data.getDosId(), data.getResultPath(), data.getPassword());
         acknowledgment.acknowledge();
         if (job.isPresent()) {
             final Result result = reEncryptService.reEncrypt(job.get());

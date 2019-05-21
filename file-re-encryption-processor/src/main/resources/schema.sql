@@ -22,8 +22,8 @@ create table JOB_RUN
 
 create table RE_ENCRYPT_PARAMETERS
 (
-    JOB_ID      varchar(255) primary key,
-    RESULT_PATH text not null,
-    DOS_ID      text not null,
-    PASSWORD    text not null
+    JOB_ID             varchar(255) primary key,
+    RESULT_PATH        text not null,
+    DOS_ID             text not null,
+    ENCRYPTED_PASSWORD text not null
 )

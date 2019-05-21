@@ -17,7 +17,6 @@
  */
 package uk.ac.ebi.ega.file.re.encryption.processor.persistence.entity;
 
-import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.domain.Persistable;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -26,7 +25,6 @@ import javax.persistence.Entity;
 import javax.persistence.EntityListeners;
 import javax.persistence.Id;
 import javax.persistence.Table;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "RE_ENCRYPT_PARAMETERS")
@@ -45,16 +43,16 @@ public class ReEncryptParametersEntity implements Persistable<String> {
     private String dosId;
 
     @Column(nullable = false)
-    private String password;
+    private String encryptedPassword;
 
     ReEncryptParametersEntity() {
     }
 
-    public ReEncryptParametersEntity(String jobId, String resultPath, String dosId, String password) {
+    public ReEncryptParametersEntity(String jobId, String resultPath, String dosId, String encryptedPassword) {
         this.jobId = jobId;
         this.resultPath = resultPath;
         this.dosId = dosId;
-        this.password = password;
+        this.encryptedPassword = encryptedPassword;
     }
 
     @Override
@@ -79,7 +77,7 @@ public class ReEncryptParametersEntity implements Persistable<String> {
         return dosId;
     }
 
-    public String getPassword() {
-        return password;
+    public String getEncryptedPassword() {
+        return encryptedPassword;
     }
 }

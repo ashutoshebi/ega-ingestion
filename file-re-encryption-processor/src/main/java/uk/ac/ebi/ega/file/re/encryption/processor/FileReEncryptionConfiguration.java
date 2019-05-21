@@ -35,8 +35,10 @@ import uk.ac.ebi.ega.file.re.encryption.processor.models.ReEncryptJobParameters;
 import uk.ac.ebi.ega.file.re.encryption.processor.persistence.repository.ReEncryptParametersRepository;
 import uk.ac.ebi.ega.file.re.encryption.processor.persistence.service.ReEncryptJobParameterService;
 import uk.ac.ebi.ega.file.re.encryption.processor.services.IMailingService;
+import uk.ac.ebi.ega.encryption.core.services.IPasswordEncryptionService;
 import uk.ac.ebi.ega.file.re.encryption.processor.services.IReEncryptService;
 import uk.ac.ebi.ega.file.re.encryption.processor.services.MailingService;
+import uk.ac.ebi.ega.encryption.core.services.PasswordEncryptionService;
 import uk.ac.ebi.ega.file.re.encryption.processor.services.ReEncryptPersistenceService;
 import uk.ac.ebi.ega.file.re.encryption.processor.services.ReEncryptService;
 import uk.ac.ebi.ega.fire.IFireService;
@@ -65,14 +67,23 @@ public class FileReEncryptionConfiguration {
     @Value("${spring.kafka.file.re.encryption.completed.queue.name}")
     private String completedTopic;
 
+    @Value("${file.re.encryption.password.encryption.key}")
+    private char[] passwordEncryptionKey;
+
     @Bean
     public IMailingService mailingService(JavaMailSender javaMailSender) {
         return new MailingService(javaMailSender, applicationName, instanceId);
     }
 
     @Bean
-    public ReEncryptJobParameterService reEncryptJobParameterService(ReEncryptParametersRepository repository) {
-        return new ReEncryptJobParameterService(repository);
+    public IPasswordEncryptionService passwordService(){
+        return new PasswordEncryptionService(passwordEncryptionKey);
+    }
+
+    @Bean
+    public ReEncryptJobParameterService reEncryptJobParameterService(ReEncryptParametersRepository repository,
+                                                                     IPasswordEncryptionService passwordService) {
+        return new ReEncryptJobParameterService(repository, passwordService);
     }
 
     @Bean
@@ -90,11 +101,12 @@ public class FileReEncryptionConfiguration {
 
     @Bean
     public IReEncryptService reEncryptService(ExecutorPersistenceService executorPersistenceService,
+                                              IPasswordEncryptionService passwordService,
                                               IMailingService mailingService,
                                               Job<ReEncryptJobParameters> job,
                                               KafkaTemplate<String, ReEncryptComplete> kafkaTemplate) {
-        return new ReEncryptService(executorPersistenceService, mailingService, reportTo, job, kafkaTemplate,
-                completedTopic);
+        return new ReEncryptService(executorPersistenceService, passwordService, mailingService, reportTo, job,
+                kafkaTemplate, completedTopic);
     }
 
 }
