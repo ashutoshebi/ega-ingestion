@@ -60,10 +60,11 @@ public class IOUtils {
     }
 
     public static char[] toCharArray(InputStream input, Charset encoding) throws IOException {
-        final CharArrayWriter writer = new CharArrayWriter();
-        final InputStreamReader reader = new InputStreamReader(input, encoding);
-        copy(reader, writer);
-        return writer.toCharArray();
+        try (final CharArrayWriter writer = new CharArrayWriter();
+             final InputStreamReader reader = new InputStreamReader(input, encoding)) {
+            copy(reader, writer);
+            return writer.toCharArray();
+        }
     }
 
     private static void copy(InputStreamReader reader, CharArrayWriter writer) throws IOException {

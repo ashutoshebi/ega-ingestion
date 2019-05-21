@@ -37,8 +37,6 @@ import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
-import org.springframework.kafka.listener.ContainerProperties;
-import org.springframework.kafka.listener.SeekToCurrentErrorHandler;
 import org.springframework.kafka.support.converter.StringJsonMessageConverter;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 import uk.ac.ebi.ega.ingestion.file.manager.kafka.message.DownloadBoxFileProcess;
@@ -91,6 +89,7 @@ public class KafkaConfiguration {
     kafkaListenerContainerFactory() {
         ConcurrentKafkaListenerContainerFactory<String, ReEncryptComplete> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConcurrency(1);
         factory.setConsumerFactory(reEncryptCompleteConsumerFactory());
         factory.setMessageConverter(new StringJsonMessageConverter(getObjectMapper()));
         return factory;

@@ -94,7 +94,7 @@ public class DownloadBoxJobService implements IDownloadBoxJobService {
 
     @Override
     @Transactional(transactionManager = "fileManager_transactionManager")
-    public synchronized void finishFileJob(String id, String message, LocalDateTime start, LocalDateTime finish)
+    public void finishFileJob(String id, String message, LocalDateTime start, LocalDateTime finish)
             throws FileJobNotFound {
         DownloadBoxFileJob downloadBoxFileJob = boxFileJobRepository.findById(id).orElseThrow(FileJobNotFound::new);
 
