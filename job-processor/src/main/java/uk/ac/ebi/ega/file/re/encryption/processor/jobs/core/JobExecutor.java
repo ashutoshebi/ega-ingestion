@@ -24,6 +24,8 @@ import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.exceptions.JobNotReg
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.exceptions.JobRetryException;
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.services.ExecutorPersistenceService;
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.services.JobDefinition;
+import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.utils.DelayConfiguration;
+import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.utils.Delayer;
 
 import java.util.Map;
 import java.util.Optional;
@@ -37,8 +39,12 @@ public class JobExecutor {
 
     private final ExecutorPersistenceService persistenceService;
 
-    public JobExecutor(ExecutorPersistenceService persistenceService) {
+    private DelayConfiguration delayConfiguration;
+
+    public JobExecutor(ExecutorPersistenceService persistenceService,
+                       final DelayConfiguration delayConfiguration) {
         this.persistenceService = persistenceService;
+        this.delayConfiguration = delayConfiguration;
         this.jobMap = new ConcurrentHashMap<>();
     }
 
@@ -68,13 +74,15 @@ public class JobExecutor {
         final Job<T> job = getJob(jobExecution.getJobName(), (Class<T>) jobExecution.getJobParameters().getClass());
         logger.info("Executing job {}", jobExecution.getJobId());
         Result result = null;
+        final Delayer delayer = Delayer.create(delayConfiguration);
+
         while (result == null) {
             try {
                 result = doExecute(job, jobExecution);
             } catch (JobRetryException e) {
                 logger.error("JobParameters could not be completed {}", e.getMessage());
                 logger.info("Retrying job {}", jobExecution.getJobId());
-                delay();
+                delayer.delay();
             }
         }
         return result;
@@ -88,10 +96,6 @@ public class JobExecutor {
         final Result result = job.execute(jobExecution.getJobParameters());
         persistenceService.saveResult(jobExecution.getJobId(), result);
         return result;
-    }
-
-    private void delay() {
-        //TODO DELAY add a configurable backoff or linear delay
     }
 
 }
