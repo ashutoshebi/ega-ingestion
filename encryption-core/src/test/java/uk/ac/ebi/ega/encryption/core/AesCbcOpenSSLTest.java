@@ -17,6 +17,8 @@
  */
 package uk.ac.ebi.ega.encryption.core;
 
+import org.bouncycastle.crypto.generators.OpenSSLPBEParametersGenerator;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.io.Streams;
 import org.junit.Assert;
 import org.junit.Test;
@@ -28,12 +30,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.Security;
+import java.util.Base64;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 
 public class AesCbcOpenSSLTest {
@@ -69,6 +72,15 @@ public class AesCbcOpenSSLTest {
         final byte[] encryptedBytes = aesCbcOpenSSL.encrypt("kiwi".toCharArray(), "test file.\n".getBytes());
         final char[] decrypt = aesCbcOpenSSL.decrypt("kiwi".toCharArray(), encryptedBytes, UTF_8);
         assertEquals("test file.\n", new String(decrypt));
+    }
+
+    @Test
+    public void testDecryptMd5SaltAndBase64() throws AlgorithmInitializationException, IOException {
+        InputStream input = this.getClass().getClassLoader().getResourceAsStream("test_a/test.txt.enc");
+        AesCbcOpenSSL aesCbcOpenSSL = new AesCbcOpenSSL();
+        aesCbcOpenSSL.setUseMd5Salt(true);
+        byte[] test = Streams.readAll(aesCbcOpenSSL.decrypt(Base64.getMimeDecoder().wrap(input), "kiwi".toCharArray()));
+        assertTrue(new String(test).startsWith("Lorem ipsum dolor"));
     }
 
 }
