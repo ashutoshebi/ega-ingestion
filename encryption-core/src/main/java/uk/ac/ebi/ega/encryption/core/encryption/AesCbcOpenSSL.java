@@ -43,19 +43,54 @@ public class AesCbcOpenSSL extends JdkEncryptionAlgorithm {
 
     private static final byte[] SALTED_MAGIC = "Salted__".getBytes(US_ASCII);
 
+    private boolean useMd5Salt;
+
+    private boolean noSalt;
+
     private byte[] fixedSalt;
 
     private SecretKeySpec secretKeySpec;
 
     private IvParameterSpec ivParameterSpec;
 
+    public AesCbcOpenSSL() {
+        super();
+        noSalt = false;
+        useMd5Salt = false;
+    }
+
     @Override
     protected void initializeRead(InputStream inputStream, char[] password) throws AlgorithmInitializationException {
-        assertHeader(inputStream);
-        initializePasswordAndIV(IOUtils.convertToBytes(password), readSaltFromHeader(inputStream));
+        byte[] salt = noSalt ? new byte[0] : readSaltFromHeader(inputStream);
+        initializePasswordAndIV(IOUtils.convertToBytes(password), salt);
     }
 
     private void initializePasswordAndIV(byte[] password, byte[] salt) {
+        if(useMd5Salt){
+            initializePasswordAndIvMd5(password,salt);
+        }else{
+            initializePasswordAndIVSha256(password,salt);
+        }
+    }
+
+    private void initializePasswordAndIvMd5(byte[] password, byte[] salt) {
+        final byte[] passAndSalt = concat(password, salt);
+        byte[] hash = new byte[0];
+        byte[] keyAndIv = new byte[0];
+        for (int i = 0; i < 3; i++) {
+            final byte[] data = concat(hash, passAndSalt);
+            final MessageDigest md = Hash.getMd5();
+            hash = md.digest(data);
+            keyAndIv = concat(keyAndIv, hash);
+        }
+
+        final byte[] keyValue = Arrays.copyOfRange(keyAndIv, 0, 32);
+        final byte[] IV = Arrays.copyOfRange(keyAndIv, 32, 48);
+        secretKeySpec = new SecretKeySpec(keyValue, "AES");
+        ivParameterSpec = new IvParameterSpec(IV);
+    }
+
+    private void initializePasswordAndIVSha256(byte[] password, byte[] salt) {
         final byte[] passAndSalt = concat(password, salt);
         final MessageDigest digestFunction = Hash.getSha256();
 
@@ -80,6 +115,7 @@ public class AesCbcOpenSSL extends JdkEncryptionAlgorithm {
     }
 
     private byte[] readSaltFromHeader(InputStream inputStream) throws AlgorithmInitializationException {
+        assertHeader(inputStream);
         byte[] salt = new byte[8];
         try {
             Streams.readFully(inputStream, salt);
@@ -104,14 +140,19 @@ public class AesCbcOpenSSL extends JdkEncryptionAlgorithm {
     @Override
     protected void initializeWrite(char[] password, OutputStream outputStream) throws AlgorithmInitializationException {
         try {
-            outputStream.write(SALTED_MAGIC);
-            byte[] salt = generateSalt();
-            outputStream.write(salt);
-            outputStream.flush();
+            byte[] salt = noSalt ? new byte[0] : generateAndWriteSaltHeader(outputStream);
             initializePasswordAndIV(IOUtils.convertToBytes(password), salt);
         } catch (IOException e) {
             throw new AlgorithmInitializationException("AesCbcOpenSSL could not write magic and salt to output", e);
         }
+    }
+
+    private byte[] generateAndWriteSaltHeader(OutputStream outputStream) throws IOException {
+        outputStream.write(SALTED_MAGIC);
+        byte[] salt = generateSalt();
+        outputStream.write(salt);
+        outputStream.flush();
+        return salt;
     }
 
     private byte[] generateSalt() {
@@ -135,7 +176,15 @@ public class AesCbcOpenSSL extends JdkEncryptionAlgorithm {
     }
 
     public void setFixedSalt(byte[] fixedSalt) {
+        noSalt = false;
         this.fixedSalt = fixedSalt;
     }
 
+    public void setNoSalt() {
+        noSalt = true;
+    }
+
+    public void setUseMd5Salt(boolean useMd5Salt) {
+        this.useMd5Salt = useMd5Salt;
+    }
 }
