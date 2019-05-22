@@ -18,7 +18,9 @@
 package uk.ac.ebi.ega.file.re.encryption.processor.services;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -43,7 +45,7 @@ import uk.ac.ebi.ega.file.re.encryption.processor.persistence.repository.ReEncry
 import uk.ac.ebi.ega.file.re.encryption.processor.persistence.service.ReEncryptJobParameterService;
 import uk.ac.ebi.ega.fire.LocalStorageFile;
 
-import java.io.File;
+import java.io.IOException;
 import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
@@ -73,6 +75,8 @@ public class ReEncryptServiceTest {
 
     private ReEncryptService reEncryptService;
 
+    @Rule
+    public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     @Before
     public void init() {
@@ -104,12 +108,14 @@ public class ReEncryptServiceTest {
     }
 
     @Test
-    public void reEncrypt_SuppliedCorrectArgument_ExecutesSuccessfully() throws AlgorithmInitializationException {
+    public void reEncrypt_SuppliedCorrectArgument_ExecutesSuccessfully() throws AlgorithmInitializationException,
+            IOException {
         final IPasswordEncryptionService passwordEncryptionService = new PasswordEncryptionService(PASSWORD_KEY);
         String encryptedPassword = passwordEncryptionService.encrypt(PASSWORD.toCharArray());
 
         final ReEncryptJobParameters reEncryptJobParameters = new ReEncryptJobParameters(passwordEncryptionService,
-                EMPTY_STRING, new File(BASE_PATH + RE_ENCRYPT_FILE_NAME).getAbsolutePath(), encryptedPassword);
+                EMPTY_STRING, temporaryFolder.newFile(RE_ENCRYPT_FILE_NAME).getAbsolutePath(),
+                encryptedPassword);
         final JobExecution<ReEncryptJobParameters> jobExecution = new JobExecution<>(EMPTY_STRING, JOB_NAME, reEncryptJobParameters);
 
         when(jobRunRepository.save(any(JobRun.class))).thenReturn(new JobRun());
