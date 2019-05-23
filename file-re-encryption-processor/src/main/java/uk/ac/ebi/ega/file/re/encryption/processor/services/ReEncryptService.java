@@ -64,7 +64,7 @@ public class ReEncryptService extends JobExecutor implements IReEncryptService {
 
     @Override
     public Optional<JobExecution<ReEncryptJobParameters>> createJob(String id, String dosId, String resultPath,
-                                                                    String encryptedPassword) {
+                                                                    String encryptedPassword) throws JobNotRegistered {
         return assignExecution(id, RE_ENCRYPT_JOB,
                 new ReEncryptJobParameters(passwordService, dosId, resultPath + ".cip", encryptedPassword));
     }

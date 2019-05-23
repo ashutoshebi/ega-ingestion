@@ -34,6 +34,7 @@ import uk.ac.ebi.ega.file.re.encryption.processor.jobs.ReEncryptJob;
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.Job;
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.JobExecution;
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.Result;
+import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.exceptions.JobNotRegistered;
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.persistence.entity.JobExecutionEntity;
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.persistence.entity.JobRun;
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.persistence.repository.JobExecutionRepository;
@@ -101,7 +102,7 @@ public class ReEncryptServiceTest {
     }
 
     @Test
-    public void createJob_SuppliedCorrectArguments_ExecutesSuccessfully() {
+    public void createJob_SuppliedCorrectArguments_ExecutesSuccessfully() throws JobNotRegistered {
 
         when(jobExecutionRepository.save(any(JobExecutionEntity.class))).thenReturn(new JobExecutionEntity());
 
