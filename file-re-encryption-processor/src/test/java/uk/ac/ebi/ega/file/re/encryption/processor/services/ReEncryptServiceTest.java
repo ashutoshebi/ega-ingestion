@@ -38,6 +38,8 @@ import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.persistence.entity.J
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.persistence.entity.JobRun;
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.persistence.repository.JobExecutionRepository;
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.persistence.repository.JobRunRepository;
+import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.utils.DelayConfiguration;
+import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.utils.DelayConfiguration.DelayType;
 import uk.ac.ebi.ega.file.re.encryption.processor.messages.ReEncryptComplete;
 import uk.ac.ebi.ega.file.re.encryption.processor.models.ReEncryptJobParameters;
 import uk.ac.ebi.ega.file.re.encryption.processor.persistence.entity.ReEncryptParametersEntity;
@@ -58,11 +60,11 @@ import static org.mockito.Mockito.when;
 public class ReEncryptServiceTest {
 
     private static final String EMPTY_STRING = "";
-    private static final String BASE_PATH = "src/test/resources/keyPairTest/";
+    private static final String BASE_PATH = "target/test-classes/keyPairTest/";
     private static final String JOB_NAME = "re-encrypt-job";
     private static final String RE_ENCRYPT_FILE_NAME = "test_file_reencrypt.txt.gpg";
     private static final String PASSWORD = "test";
-    public static final char[] PASSWORD_KEY = "test_password".toCharArray();
+    private static final char[] PASSWORD_KEY = "test_password".toCharArray();
 
     @Mock
     private JobExecutionRepository jobExecutionRepository;
@@ -91,9 +93,10 @@ public class ReEncryptServiceTest {
                 "b2e6283b2044de260d6df0e854cd3fa2", BASE_PATH + "test_file.txt.gpg"), EMPTY_STRING.toCharArray());
 
         final KafkaTemplate<String, ReEncryptComplete> kafkaTemplate = Mockito.mock(KafkaTemplate.class);
+        final DelayConfiguration delayConfiguration = new DelayConfiguration(DelayType.LINEAR, 0, 0);
         final ReEncryptPersistenceService reEncryptPersistenceService = new ReEncryptPersistenceService(jobExecutionRepository, jobRunRepository, EMPTY_STRING, reEncryptJobParameterService);
         reEncryptService = new ReEncryptService(reEncryptPersistenceService, passwordEncryptionService, mailingService,
-                EMPTY_STRING, job, kafkaTemplate, EMPTY_STRING);
+                EMPTY_STRING, job, kafkaTemplate, EMPTY_STRING, delayConfiguration);
         MockitoAnnotations.initMocks(reEncryptService);
     }
 

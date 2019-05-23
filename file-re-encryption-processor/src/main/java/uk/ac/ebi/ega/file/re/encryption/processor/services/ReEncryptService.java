@@ -25,6 +25,7 @@ import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.JobExecutor;
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.Result;
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.exceptions.JobNotRegistered;
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.services.ExecutorPersistenceService;
+import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.utils.DelayConfiguration;
 import uk.ac.ebi.ega.file.re.encryption.processor.messages.ReEncryptComplete;
 import uk.ac.ebi.ega.file.re.encryption.processor.models.ReEncryptJobParameters;
 
@@ -50,8 +51,9 @@ public class ReEncryptService extends JobExecutor implements IReEncryptService {
                             IMailingService mailingService, String reportTo,
                             Job<ReEncryptJobParameters> job,
                             KafkaTemplate<String, ReEncryptComplete> kafkaTemplate,
-                            String completeJobTopic) {
-        super(persistenceService);
+                            String completeJobTopic,
+                            final DelayConfiguration delayConfiguration) {
+        super(persistenceService, delayConfiguration);
         this.passwordService = passwordService;
         this.mailingService = mailingService;
         this.reportTo = reportTo;
