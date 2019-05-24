@@ -33,6 +33,7 @@
         <module>file-manager</module>
         <module>file-re-encryption-processor</module>
         <module>job-processor</module>
+        <module>ukbb-temp-ingestion</module>
     </modules>
 
     <dependencyManagement>
