@@ -54,7 +54,8 @@ public class UkbbTempIngestionApplication implements CommandLineRunner {
 					"[filename] [input password] [output password]";
 			LOGGER.error(message);
 
-			SpringApplication.exit(applicationContext, () -> 1);
+			// https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#boot-features-application-exit
+			System.exit(SpringApplication.exit(applicationContext, () -> 1));
 		}
 	}
 

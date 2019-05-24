@@ -21,6 +21,8 @@ public class UkbbTempIngestionApplicationTest {
 	public void main_SuppliedCorrectArguments_ReturnsSuccess() {
 		final String[] commandLineArgs = new String[] { FILE_NAME, INPUT_PASSWORD, OUTPUT_PASSWORD };
 
+		// TODO bjuhasz: this starts the application, but then it fails
+		//  because the datasource is not configured. Use an in-memory DB?
 		UkbbTempIngestionApplication.main(commandLineArgs);
 
 		final String resultOfReEncryption = outputCapture.toString();
