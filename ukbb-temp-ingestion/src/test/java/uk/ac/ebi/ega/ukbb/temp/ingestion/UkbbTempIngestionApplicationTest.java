@@ -1,5 +1,6 @@
 package uk.ac.ebi.ega.ukbb.temp.ingestion;
 
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.springframework.boot.test.rule.OutputCapture;
@@ -17,11 +18,24 @@ public class UkbbTempIngestionApplicationTest {
 	public OutputCapture outputCapture = new OutputCapture();
 
 	@Test
-	public void ukbbTempIngestionApplication_main_Runs_And_ReturnsFailureAsResult() {
-		UkbbTempIngestionApplication.main(new String[] { FILE_NAME, INPUT_PASSWORD, OUTPUT_PASSWORD });
+	public void main_SuppliedCorrectArguments_ReturnsSuccess() {
+		final String[] commandLineArgs = new String[] { FILE_NAME, INPUT_PASSWORD, OUTPUT_PASSWORD };
+
+		UkbbTempIngestionApplication.main(commandLineArgs);
 
 		final String resultOfReEncryption = outputCapture.toString();
+		assertThat(resultOfReEncryption).contains("status: " + Result.Status.SUCCESS);
+	}
 
+	// TODO bjuhasz
+	@Ignore("I think this test needs an ApplicationContext")
+	@Test
+	public void main_SuppliedTooFewArguments_ReturnsFailure() {
+		final String[] commandLineArgs = new String[] { FILE_NAME, INPUT_PASSWORD };
+
+		UkbbTempIngestionApplication.main(commandLineArgs);
+
+		final String resultOfReEncryption = outputCapture.toString();
 		assertThat(resultOfReEncryption).contains("status: " + Result.Status.FAILURE);
 	}
 

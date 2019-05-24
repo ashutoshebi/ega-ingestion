@@ -27,8 +27,7 @@ public class ReEncryptService implements IReEncryptService {
     private IPasswordEncryptionService passwordService;
 
     @Override
-    public Result reEncrypt(final String fileName, final String inputPassword, final String outputPassword) {
-        final String message = "TODO bjuhasz: implement this";
-        return Result.failure(message, new RuntimeException(message), LocalDateTime.now());
+    public Result reEncrypt(String fileName, String inputPassword, String outputPassword) {
+        return Result.correct(LocalDateTime.now());
     }
 }
