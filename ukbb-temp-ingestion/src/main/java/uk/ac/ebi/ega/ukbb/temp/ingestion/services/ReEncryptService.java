@@ -15,19 +15,139 @@
  */
 package uk.ac.ebi.ega.ukbb.temp.ingestion.services;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import uk.ac.ebi.ega.encryption.core.services.IPasswordEncryptionService;
+import uk.ac.ebi.ega.encryption.core.DecryptInputStream;
+import uk.ac.ebi.ega.encryption.core.EncryptOutputStream;
+import uk.ac.ebi.ega.encryption.core.EncryptionReport;
+import uk.ac.ebi.ega.encryption.core.EncryptionService;
+import uk.ac.ebi.ega.encryption.core.Input;
+import uk.ac.ebi.ega.encryption.core.Md5Check;
+import uk.ac.ebi.ega.encryption.core.Output;
+import uk.ac.ebi.ega.encryption.core.PasswordSource;
+import uk.ac.ebi.ega.encryption.core.encryption.AesCbcOpenSSL;
+import uk.ac.ebi.ega.encryption.core.encryption.AesCtr256Ega;
+import uk.ac.ebi.ega.encryption.core.encryption.Base64WrappedAesCbcOpenSSL;
+import uk.ac.ebi.ega.encryption.core.encryption.exceptions.AlgorithmInitializationException;
+import uk.ac.ebi.ega.encryption.core.exceptions.Md5CheckException;
+import uk.ac.ebi.ega.encryption.core.utils.Hash;
+import uk.ac.ebi.ega.encryption.core.utils.io.IOUtils;
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.Result;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.MessageDigest;
 import java.time.LocalDateTime;
+import java.util.Base64;
 
 @Service
 public class ReEncryptService implements IReEncryptService {
 
-    private IPasswordEncryptionService passwordService;
+    private static final Logger LOGGER = LoggerFactory.getLogger(ReEncryptService.class);
+
+    private static final int BUFFER_SIZE = 8192;
+
+    private EncryptionService encryptionService;
+
+    @Autowired
+    public ReEncryptService(final EncryptionService encryptionService) {
+        this.encryptionService = encryptionService;
+    }
 
     @Override
-    public Result reEncrypt(String fileName, String inputPassword, String outputPassword) {
-        return Result.correct(LocalDateTime.now());
+    public Result reEncrypt(String inputFilePathAndName, String inputPassword, String outputPassword) {
+
+        final LocalDateTime start = LocalDateTime.now();
+
+        final File inputFile = new File(inputFilePathAndName);
+        final File outputFile = new File("TODO bjuhasz");
+
+        final String md5FromDatabase = "TODO bjuhasz";
+        final Md5Check md5Check = Md5Check.any(md5FromDatabase);
+
+        Result firstResult = firstTry(inputFile, inputPassword, outputFile, outputPassword, start, md5Check);
+
+        Result secondResult = secondTry(inputFile, inputPassword, outputFile, outputPassword, start, md5Check);
+
+        return firstResult;
     }
+
+    private Result firstTry(final File inputFile,
+                            final String inputPassword,
+                            final File outputFile,
+                            final String outputPassword,
+                            final LocalDateTime start,
+                            final Md5Check md5Check) {
+        try {
+            final Input input = Input.file(inputFile,
+                    new Base64WrappedAesCbcOpenSSL(),
+                    PasswordSource.staticSource(inputPassword.toCharArray()));
+
+            final Output output = Output.aesCtr256Ega(outputFile,
+                    true,
+                    PasswordSource.staticSource(outputPassword.toCharArray()));
+
+            final EncryptionReport encryptionReport = encryptionService.encrypt(input, md5Check, output);
+
+        } catch (FileNotFoundException e) {
+            // TODO bjuhasz: fix error messages
+            return Result.failure("File could not be found on DOS", e, start);
+        } catch (AlgorithmInitializationException e) {
+            return Result.failure("Error while decrypting the file on DOS", e, start);
+        } catch (Md5CheckException e) {
+            return Result.failure("Mismatch of md5", e, start);
+        } catch (IOException e) {
+            return Result.abort("Unrecoverable error", e, start);
+        }
+
+        return Result.correct(start);
+    }
+
+    private Result secondTry(final File inputFile,
+                             final String inputPassword,
+                             final File outputFile,
+                             final String outputPassword,
+                             final LocalDateTime start,
+                             final Md5Check md5Check) {
+        MessageDigest messageDigestEncrypted = Hash.getMd5();
+
+        try (InputStream base64DecodedInputStream = Base64.getMimeDecoder().wrap(new FileInputStream(inputFile));
+             DecryptInputStream decryptedStream = new DecryptInputStream(base64DecodedInputStream,
+                     new AesCbcOpenSSL(),
+                     inputPassword.toCharArray());
+
+             EncryptOutputStream encryptedOutputStream = new EncryptOutputStream(new FileOutputStream(outputFile),
+                     new AesCtr256Ega(),
+                     outputPassword.toCharArray())) {
+            long unencryptedSize = IOUtils.bufferedPipe(decryptedStream, encryptedOutputStream, BUFFER_SIZE);
+            encryptedOutputStream.flush();
+
+            String originalMd5 = Hash.normalize(messageDigestEncrypted);
+            String unencryptedMd5 = decryptedStream.getUnencryptedMd5();
+            md5Check.check(originalMd5, unencryptedMd5);
+
+            final EncryptionReport encryptionReport = new EncryptionReport(originalMd5,
+                    unencryptedMd5,
+                    encryptedOutputStream.getMd5(),
+                    unencryptedSize);
+
+        } catch (FileNotFoundException e) {
+            return Result.failure("File could not be found on DOS", e, start);
+        } catch (AlgorithmInitializationException e) {
+            return Result.failure("Error while decrypting the file on DOS", e, start);
+        } catch (Md5CheckException e) {
+            return Result.failure("Mismatch of md5", e, start);
+        } catch (IOException e) {
+            return Result.abort("Unrecoverable error", e, start);
+        }
+
+        return Result.correct(start);
+    }
+
 }
