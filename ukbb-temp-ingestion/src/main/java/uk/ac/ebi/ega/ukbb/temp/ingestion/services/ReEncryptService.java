@@ -17,6 +17,7 @@ package uk.ac.ebi.ega.ukbb.temp.ingestion.services;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.orm.ObjectRetrievalFailureException;
 import org.springframework.stereotype.Service;
 import uk.ac.ebi.ega.encryption.core.DecryptInputStream;
 import uk.ac.ebi.ega.encryption.core.EncryptOutputStream;
@@ -24,11 +25,14 @@ import uk.ac.ebi.ega.encryption.core.EncryptionReport;
 import uk.ac.ebi.ega.encryption.core.Md5Check;
 import uk.ac.ebi.ega.encryption.core.encryption.AesCbcOpenSSL;
 import uk.ac.ebi.ega.encryption.core.encryption.AesCtr256Ega;
+import uk.ac.ebi.ega.encryption.core.encryption.EncryptionAlgorithm;
 import uk.ac.ebi.ega.encryption.core.encryption.exceptions.AlgorithmInitializationException;
 import uk.ac.ebi.ega.encryption.core.exceptions.Md5CheckException;
 import uk.ac.ebi.ega.encryption.core.utils.Hash;
 import uk.ac.ebi.ega.encryption.core.utils.io.IOUtils;
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.Result;
+import uk.ac.ebi.ega.ukbb.temp.ingestion.persistence.entity.UkBiobankFileEntity;
+import uk.ac.ebi.ega.ukbb.temp.ingestion.persistence.repository.UkBiobankFilesRepository;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -36,6 +40,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
+import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.time.LocalDateTime;
 import java.util.Base64;
@@ -47,39 +53,57 @@ public class ReEncryptService implements IReEncryptService {
 
     private static final int BUFFER_SIZE = 8192;
 
+    private UkBiobankFilesRepository ukBiobankFilesRepository;
+
+    public ReEncryptService(final UkBiobankFilesRepository ukBiobankFilesRepository) {
+        this.ukBiobankFilesRepository = ukBiobankFilesRepository;
+    }
+
     @Override
-    public Result reEncrypt(String inputFilePathAndName, String inputPassword, String outputPassword) {
+    public Result reEncrypt(final Path inputFilePath,
+                            final String inputPassword,
+                            final Path outputFilePath,
+                            final String outputPassword) {
 
         final LocalDateTime start = LocalDateTime.now();
 
-        final File inputFile = new File(inputFilePathAndName);
-        final File outputFile = new File("TODO bjuhasz");
+        final File inputFile = inputFilePath.toFile();
+        final File outputFile = outputFilePath.toFile();
 
-        final String md5FromDatabase = "TODO bjuhasz";
-        final Md5Check md5Check = Md5Check.any(md5FromDatabase);
+        // This is the MessageDigest of the original, encrypted file:
+        final MessageDigest messageDigestOfEncryptedFile = Hash.getMd5();
 
-        MessageDigest messageDigestEncrypted = Hash.getMd5();
+        final AesCbcOpenSSL decryptionAlgorithm = new AesCbcOpenSSL();
+        decryptionAlgorithm.setUseMd5Salt(true);
 
-        try (InputStream base64DecodedInputStream = Base64.getMimeDecoder().wrap(new FileInputStream(inputFile));
-             DecryptInputStream decryptedStream = new DecryptInputStream(base64DecodedInputStream,
-                     new AesCbcOpenSSL(),
-                     inputPassword.toCharArray());
+        final EncryptionAlgorithm encryptionAlgorithm = new AesCtr256Ega();
 
-             EncryptOutputStream encryptedOutputStream = new EncryptOutputStream(new FileOutputStream(outputFile),
-                     new AesCtr256Ega(),
-                     outputPassword.toCharArray())) {
+        try (final InputStream encryptedInput = new FileInputStream(inputFile);
+             final InputStream messageDigestedEncryptedInput = new DigestInputStream(encryptedInput, messageDigestOfEncryptedFile);
+             final InputStream base64DecodedInput = Base64.getMimeDecoder().wrap(messageDigestedEncryptedInput);
+             final DecryptInputStream decryptedInput = new DecryptInputStream(base64DecodedInput,
+                     decryptionAlgorithm, inputPassword.toCharArray());
 
-            long unencryptedSize = IOUtils.bufferedPipe(decryptedStream, encryptedOutputStream, BUFFER_SIZE);
-            encryptedOutputStream.flush();
+             final EncryptOutputStream reEncryptedOutput = new EncryptOutputStream(new FileOutputStream(outputFile),
+                     encryptionAlgorithm, outputPassword.toCharArray())) {
 
-            String originalMd5 = Hash.normalize(messageDigestEncrypted);
-            String unencryptedMd5 = decryptedStream.getUnencryptedMd5();
-            md5Check.check(originalMd5, unencryptedMd5);
+            final long decryptedSize = IOUtils.bufferedPipe(decryptedInput, reEncryptedOutput, BUFFER_SIZE);
+            reEncryptedOutput.flush();
 
-            final EncryptionReport encryptionReport = new EncryptionReport(originalMd5,
-                    unencryptedMd5,
-                    encryptedOutputStream.getMd5(),
-                    unencryptedSize);
+            final String md5OfEncryptedInput = Hash.normalize(messageDigestOfEncryptedFile);
+            final String md5OfDecryptedInput = decryptedInput.getUnencryptedMd5();
+            final String md5OfReEncryptedOutput = reEncryptedOutput.getMd5();
+
+            // This is the MD5 of the original, not-yet-encrypted file:
+            final String expectedMd5OfOriginalFile = fetchMd5FromDatabaseFor(inputFilePath);
+
+            final Md5Check md5Check = Md5Check.any(expectedMd5OfOriginalFile);
+            md5Check.check(md5OfEncryptedInput, md5OfDecryptedInput);
+
+            final EncryptionReport encryptionReport = new EncryptionReport(md5OfEncryptedInput,
+                    md5OfDecryptedInput,
+                    md5OfReEncryptedOutput,
+                    decryptedSize);
 
         } catch (FileNotFoundException e) {
             return Result.failure("File could not be found on DOS", e, start);
@@ -89,9 +113,19 @@ public class ReEncryptService implements IReEncryptService {
             return Result.failure("Mismatch of md5", e, start);
         } catch (IOException e) {
             return Result.abort("Unrecoverable error", e, start);
+        } catch (ObjectRetrievalFailureException e) {
+            return Result.failure("MD5 checksum was not found in database", e, start);
         }
 
         return Result.correct(start);
+    }
+
+    private String fetchMd5FromDatabaseFor(final Path inputFilePath) {
+        final String inputFilePathAsString = inputFilePath.toString();
+        return ukBiobankFilesRepository
+                .findByFilePath(inputFilePathAsString)
+                .map(UkBiobankFileEntity::getMd5Checksum)
+                .orElseThrow(() -> new ObjectRetrievalFailureException(UkBiobankFileEntity.class, inputFilePathAsString));
     }
 
 }

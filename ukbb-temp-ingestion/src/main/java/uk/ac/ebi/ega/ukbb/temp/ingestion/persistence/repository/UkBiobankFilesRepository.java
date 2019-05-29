@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.ega.ukbb.temp.ingestion.services;
+package uk.ac.ebi.ega.ukbb.temp.ingestion.persistence.repository;
 
-import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.Result;
+import org.springframework.data.repository.CrudRepository;
+import uk.ac.ebi.ega.ukbb.temp.ingestion.persistence.entity.UkBiobankFileEntity;
 
-import java.nio.file.Path;
+import java.util.Optional;
 
-public interface IReEncryptService {
+public interface UkBiobankFilesRepository extends CrudRepository<UkBiobankFileEntity, String> {
 
-    Result reEncrypt(Path inputFilePath, String inputPassword, Path outputFilePath, String outputPassword);
+    Optional<UkBiobankFileEntity> findByFilePath(String filePath);
+
 }

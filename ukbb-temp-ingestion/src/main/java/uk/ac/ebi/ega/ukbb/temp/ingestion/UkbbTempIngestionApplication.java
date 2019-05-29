@@ -10,6 +10,9 @@ import org.springframework.context.ApplicationContext;
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.Result;
 import uk.ac.ebi.ega.ukbb.temp.ingestion.services.IReEncryptService;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 @SpringBootApplication
 public class UkbbTempIngestionApplication implements CommandLineRunner {
 
@@ -32,11 +35,13 @@ public class UkbbTempIngestionApplication implements CommandLineRunner {
 	public void run(final String... args) {
 		assertCorrectNumberOfCommandLineArguments(args);
 
-		final String fileName = args[0];
+		final Path inputFilePath = Paths.get(args[0]);
 		final String inputPassword = args[1];
+		final Path outputFilePath = Paths.get("/tmp/output.txt"); // TODO bjuhasz
 		final String outputPassword = args[2];
 
-		final Result result = reEncryptService.reEncrypt(fileName, inputPassword, outputPassword);
+		final Result result = reEncryptService.reEncrypt(inputFilePath, inputPassword,
+				outputFilePath, outputPassword);
 
 		LOGGER.info("Result of re-encryption: message and exception: {}, status: {}, " +
 						"startTime: {}, endTime: {}",

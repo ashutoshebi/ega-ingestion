@@ -16,20 +16,12 @@
 package uk.ac.ebi.ega.ukbb.temp.ingestion;
 
 
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import uk.ac.ebi.ega.encryption.core.BaseEncryptionService;
-import uk.ac.ebi.ega.encryption.core.EncryptionService;
-import uk.ac.ebi.ega.encryption.core.services.IPasswordEncryptionService;
-import uk.ac.ebi.ega.encryption.core.services.PasswordEncryptionService;
-import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.services.ExecutorPersistenceService;
-import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.utils.DelayConfiguration;
-import uk.ac.ebi.ega.ukbb.temp.ingestion.services.IReEncryptService;
-import uk.ac.ebi.ega.ukbb.temp.ingestion.services.ReEncryptService;
 
 @Configuration
 public class FileReEncryptionConfiguration {
 
+    /*
     @Bean
     public EncryptionService encryptionService(){
         return new BaseEncryptionService();
@@ -45,5 +37,6 @@ public class FileReEncryptionConfiguration {
         return new ReEncryptService(executorPersistenceService, passwordService, mailingService, reportTo, job,
                 kafkaTemplate, completedTopic, delayConfiguration);
     }
+     */
 
 }
