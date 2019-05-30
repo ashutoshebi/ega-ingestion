@@ -37,11 +37,12 @@ public class UkbbTempIngestionApplication implements CommandLineRunner {
 
 		final Path inputFilePath = Paths.get(args[0]);
 		final String inputPassword = args[1];
-		final Path outputFilePath = Paths.get("/tmp/output.txt"); // TODO bjuhasz
 		final String outputPassword = args[2];
 
-		final Result result = reEncryptService.reEncrypt(inputFilePath, inputPassword,
-				outputFilePath, outputPassword);
+		final Result result = reEncryptService
+				.getReEncryptionResultFor(inputFilePath)
+				.filter(r -> Result.Status.SUCCESS.equals(r.getStatus()))
+				.orElse(reEncryptService.reEncrypt(inputFilePath, inputPassword, outputPassword));
 
 		LOGGER.info("Result of re-encryption: message and exception: {}, status: {}, " +
 						"startTime: {}, endTime: {}",

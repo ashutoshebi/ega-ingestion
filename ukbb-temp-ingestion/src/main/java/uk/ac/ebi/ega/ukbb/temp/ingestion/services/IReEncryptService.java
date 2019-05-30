@@ -18,8 +18,30 @@ package uk.ac.ebi.ega.ukbb.temp.ingestion.services;
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.Result;
 
 import java.nio.file.Path;
+import java.util.Optional;
 
 public interface IReEncryptService {
 
+    Optional<Result> getReEncryptionResultFor(Path inputFilePath);
+
+    /**
+     * TODO bjuhasz
+     *
+     * @param inputFilePath
+     * @param inputPassword
+     * @param outputPassword
+     * @return
+     */
+    Result reEncrypt(Path inputFilePath, String inputPassword, String outputPassword);
+
+    /**
+     * TODO bjuhasz
+     *
+     * @param inputFilePath
+     * @param inputPassword
+     * @param outputFilePath
+     * @param outputPassword
+     * @return
+     */
     Result reEncrypt(Path inputFilePath, String inputPassword, Path outputFilePath, String outputPassword);
 }
