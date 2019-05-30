@@ -20,16 +20,25 @@ import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import uk.ac.ebi.ega.encryption.core.DecryptInputStream;
+import uk.ac.ebi.ega.encryption.core.encryption.AesCtr256Ega;
+import uk.ac.ebi.ega.encryption.core.encryption.exceptions.AlgorithmInitializationException;
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.Result;
 import uk.ac.ebi.ega.fire.IFireService;
 import uk.ac.ebi.ega.ukbb.temp.ingestion.persistence.entity.UkBiobankFileEntity;
 import uk.ac.ebi.ega.ukbb.temp.ingestion.persistence.repository.UkBiobankFilesRepository;
 import uk.ac.ebi.ega.ukbb.temp.ingestion.persistence.repository.UkBiobankReEncryptedFilesRepository;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -52,7 +61,6 @@ public class ReEncryptServiceTest {
     private IFireService fireService = mock(IFireService.class);
 
     private ReEncryptService reEncryptService;
-
     private Path outputFile;
 
     @Rule
@@ -110,10 +118,20 @@ public class ReEncryptServiceTest {
         // TODO bjuhasz: implement this test
     }
 
-    @Ignore("TODO")
     @Test
-    public void testThatTheReEncryptedFileCanBeDecrypted() {
-        // TODO bjuhasz: implement this test
+    public void testThatTheReEncryptedFileCanBeDecrypted() throws FileNotFoundException, AlgorithmInitializationException {
+        when(originalFilesRepository.findByFilePath(eq(INPUT_FILE.toString()))).thenReturn(getUkBiobankFileEntity());
+        final Result result = reEncryptService.reEncrypt(INPUT_FILE, INPUT_PASSWORD, outputFile, OUTPUT_PASSWORD);
+
+        assertThat(result.getStatus()).isEqualTo(Result.Status.SUCCESS);
+
+        final InputStream reEncryptedFile = new FileInputStream(outputFile.toFile());
+        final DecryptInputStream decryptedFile = new DecryptInputStream(reEncryptedFile,
+                new AesCtr256Ega(), OUTPUT_PASSWORD.toCharArray());
+        final String fileAsString = new BufferedReader(new InputStreamReader(decryptedFile))
+                .lines().collect(Collectors.joining("\n"));
+
+        assertThat(fileAsString).startsWith("Lorem ipsum");
     }
 
     private void assertThatOutputFileIsStoredInFire() {
@@ -129,7 +147,6 @@ public class ReEncryptServiceTest {
     }
 
     private static Path getPathFromResource(final String resourceName) {
-        //return new File(this.getClass().getResource("/keyPairTest/test_file.txt.md5").getFile());
         return Paths.get(ReEncryptServiceTest.class.getResource(resourceName).getPath());
     }
 

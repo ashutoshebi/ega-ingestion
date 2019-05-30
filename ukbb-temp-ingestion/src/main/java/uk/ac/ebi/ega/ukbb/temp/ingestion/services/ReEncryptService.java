@@ -55,8 +55,8 @@ public class ReEncryptService implements IReEncryptService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ReEncryptService.class);
 
-    private static final int BUFFER_SIZE = 8192;
     private static final String FAILURE_MESSAGE = "Failure during the re-encryption";
+    private static final int BUFFER_SIZE = 8192;
 
     private UkBiobankFilesRepository originalFilesRepository;
     private UkBiobankReEncryptedFilesRepository reEncryptedFilesRepository;
