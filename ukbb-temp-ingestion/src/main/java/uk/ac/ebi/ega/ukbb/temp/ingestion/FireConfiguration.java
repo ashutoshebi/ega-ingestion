@@ -27,6 +27,7 @@ import java.net.MalformedURLException;
 @Configuration
 public class FireConfiguration {
 
+    // TODO bjuhasz: edit the app.props file, too
     @Bean
     @ConfigurationProperties("fire")
     public FireProperties fireProperties() {

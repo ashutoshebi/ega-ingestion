@@ -19,7 +19,9 @@ public class UkbbTempIngestionApplication implements CommandLineRunner {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(UkbbTempIngestionApplication.class);
 
-	private static final Path STAGING_PATH = Paths.get("/staging");
+	// TODO bjuhasz: what permissions needed for this Spring Boot application
+	//  to be able to write into the STAGING_PATH directory?
+	private static final Path STAGING_PATH = Paths.get("/nfs/ega/public/staging/ukbb-temp-ingestion/re-encrypted-files");
 
 	private ApplicationContext applicationContext;
 
@@ -82,7 +84,7 @@ public class UkbbTempIngestionApplication implements CommandLineRunner {
 	}
 
 	/**
-	 * TODO bjuhasz
+	 * TODO bjuhasz: document this function
 	 *
 	 * @param inputFilePath
 	 * @return

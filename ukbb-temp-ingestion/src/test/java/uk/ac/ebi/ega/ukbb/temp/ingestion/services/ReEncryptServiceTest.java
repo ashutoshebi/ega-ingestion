@@ -107,22 +107,21 @@ public class ReEncryptServiceTest {
     @Ignore("TODO")
     @Test
     public void reEncrypt_WhatHappensIfSavingTheReEncryptionReportToTheDbFails() {
-        // TODO bjuhasz
+        // TODO bjuhasz: implement this test
     }
 
     @Ignore("TODO")
     @Test
     public void testThatTheReEncryptedFileCanBeDecrypted() {
-        // TODO bjuhasz
+        // TODO bjuhasz: implement this test
     }
 
-
     private void assertThatOutputFileIsStoredInFire() {
-        // TODO bjuhasz
+        // TODO bjuhasz: implement this function
     }
 
     private void assertThatOutputFileIsNotStoredInFire() {
-        // TODO bjuhasz
+        // TODO bjuhasz: implement this function
     }
 
     private void assertThatResultIsSavedIntoDatabase() {

@@ -23,7 +23,7 @@ import java.util.Optional;
 public interface IReEncryptService {
 
     /**
-     * TODO bjuhasz
+     * TODO bjuhasz: document this function
      *
      * @param inputFilePath
      * @return
@@ -31,7 +31,7 @@ public interface IReEncryptService {
     Optional<Result> getReEncryptionResultFor(Path inputFilePath);
 
     /**
-     * TODO bjuhasz
+     * TODO bjuhasz: document this function
      *
      * @param inputFilePath
      * @param inputPassword

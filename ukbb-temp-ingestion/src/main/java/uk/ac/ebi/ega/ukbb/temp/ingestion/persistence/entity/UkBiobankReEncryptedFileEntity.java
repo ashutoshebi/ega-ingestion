@@ -24,6 +24,10 @@ import javax.persistence.EntityListeners;
 import javax.persistence.Table;
 import java.time.LocalDateTime;
 
+/**
+ * Class representing the egadev.ukbiobank.re_encrypted_files database table.
+ */
+
 @Entity
 @Table(name = "RE_ENCRYPTED_FILES")
 @EntityListeners(AuditingEntityListener.class)

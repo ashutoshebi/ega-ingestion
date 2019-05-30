@@ -158,7 +158,7 @@ public class ReEncryptService implements IReEncryptService {
 
     // TODO bjuhasz: throw the necessary exceptions
     private void storeReEncryptedFileInFire(final File outputFile) {
-        // TODO bjuhasz
+        // TODO bjuhasz: implement this function
     }
 
     private String fetchMd5FromDatabaseFor(final Path inputFilePath) {

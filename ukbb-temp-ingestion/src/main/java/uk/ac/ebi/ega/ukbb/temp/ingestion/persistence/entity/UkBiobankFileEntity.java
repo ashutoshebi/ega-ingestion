@@ -23,6 +23,9 @@ import javax.persistence.EntityListeners;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
+/**
+ * Class representing the egadev.ukbiobank.files database table.
+ */
 @Entity
 @Table(name = "FILES")
 @EntityListeners(AuditingEntityListener.class)
