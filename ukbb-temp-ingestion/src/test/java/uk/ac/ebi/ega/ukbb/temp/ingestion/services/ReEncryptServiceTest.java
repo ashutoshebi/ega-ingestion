@@ -16,10 +16,10 @@
 package uk.ac.ebi.ega.ukbb.temp.ingestion.services;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.springframework.dao.DataRetrievalFailureException;
 import uk.ac.ebi.ega.encryption.core.DecryptInputStream;
 import uk.ac.ebi.ega.encryption.core.encryption.AesCtr256Ega;
 import uk.ac.ebi.ega.encryption.core.encryption.exceptions.AlgorithmInitializationException;
@@ -113,10 +113,18 @@ public class ReEncryptServiceTest {
         assertThatOutputFileIsNotStoredInFire();
     }
 
-    @Ignore("TODO")
     @Test
-    public void reEncrypt_WhatHappensIfSavingTheReEncryptionReportToTheDbFails() {
-        // TODO bjuhasz: implement this test
+    public void reEncrypt_WhenTheReEncryptionReportCannotBeSavedToTheDb_ThenFileIsNotStoredInFire() {
+        when(reEncryptedFilesRepository.save(any())).thenThrow(new DataRetrievalFailureException("example exception from a test"));
+        when(originalFilesRepository.findByFilePath(eq(INPUT_FILE.toString()))).thenReturn(getUkBiobankFileEntity());
+
+        final Result result = reEncryptService.reEncrypt(INPUT_FILE, INPUT_PASSWORD, outputFile, OUTPUT_PASSWORD);
+
+        assertThat(result.getStatus()).isEqualTo(Result.Status.FAILURE);
+        assertThat(result.getMessageAndException())
+                .contains("DataRetrievalFailureException")
+                .contains("Error while saving the result to the DB");
+        assertThatOutputFileIsNotStoredInFire();
     }
 
     @Test

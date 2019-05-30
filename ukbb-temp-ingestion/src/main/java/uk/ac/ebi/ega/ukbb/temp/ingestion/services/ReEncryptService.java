@@ -17,6 +17,7 @@ package uk.ac.ebi.ega.ukbb.temp.ingestion.services;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataAccessException;
 import org.springframework.orm.ObjectRetrievalFailureException;
 import org.springframework.stereotype.Service;
 import uk.ac.ebi.ega.encryption.core.DecryptInputStream;
@@ -99,7 +100,7 @@ public class ReEncryptService implements IReEncryptService {
 
         EncryptionReport reEncryptionReport = new EncryptionReport(FAILURE_MESSAGE, FAILURE_MESSAGE,
                 FAILURE_MESSAGE, -1);
-        Result result;
+        Result result = Result.correct(start);
 
         try (final InputStream encryptedInput = new FileInputStream(inputFile);
              final InputStream messageDigestedEncryptedInput = new DigestInputStream(encryptedInput, messageDigestOfEncryptedFile);
@@ -130,8 +131,6 @@ public class ReEncryptService implements IReEncryptService {
 
             storeReEncryptedFileInFire(outputFile);
 
-            result = Result.correct(start);
-
         } catch (FileNotFoundException e) {
             result = Result.failure("File could not be found on DOS", e, start);
         } catch (AlgorithmInitializationException e) {
@@ -142,9 +141,15 @@ public class ReEncryptService implements IReEncryptService {
             result = Result.failure("MD5 checksum of the original, unencrypted file was not found in database", e, start);
         } catch (IOException e) {
             result = Result.abort("Unrecoverable error", e, start);
+        } catch (Exception e) {
+            result = Result.abort("Generic error", e, start);
+        } finally {
+            try {
+                saveReEncryptionOutcomeIntoDatabase(reEncryptionReport, result, inputFilePath, outputFilePath);
+            } catch (DataAccessException e) {
+                result = Result.failure("Error while saving the result to the DB", e, start);
+            }
         }
-
-        saveReEncryptionOutcomeIntoDatabase(reEncryptionReport, result, inputFilePath, outputFilePath);
 
         return result;
     }
