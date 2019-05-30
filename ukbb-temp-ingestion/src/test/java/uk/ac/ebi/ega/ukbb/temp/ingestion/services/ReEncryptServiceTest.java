@@ -26,6 +26,7 @@ import uk.ac.ebi.ega.encryption.core.encryption.exceptions.AlgorithmInitializati
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.Result;
 import uk.ac.ebi.ega.fire.IFireService;
 import uk.ac.ebi.ega.ukbb.temp.ingestion.persistence.entity.UkBiobankFileEntity;
+import uk.ac.ebi.ega.ukbb.temp.ingestion.persistence.entity.UkBiobankReEncryptedFileEntity;
 import uk.ac.ebi.ega.ukbb.temp.ingestion.persistence.repository.UkBiobankFilesRepository;
 import uk.ac.ebi.ega.ukbb.temp.ingestion.persistence.repository.UkBiobankReEncryptedFilesRepository;
 
@@ -121,16 +122,11 @@ public class ReEncryptServiceTest {
     @Test
     public void testThatTheReEncryptedFileCanBeDecrypted() throws FileNotFoundException, AlgorithmInitializationException {
         when(originalFilesRepository.findByFilePath(eq(INPUT_FILE.toString()))).thenReturn(getUkBiobankFileEntity());
-        final Result result = reEncryptService.reEncrypt(INPUT_FILE, INPUT_PASSWORD, outputFile, OUTPUT_PASSWORD);
 
+        final Result result = reEncryptService.reEncrypt(INPUT_FILE, INPUT_PASSWORD, outputFile, OUTPUT_PASSWORD);
         assertThat(result.getStatus()).isEqualTo(Result.Status.SUCCESS);
 
-        final InputStream reEncryptedFile = new FileInputStream(outputFile.toFile());
-        final DecryptInputStream decryptedFile = new DecryptInputStream(reEncryptedFile,
-                new AesCtr256Ega(), OUTPUT_PASSWORD.toCharArray());
-        final String fileAsString = new BufferedReader(new InputStreamReader(decryptedFile))
-                .lines().collect(Collectors.joining("\n"));
-
+        final String fileAsString = decryptFile(outputFile, OUTPUT_PASSWORD);
         assertThat(fileAsString).startsWith("Lorem ipsum");
     }
 
@@ -143,7 +139,8 @@ public class ReEncryptServiceTest {
     }
 
     private void assertThatResultIsSavedIntoDatabase() {
-        verify(reEncryptedFilesRepository, times(1)).save(any());
+        verify(reEncryptedFilesRepository, times(1))
+                .save(any(UkBiobankReEncryptedFileEntity.class));
     }
 
     private static Path getPathFromResource(final String resourceName) {
@@ -157,5 +154,14 @@ public class ReEncryptServiceTest {
     private Optional<UkBiobankFileEntity> getUkBiobankFileEntity(final String md5) {
         return Optional.of(new UkBiobankFileEntity(INPUT_FILE.toString(), "", 0,
                 md5, "", "", "", ""));
+    }
+
+    private String decryptFile(final Path encryptedFile, final String password)
+            throws FileNotFoundException, AlgorithmInitializationException {
+        final InputStream encryptedStream = new FileInputStream(encryptedFile.toFile());
+        final DecryptInputStream decryptedStream = new DecryptInputStream(encryptedStream,
+                new AesCtr256Ega(), password.toCharArray());
+        return new BufferedReader(new InputStreamReader(decryptedStream))
+                .lines().collect(Collectors.joining("\n"));
     }
 }
