@@ -77,7 +77,7 @@ public class ReEncryptService implements IReEncryptService {
                 .map(this::reEncryptedFileEntityToResult);
     }
 
-    // TODO bjuhasz: modularize this function
+    // TODO bjuhasz: modularize this function: split it into smaller pieces
     @Override
     public Result reEncrypt(final Path inputFilePath,
                             final String inputPassword,
@@ -158,7 +158,7 @@ public class ReEncryptService implements IReEncryptService {
 
     // TODO bjuhasz: throw the necessary exceptions
     private void storeReEncryptedFileInFire(final File outputFile) {
-        // TODO bjuhasz: implement this function
+        // TODO bjuhasz: implement this function (in the next ticket (EE-749))
     }
 
     private String fetchMd5FromDatabaseFor(final Path inputFilePath) {
