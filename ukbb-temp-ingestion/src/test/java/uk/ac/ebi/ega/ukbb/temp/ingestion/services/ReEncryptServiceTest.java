@@ -104,11 +104,18 @@ public class ReEncryptServiceTest {
         assertThatOutputFileIsNotStoredInFire();
     }
 
-    @Ignore
+    @Ignore("TODO")
     @Test
     public void reEncrypt_WhatHappensIfSavingTheReEncryptionReportToTheDbFails() {
         // TODO bjuhasz
     }
+
+    @Ignore("TODO")
+    @Test
+    public void testThatTheReEncryptedFileCanBeDecrypted() {
+        // TODO bjuhasz
+    }
+
 
     private void assertThatOutputFileIsStoredInFire() {
         // TODO bjuhasz

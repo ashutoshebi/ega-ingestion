@@ -22,17 +22,13 @@ import java.util.Optional;
 
 public interface IReEncryptService {
 
-    Optional<Result> getReEncryptionResultFor(Path inputFilePath);
-
     /**
      * TODO bjuhasz
      *
      * @param inputFilePath
-     * @param inputPassword
-     * @param outputPassword
      * @return
      */
-    Result reEncrypt(Path inputFilePath, String inputPassword, String outputPassword);
+    Optional<Result> getReEncryptionResultFor(Path inputFilePath);
 
     /**
      * TODO bjuhasz

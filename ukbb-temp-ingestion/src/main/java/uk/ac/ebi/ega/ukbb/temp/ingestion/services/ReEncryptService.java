@@ -44,12 +44,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.time.LocalDateTime;
 import java.util.Base64;
-import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -58,7 +56,6 @@ public class ReEncryptService implements IReEncryptService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ReEncryptService.class);
 
     private static final int BUFFER_SIZE = 8192;
-    private static final Path STAGING_PATH = Paths.get("/staging");
     private static final String FAILURE_MESSAGE = "Failure during the re-encryption";
 
     private UkBiobankFilesRepository originalFilesRepository;
@@ -78,14 +75,6 @@ public class ReEncryptService implements IReEncryptService {
         return reEncryptedFilesRepository
                 .findByOriginalFilePath(originalFilePath.toString())
                 .map(this::reEncryptedFileEntityToResult);
-    }
-
-    @Override
-    public Result reEncrypt(final Path inputFilePath,
-                            final String inputPassword,
-                            final String outputPassword) {
-        final Path outputFilePath = getOutputFilePathInStagingBasedOn(inputFilePath);
-        return reEncrypt(inputFilePath, inputPassword, outputFilePath, outputPassword);
     }
 
     // TODO bjuhasz: modularize this function
@@ -170,21 +159,6 @@ public class ReEncryptService implements IReEncryptService {
     // TODO bjuhasz: throw the necessary exceptions
     private void storeReEncryptedFileInFire(final File outputFile) {
         // TODO bjuhasz
-    }
-
-    /**
-     * TODO bjuhasz
-     *
-     * @param inputFilePath
-     * @return
-     */
-    private Path getOutputFilePathInStagingBasedOn(final Path inputFilePath) {
-        final Path fileName = inputFilePath.getFileName();
-
-        final String message = String.format("%s should contain a filename", inputFilePath);
-        Objects.requireNonNull(fileName, message);
-
-        return STAGING_PATH.resolve(fileName);
     }
 
     private String fetchMd5FromDatabaseFor(final Path inputFilePath) {
