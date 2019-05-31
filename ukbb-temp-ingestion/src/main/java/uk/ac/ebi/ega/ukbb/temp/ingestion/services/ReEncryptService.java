@@ -52,7 +52,7 @@ import java.util.Base64;
 import java.util.Optional;
 
 @Service
-public class ReEncryptService implements IReEncryptService {
+public class ReEncryptService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ReEncryptService.class);
 
@@ -71,7 +71,6 @@ public class ReEncryptService implements IReEncryptService {
         this.fireService = fireService;
     }
 
-    @Override
     public Optional<Result> getReEncryptionResultFor(final Path originalFilePath) {
         return reEncryptedFilesRepository
                 .findByOriginalFilePath(originalFilePath.toString())
@@ -79,7 +78,6 @@ public class ReEncryptService implements IReEncryptService {
     }
 
     // TODO bjuhasz: modularize this function: split it into smaller pieces
-    @Override
     public Result reEncrypt(final Path inputFilePath,
                             final String inputPassword,
                             final Path outputFilePath,

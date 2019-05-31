@@ -8,7 +8,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.Result;
-import uk.ac.ebi.ega.ukbb.temp.ingestion.services.IReEncryptService;
+import uk.ac.ebi.ega.ukbb.temp.ingestion.services.ReEncryptService;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -25,11 +25,11 @@ public class UkbbTempIngestionApplication implements CommandLineRunner {
 
 	private ApplicationContext applicationContext;
 
-	private IReEncryptService reEncryptService;
+	private ReEncryptService reEncryptService;
 
 	@Autowired
 	public UkbbTempIngestionApplication(final ApplicationContext applicationContext,
-			final IReEncryptService reEncryptService) {
+										final ReEncryptService reEncryptService) {
 		this.applicationContext = applicationContext;
 		this.reEncryptService = reEncryptService;
 	}

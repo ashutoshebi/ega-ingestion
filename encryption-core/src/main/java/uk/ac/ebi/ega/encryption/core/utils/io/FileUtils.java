@@ -17,15 +17,27 @@
  */
 package uk.ac.ebi.ega.encryption.core.utils.io;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Set;
 
 public class FileUtils {
+
+    private final static Set<String> knownFormats = new HashSet<>(Arrays.asList(
+            "cip", "gpg",
+            "txt", "gz", "tar", "rar", "zip", "7zip",
+            "vcf", "tbi", "bam", "cram",
+            "fastq", "fasta", "fas", "fa", "seq", "fsa", "ffn", "faa", "mpfa", "frn",
+            "gtc",
+            "bgen"
+    ));
 
     /**
      * This method is intended for small files that can be handled in memory.
@@ -103,5 +115,31 @@ public class FileUtils {
                 return textValue + "Yb";
         }
         return Long.toString(size);
+    }
+
+    // Copied from https://github.com/EbiEga/ega-production/blob/master/
+    //  database-commons/src/main/java/uk/ac/ebi/ega/database/commons/utils/FileUtils.java
+    public static String getType(String fileName) {
+
+        String components[] = new File(fileName).getName().split("\\.");
+        if (components.length == 1) {
+            return "";
+        }
+        StringBuilder stringBuilder = new StringBuilder();
+        // Skip file name, assume 0 is name for sure, now we advance until we find a known extension
+        int i = 1;
+        for (; i < components.length; i++) {
+            if (knownFormats.contains(components[i])) {
+                break;
+            }
+        }
+        // Now we continue until we find the encrypted format adding all the file extensions
+        for (; i < components.length; i++) {
+            if (components[i].equals("cip") || components[i].equals("gpg")) {
+                break;
+            }
+            stringBuilder.append(".").append(components[i]);
+        }
+        return stringBuilder.toString();
     }
 }
