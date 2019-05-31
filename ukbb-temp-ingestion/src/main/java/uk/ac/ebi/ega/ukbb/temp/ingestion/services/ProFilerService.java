@@ -19,6 +19,7 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.stereotype.Service;
 import uk.ac.ebi.ega.encryption.core.utils.io.FileUtils;
 
 import java.io.File;
@@ -27,6 +28,7 @@ import java.util.Calendar;
 
 // Copied from https://github.com/EbiEga/ega-production/blob/master/
 //  database-commons/src/main/java/uk/ac/ebi/ega/database/commons/services/ProFilerService.java
+@Service
 public class ProFilerService {
 
     private static final int BATCH = 1000;

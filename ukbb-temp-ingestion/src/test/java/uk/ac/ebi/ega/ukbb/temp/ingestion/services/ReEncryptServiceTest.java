@@ -24,7 +24,6 @@ import uk.ac.ebi.ega.encryption.core.DecryptInputStream;
 import uk.ac.ebi.ega.encryption.core.encryption.AesCtr256Ega;
 import uk.ac.ebi.ega.encryption.core.encryption.exceptions.AlgorithmInitializationException;
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.Result;
-import uk.ac.ebi.ega.fire.IFireService;
 import uk.ac.ebi.ega.ukbb.temp.ingestion.persistence.entity.UkBiobankFileEntity;
 import uk.ac.ebi.ega.ukbb.temp.ingestion.persistence.entity.UkBiobankReEncryptedFileEntity;
 import uk.ac.ebi.ega.ukbb.temp.ingestion.persistence.repository.UkBiobankFilesRepository;
@@ -59,7 +58,7 @@ public class ReEncryptServiceTest {
 
     private UkBiobankFilesRepository originalFilesRepository = mock(UkBiobankFilesRepository.class);
     private UkBiobankReEncryptedFilesRepository reEncryptedFilesRepository = mock(UkBiobankReEncryptedFilesRepository.class);
-    private IFireService fireService = mock(IFireService.class);
+    private ProFilerService proFilerService = mock(ProFilerService.class);
 
     private ReEncryptService reEncryptService;
     private Path outputFile;
@@ -70,7 +69,7 @@ public class ReEncryptServiceTest {
     @Before
     public void setUp() throws IOException {
         this.reEncryptService = new ReEncryptService(originalFilesRepository,
-                reEncryptedFilesRepository, fireService);
+                reEncryptedFilesRepository, proFilerService);
         outputFile = temporaryFolder.newFile("temporaryOutputFile").toPath();
     }
 

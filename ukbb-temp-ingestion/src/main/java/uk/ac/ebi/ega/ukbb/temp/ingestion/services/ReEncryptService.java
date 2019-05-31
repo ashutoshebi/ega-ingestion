@@ -32,7 +32,6 @@ import uk.ac.ebi.ega.encryption.core.exceptions.Md5CheckException;
 import uk.ac.ebi.ega.encryption.core.utils.Hash;
 import uk.ac.ebi.ega.encryption.core.utils.io.IOUtils;
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.Result;
-import uk.ac.ebi.ega.fire.IFireService;
 import uk.ac.ebi.ega.ukbb.temp.ingestion.persistence.entity.UkBiobankFileEntity;
 import uk.ac.ebi.ega.ukbb.temp.ingestion.persistence.entity.UkBiobankReEncryptedFileEntity;
 import uk.ac.ebi.ega.ukbb.temp.ingestion.persistence.repository.UkBiobankFilesRepository;
@@ -44,11 +43,15 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.time.LocalDateTime;
 import java.util.Base64;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -56,25 +59,37 @@ public class ReEncryptService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ReEncryptService.class);
 
+    // TODO bjuhasz: what permissions are needed for this Spring Boot application
+    //  to be able to write into the STAGING_PATH directory?
+    private static final Path STAGING_PATH = Paths.get("/nfs/ega/public/staging");
+    private static final String RELATIVE_PATH_INSIDE_STAGING = "ukbb-temp-ingestion/re-encrypted-files";
+
     private static final String FAILURE_MESSAGE = "Failure during the re-encryption";
     private static final int BUFFER_SIZE = 8192;
 
     private UkBiobankFilesRepository originalFilesRepository;
     private UkBiobankReEncryptedFilesRepository reEncryptedFilesRepository;
-    private IFireService fireService;
+    private ProFilerService proFilerService;
 
     public ReEncryptService(final UkBiobankFilesRepository originalFilesRepository,
                             final UkBiobankReEncryptedFilesRepository reEncryptedFilesRepository,
-                            final IFireService fireService) {
+                            final ProFilerService proFilerService) {
         this.originalFilesRepository = originalFilesRepository;
         this.reEncryptedFilesRepository = reEncryptedFilesRepository;
-        this.fireService = fireService;
+        this.proFilerService = proFilerService;
     }
 
     public Optional<Result> getReEncryptionResultFor(final Path originalFilePath) {
         return reEncryptedFilesRepository
                 .findByOriginalFilePath(originalFilePath.toString())
                 .map(this::reEncryptedFileEntityToResult);
+    }
+
+    public Result reEncrypt(final Path inputFilePath,
+                            final String inputPassword,
+                            final String outputPassword) {
+        final Path outputFilePath = getOutputFilePathInStagingBasedOn(inputFilePath);
+        return reEncrypt(inputFilePath, inputPassword, outputFilePath, outputPassword);
     }
 
     // TODO bjuhasz: modularize this function: split it into smaller pieces
@@ -127,7 +142,9 @@ public class ReEncryptService {
                     newReEncryptedMd5,
                     unencryptedSize);
 
-            storeReEncryptedFileInFire(outputFile);
+            // TODO bjuhasz: logging here
+
+            storeReEncryptedFileInFire(outputFile, newReEncryptedMd5);
 
         } catch (FileNotFoundException e) {
             result = Result.failure("File could not be found on DOS", e, start);
@@ -159,9 +176,15 @@ public class ReEncryptService {
                 reEncryptedFileEntity.getStartTime());
     }
 
-    // TODO bjuhasz: throw the necessary exceptions
-    private void storeReEncryptedFileInFire(final File outputFile) {
-        // TODO bjuhasz: implement this function (in the next ticket (EE-749))
+    private long storeReEncryptedFileInFire(final File file, final String md5) {
+        final long fileId = proFilerService.insertFile(null, file, md5);
+        final String relativePath = "/" + RELATIVE_PATH_INSIDE_STAGING;
+        final long proFilerId = proFilerService.insertArchive(fileId, relativePath, file, md5);
+
+        // TODO bjuhasz: logging here
+        //LOGGER.info("File {} has been inserted into pro-filer.", file);
+
+        return proFilerId;
     }
 
     private String fetchMd5FromDatabaseFor(final Path inputFilePath) {
@@ -199,5 +222,35 @@ public class ReEncryptService {
 
         reEncryptedFilesRepository.save(entity);
     }
+
+    /**
+     * TODO bjuhasz: document this function
+     *
+     * @param inputFilePath
+     * @return
+     */
+    private Path getOutputFilePathInStagingBasedOn(final Path inputFilePath) {
+        final Path fileName = inputFilePath.getFileName();
+
+        final String message = String.format("%s should contain a filename", inputFilePath);
+        Objects.requireNonNull(fileName, message);
+
+        // TODO bjuhasz: use createDirectoriesInPath
+
+        return STAGING_PATH.resolve(RELATIVE_PATH_INSIDE_STAGING).resolve(fileName);
+    }
+
+    private File createDirectoriesInPath(final Path path) throws IOException {
+        Files.createDirectories(path.getParent());
+        File outputFile;
+        try {
+            outputFile = Files.createFile(path).toFile();
+        } catch (FileAlreadyExistsException e) {
+            outputFile = path.toFile();
+            LOGGER.warn("File {} already exists, process will overwrite the file", outputFile);
+        }
+        return outputFile;
+    }
+
 
 }
