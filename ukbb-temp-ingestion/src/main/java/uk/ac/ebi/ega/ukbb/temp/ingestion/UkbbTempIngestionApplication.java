@@ -27,11 +27,6 @@ public class UkbbTempIngestionApplication implements CommandLineRunner {
 
 	private IReEncryptService reEncryptService;
 
-	private Path inputFilePath;
-	private String inputPassword;
-	private Path outputFilePath;
-	private String outputPassword;
-
 	@Autowired
 	public UkbbTempIngestionApplication(final ApplicationContext applicationContext,
 			final IReEncryptService reEncryptService) {
@@ -41,9 +36,10 @@ public class UkbbTempIngestionApplication implements CommandLineRunner {
 
 	@Override
 	public void run(final String... args) {
-		parseCommandLineArguments(args);
+		final CmdLineArgs cmdLineArgs = parseCommandLineArguments(args);
 
-		final Result result = reRunReEncryptionIfNeeded();
+		final Result result = reRunReEncryptionIfNeeded(cmdLineArgs.inputFilePath,
+				cmdLineArgs.inputPassword, cmdLineArgs.outputFilePath, cmdLineArgs.outputPassword);
 
 		LOGGER.info("Result of re-encryption: message and exception: {}, status: {}, " +
 						"startTime: {}, endTime: {}",
@@ -55,27 +51,31 @@ public class UkbbTempIngestionApplication implements CommandLineRunner {
 		SpringApplication.run(UkbbTempIngestionApplication.class, args);
 	}
 
-	private void parseCommandLineArguments(final String... args) {
+	private CmdLineArgs parseCommandLineArguments(final String... args) {
 		assertCorrectNumberOfCommandLineArguments(args);
 
-		inputFilePath = Paths.get(args[0]);
-		inputPassword = args[1];
+		final Path inputFilePath = Paths.get(args[0]);
+		final String inputPassword = args[1];
+		final Path outputFilePath;
+		final String outputPassword;
 
 		if (args.length == 3) {
 			outputFilePath = getOutputFilePathInStagingBasedOn(inputFilePath);
 			outputPassword = args[2];
-		} else if (args.length == 4) {
+		} else {
 			outputFilePath = Paths.get(args[2]);
 			outputPassword = args[3];
 		}
+
+		return new CmdLineArgs(inputFilePath, inputPassword, outputFilePath, outputPassword);
 	}
 
 	private void assertCorrectNumberOfCommandLineArguments(final String... args) {
-		if (args.length != 3 || args.length != 4) {
-			final String message = "Either 3 or 4 arguments are needed:\n" +
+		if (args.length < 3 || args.length > 4) {
+			final String message = String.format("Either 3 or 4 arguments are needed:\n" +
 					"INPUT_FILE INPUT_PASSWORD [OPTIONAL_OUTPUT_FILE] OUTPUT_PASSWORD\n\n" +
 					"If the optional output file is not given, then the re-encrypted " +
-					"output file will be placed into " + STAGING_PATH + ".";
+					"output file will be placed into %s.", STAGING_PATH);
 			LOGGER.error(message);
 
 			// https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#boot-features-application-exit
@@ -106,11 +106,26 @@ public class UkbbTempIngestionApplication implements CommandLineRunner {
 	 * @return the result of a previous successful re-encryption
 	 *         or the result of the current re-encryption.
 	 */
-	private Result reRunReEncryptionIfNeeded() {
+	private Result reRunReEncryptionIfNeeded(final Path inputFilePath, final String inputPassword,
+											 final Path outputFilePath, final String outputPassword) {
 		return reEncryptService
 				.getReEncryptionResultFor(inputFilePath)
 				.filter(r -> Result.Status.SUCCESS.equals(r.getStatus()))
 				.orElse(reEncryptService.reEncrypt(inputFilePath, inputPassword, outputFilePath, outputPassword));
 	}
 
+	private class CmdLineArgs {
+		Path inputFilePath;
+		String inputPassword;
+		Path outputFilePath;
+		String outputPassword;
+
+		CmdLineArgs(final Path inputFilePath, final String inputPassword,
+					final Path outputFilePath, final String outputPassword) {
+			this.inputFilePath = inputFilePath;
+			this.inputPassword = inputPassword;
+			this.outputFilePath = outputFilePath;
+			this.outputPassword = outputPassword;
+		}
+	}
 }

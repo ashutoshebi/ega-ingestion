@@ -120,10 +120,25 @@ public class ReEncryptServiceTest {
 
         final Result result = reEncryptService.reEncrypt(INPUT_FILE, INPUT_PASSWORD, outputFile, OUTPUT_PASSWORD);
 
+        // If there's a DB-exception, then the user is still informed, she still receives the Result object:
         assertThat(result.getStatus()).isEqualTo(Result.Status.FAILURE);
         assertThat(result.getMessageAndException())
                 .contains("DataRetrievalFailureException")
                 .contains("Error while saving the result to the DB");
+        assertThatOutputFileIsNotStoredInFire();
+    }
+
+    @Test
+    public void reEncrypt_IfAnExceptionOccurs_ThenFileIsNotStoredInFire() {
+        when(originalFilesRepository.findByFilePath(any())).thenThrow(new RuntimeException("example exception from a test"));
+
+        final Result result = reEncryptService.reEncrypt(INPUT_FILE, INPUT_PASSWORD, outputFile, OUTPUT_PASSWORD);
+
+        // If there's an exception, then the user is still informed, she still receives the Result object:
+        assertThat(result.getStatus()).isEqualTo(Result.Status.ABORTED);
+        assertThat(result.getMessageAndException())
+                .contains("RuntimeException")
+                .contains("Generic error");
         assertThatOutputFileIsNotStoredInFire();
     }
 
