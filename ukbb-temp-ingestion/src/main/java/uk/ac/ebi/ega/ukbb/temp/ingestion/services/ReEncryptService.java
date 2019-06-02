@@ -22,7 +22,6 @@ import org.springframework.orm.ObjectRetrievalFailureException;
 import org.springframework.stereotype.Service;
 import uk.ac.ebi.ega.encryption.core.DecryptInputStream;
 import uk.ac.ebi.ega.encryption.core.EncryptOutputStream;
-import uk.ac.ebi.ega.encryption.core.EncryptionReport;
 import uk.ac.ebi.ega.encryption.core.Md5Check;
 import uk.ac.ebi.ega.encryption.core.encryption.AesCbcOpenSSL;
 import uk.ac.ebi.ega.encryption.core.encryption.AesCtr256Ega;
@@ -64,7 +63,6 @@ public class ReEncryptService {
     private static final Path STAGING_PATH = Paths.get("/nfs/ega/public/staging");
     private static final String RELATIVE_PATH_INSIDE_STAGING = "ukbb-temp-ingestion/re-encrypted-files";
 
-    private static final String FAILURE_MESSAGE = "Failure during the re-encryption";
     private static final int BUFFER_SIZE = 8192;
 
     private UkBiobankFilesRepository originalFilesRepository;
@@ -85,23 +83,84 @@ public class ReEncryptService {
                 .map(this::reEncryptedFileEntityToResult);
     }
 
-    public Result reEncrypt(final Path inputFilePath,
-                            final String inputPassword,
-                            final String outputPassword) {
-        final Path outputFilePath = getOutputFilePathInStagingBasedOn(inputFilePath);
-        return reEncrypt(inputFilePath, inputPassword, outputFilePath, outputPassword);
+    public Result reEncryptAndStoreInProFiler(final Path inputFilePath,
+                                              final String inputPassword,
+                                              final String outputPassword) {
+
+        final Path fileName = getFileName(inputFilePath);
+        final Path outputFileAbsolutePath = STAGING_PATH.resolve(RELATIVE_PATH_INSIDE_STAGING).resolve(fileName);
+        final Path outputFileRelativePathInsideStaging = Paths.get("/")
+                .resolve(RELATIVE_PATH_INSIDE_STAGING).resolve(fileName);
+
+        return reEncryptAndStoreInProFiler(inputFilePath, inputPassword,
+                outputFileAbsolutePath, outputFileRelativePathInsideStaging, outputPassword);
     }
 
-    // TODO bjuhasz: modularize this function: split it into smaller pieces
-    public Result reEncrypt(final Path inputFilePath,
-                            final String inputPassword,
-                            final Path outputFilePath,
-                            final String outputPassword) {
+    Result reEncryptAndStoreInProFiler(final Path inputFilePath,
+                                       final String inputPassword,
+                                       final Path outputFileAbsolutePath,
+                                       final Path outputFileRelativePathInsideStaging,
+                                       final String outputPassword) {
 
         final LocalDateTime start = LocalDateTime.now();
+        String originalEncryptedMd5 = "";
+        String unencryptedMd5 = "";
+        String newReEncryptedMd5 = "";
+        Result finalResult;
+
+        try {
+            final ReEncryptionResult reEncryptionResult = reEncrypt(inputFilePath, inputPassword,
+                    outputFileAbsolutePath, outputPassword);
+
+            originalEncryptedMd5 = reEncryptionResult.originalEncryptedMd5;
+            unencryptedMd5 = reEncryptionResult.unencryptedMd5;
+            newReEncryptedMd5 = reEncryptionResult.newReEncryptedMd5;
+
+            // This is the MD5 of the original, not-yet-encrypted (or unencrypted) file:
+            final String expectedUnencryptedMd5 = fetchMd5FromDatabaseFor(inputFilePath);
+
+            checkMd5(expectedUnencryptedMd5, originalEncryptedMd5, unencryptedMd5);
+
+            final long proFilerId = storeReEncryptedFileInProFiler(reEncryptionResult.outputFile,
+                    outputFileRelativePathInsideStaging, newReEncryptedMd5);
+
+            LOGGER.debug("{} was re-encrypted into {}", inputFilePath, outputFileAbsolutePath);
+            LOGGER.info("{} was re-encrypted and stored in pro-filer with ID: {}", inputFilePath, proFilerId);
+
+            finalResult = Result.correct(start);
+
+        } catch (FileNotFoundException e) {
+            finalResult = Result.failure("File could not be found on DOS", e, start);
+        } catch (AlgorithmInitializationException e) {
+            finalResult = Result.failure("Error while decrypting the file on DOS", e, start);
+        } catch (IOException e) {
+            finalResult = Result.abort("Unrecoverable error", e, start);
+        } catch (Md5CheckException e) {
+            finalResult = Result.failure("Mismatch of md5", e, start);
+        } catch (ObjectRetrievalFailureException e) {
+            finalResult = Result.failure("MD5 checksum of the original, unencrypted file was not found in database", e, start);
+        } catch (Exception e) {
+            finalResult = Result.abort("Generic error", e, start);
+        }
+
+        try {
+            storeReEncryptionResultInDatabase(inputFilePath, outputFileAbsolutePath,
+                    originalEncryptedMd5, unencryptedMd5, newReEncryptedMd5,
+                    finalResult);
+        } catch (DataAccessException e) {
+            finalResult = Result.failure("Error while saving the result to the DB", e, start);
+        }
+
+        return finalResult;
+    }
+
+    private ReEncryptionResult reEncrypt(final Path inputFilePath,
+                                         final String inputPassword,
+                                         final Path outputFilePath,
+                                         final String outputPassword) throws IOException, AlgorithmInitializationException {
 
         final File inputFile = inputFilePath.toFile();
-        final File outputFile = outputFilePath.toFile();
+        final File outputFile = createDirectoriesInPath(outputFilePath);
 
         // This is the MessageDigest of the encrypted file:
         final MessageDigest messageDigestOfEncryptedFile = Hash.getMd5();
@@ -110,10 +169,6 @@ public class ReEncryptService {
         decryptionAlgorithm.setUseMd5Salt(true);
 
         final EncryptionAlgorithm encryptionAlgorithm = new AesCtr256Ega();
-
-        EncryptionReport reEncryptionReport = new EncryptionReport(FAILURE_MESSAGE, FAILURE_MESSAGE,
-                FAILURE_MESSAGE, -1);
-        Result result = Result.correct(start);
 
         try (final InputStream encryptedInput = new FileInputStream(inputFile);
              final InputStream messageDigestedEncryptedInput = new DigestInputStream(encryptedInput, messageDigestOfEncryptedFile);
@@ -131,42 +186,15 @@ public class ReEncryptService {
             final String unencryptedMd5 = decryptedInput.getUnencryptedMd5();
             final String newReEncryptedMd5 = reEncryptedOutput.getMd5();
 
-            // This is the MD5 of the original, not-yet-encrypted (or unencrypted) file:
-            final String expectedUnencryptedMd5 = fetchMd5FromDatabaseFor(inputFilePath);
-
-            final Md5Check md5Check = Md5Check.any(expectedUnencryptedMd5);
-            md5Check.check(originalEncryptedMd5, unencryptedMd5);
-
-            reEncryptionReport = new EncryptionReport(originalEncryptedMd5,
-                    unencryptedMd5,
-                    newReEncryptedMd5,
-                    unencryptedSize);
-
-            // TODO bjuhasz: logging here
-
-            storeReEncryptedFileInFire(outputFile, newReEncryptedMd5);
-
-        } catch (FileNotFoundException e) {
-            result = Result.failure("File could not be found on DOS", e, start);
-        } catch (AlgorithmInitializationException e) {
-            result = Result.failure("Error while decrypting the file on DOS", e, start);
-        } catch (Md5CheckException e) {
-            result = Result.failure("Mismatch of md5", e, start);
-        } catch (ObjectRetrievalFailureException e) {
-            result = Result.failure("MD5 checksum of the original, unencrypted file was not found in database", e, start);
-        } catch (IOException e) {
-            result = Result.abort("Unrecoverable error", e, start);
-        } catch (Exception e) {
-            result = Result.abort("Generic error", e, start);
-        } finally {
-            try {
-                saveReEncryptionOutcomeIntoDatabase(reEncryptionReport, result, inputFilePath, outputFilePath);
-            } catch (DataAccessException e) {
-                result = Result.failure("Error while saving the result to the DB", e, start);
-            }
+            return new ReEncryptionResult(originalEncryptedMd5, unencryptedMd5, newReEncryptedMd5, outputFile);
         }
+    }
 
-        return result;
+    private void checkMd5(final String expectedUnencryptedMd5,
+                          final String originalEncryptedMd5,
+                          final String unencryptedMd5) throws Md5CheckException {
+        final Md5Check md5Check = Md5Check.any(expectedUnencryptedMd5);
+        md5Check.check(originalEncryptedMd5, unencryptedMd5);
     }
 
     private Result reEncryptedFileEntityToResult(final UkBiobankReEncryptedFileEntity reEncryptedFileEntity) {
@@ -176,13 +204,12 @@ public class ReEncryptService {
                 reEncryptedFileEntity.getStartTime());
     }
 
-    private long storeReEncryptedFileInFire(final File file, final String md5) {
+    private long storeReEncryptedFileInProFiler(final File file, final Path relativePath, final String md5) {
         final long fileId = proFilerService.insertFile(null, file, md5);
-        final String relativePath = "/" + RELATIVE_PATH_INSIDE_STAGING;
-        final long proFilerId = proFilerService.insertArchive(fileId, relativePath, file, md5);
+        final long proFilerId = proFilerService.insertArchive(fileId, relativePath.toString(), file, md5);
 
-        // TODO bjuhasz: logging here
-        //LOGGER.info("File {} has been inserted into pro-filer.", file);
+        LOGGER.info("File {} has been inserted into pro-filer. fileId: {}, proFilerId: {}",
+                relativePath, fileId, proFilerId);
 
         return proFilerId;
     }
@@ -201,43 +228,25 @@ public class ReEncryptService {
         return md5;
     }
 
-    private void saveReEncryptionOutcomeIntoDatabase(final EncryptionReport reEncryptionReport,
-                                                     final Result result,
-                                                     final Path inputFilePath,
-                                                     final Path outputFilePath) {
-
+    private void storeReEncryptionResultInDatabase(final Path inputFilePath, final Path outputFilePath,
+                                                   final String originalEncryptedMd5,
+                                                   final String unencryptedMd5, final String newReEncryptedMd5,
+                                                   final Result result) {
         final String exceptionMessage = result.getException() != null ? result.getException().getMessage() : "";
 
         final UkBiobankReEncryptedFileEntity entity = new UkBiobankReEncryptedFileEntity(
-                inputFilePath.toString(),
-                outputFilePath.toString(),
-                reEncryptionReport.getUnencryptedMd5(),
-                reEncryptionReport.getOriginalMd5(),
-                reEncryptionReport.getEncryptedMd5(),
-                result.getStatus(),
-                result.getMessage(),
-                exceptionMessage,
-                result.getStartTime(),
-                result.getEndTime());
+                inputFilePath.toString(), outputFilePath.toString(),
+                unencryptedMd5, originalEncryptedMd5, newReEncryptedMd5,
+                result.getStatus(), result.getMessage(), exceptionMessage,
+                result.getStartTime(), result.getEndTime());
 
         reEncryptedFilesRepository.save(entity);
     }
 
-    /**
-     * TODO bjuhasz: document this function
-     *
-     * @param inputFilePath
-     * @return
-     */
-    private Path getOutputFilePathInStagingBasedOn(final Path inputFilePath) {
+    private Path getFileName(final Path inputFilePath) {
         final Path fileName = inputFilePath.getFileName();
-
         final String message = String.format("%s should contain a filename", inputFilePath);
-        Objects.requireNonNull(fileName, message);
-
-        // TODO bjuhasz: use createDirectoriesInPath
-
-        return STAGING_PATH.resolve(RELATIVE_PATH_INSIDE_STAGING).resolve(fileName);
+        return Objects.requireNonNull(fileName, message);
     }
 
     private File createDirectoriesInPath(final Path path) throws IOException {
@@ -252,5 +261,18 @@ public class ReEncryptService {
         return outputFile;
     }
 
+    private class ReEncryptionResult {
+        String originalEncryptedMd5;
+        String unencryptedMd5;
+        String newReEncryptedMd5;
+        File outputFile;
 
+        ReEncryptionResult(final String originalEncryptedMd5, final String unencryptedMd5,
+                           final String newReEncryptedMd5, final File outputFile) {
+            this.originalEncryptedMd5 = originalEncryptedMd5;
+            this.unencryptedMd5 = unencryptedMd5;
+            this.newReEncryptedMd5 = newReEncryptedMd5;
+            this.outputFile = outputFile;
+        }
+    }
 }

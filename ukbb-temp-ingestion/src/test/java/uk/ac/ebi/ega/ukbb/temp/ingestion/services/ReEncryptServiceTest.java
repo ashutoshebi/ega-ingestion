@@ -77,7 +77,7 @@ public class ReEncryptServiceTest {
     public void reEncrypt_SuppliedCorrectArguments_ExecutesSuccessfully() {
         when(originalFilesRepository.findByFilePath(eq(INPUT_FILE.toString()))).thenReturn(getUkBiobankFileEntity());
 
-        final Result result = reEncryptService.reEncrypt(INPUT_FILE, INPUT_PASSWORD, outputFile, OUTPUT_PASSWORD);
+        final Result result = reEncryptService.reEncryptAndStoreInProFiler(INPUT_FILE, INPUT_PASSWORD, outputFile, outputFile, OUTPUT_PASSWORD);
 
         assertThat(result.getStatus()).isEqualTo(Result.Status.SUCCESS);
         assertThatResultIsSavedIntoDatabase();
@@ -86,7 +86,7 @@ public class ReEncryptServiceTest {
 
     @Test
     public void reEncrypt_SuppliedWithNonExistingInputFile_ReturnsFailureResult() {
-        final Result result = reEncryptService.reEncrypt(NONEXISTENT_INPUT_FILE, INPUT_PASSWORD, outputFile, OUTPUT_PASSWORD);
+        final Result result = reEncryptService.reEncryptAndStoreInProFiler(NONEXISTENT_INPUT_FILE, INPUT_PASSWORD, outputFile, outputFile, OUTPUT_PASSWORD);
 
         assertThat(result.getStatus()).isEqualTo(Result.Status.FAILURE);
         assertThat(result.getMessageAndException())
@@ -102,7 +102,7 @@ public class ReEncryptServiceTest {
         when(originalFilesRepository.findByFilePath(eq(INPUT_FILE.toString()))).thenReturn(
                 getUkBiobankFileEntity(anMD5FromTheDBWhichWillNotMatchTheOneCalculatedByOurService));
 
-        final Result result = reEncryptService.reEncrypt(INPUT_FILE, INPUT_PASSWORD, outputFile, OUTPUT_PASSWORD);
+        final Result result = reEncryptService.reEncryptAndStoreInProFiler(INPUT_FILE, INPUT_PASSWORD, outputFile, outputFile, OUTPUT_PASSWORD);
 
         assertThat(result.getStatus()).isEqualTo(Result.Status.FAILURE);
         assertThat(result.getMessageAndException())
@@ -117,7 +117,7 @@ public class ReEncryptServiceTest {
         when(reEncryptedFilesRepository.save(any())).thenThrow(new DataRetrievalFailureException("example exception from a test"));
         when(originalFilesRepository.findByFilePath(eq(INPUT_FILE.toString()))).thenReturn(getUkBiobankFileEntity());
 
-        final Result result = reEncryptService.reEncrypt(INPUT_FILE, INPUT_PASSWORD, outputFile, OUTPUT_PASSWORD);
+        final Result result = reEncryptService.reEncryptAndStoreInProFiler(INPUT_FILE, INPUT_PASSWORD, outputFile, outputFile, OUTPUT_PASSWORD);
 
         // If there's a DB-exception, then the user is still informed, she still receives the Result object:
         assertThat(result.getStatus()).isEqualTo(Result.Status.FAILURE);
@@ -131,7 +131,7 @@ public class ReEncryptServiceTest {
     public void reEncrypt_IfAnExceptionOccurs_ThenFileIsNotStoredInFire() {
         when(originalFilesRepository.findByFilePath(any())).thenThrow(new RuntimeException("example exception from a test"));
 
-        final Result result = reEncryptService.reEncrypt(INPUT_FILE, INPUT_PASSWORD, outputFile, OUTPUT_PASSWORD);
+        final Result result = reEncryptService.reEncryptAndStoreInProFiler(INPUT_FILE, INPUT_PASSWORD, outputFile, outputFile, OUTPUT_PASSWORD);
 
         // If there's an exception, then the user is still informed, she still receives the Result object:
         assertThat(result.getStatus()).isEqualTo(Result.Status.ABORTED);
@@ -145,7 +145,7 @@ public class ReEncryptServiceTest {
     public void testThatTheReEncryptedFileCanBeDecrypted() throws FileNotFoundException, AlgorithmInitializationException {
         when(originalFilesRepository.findByFilePath(eq(INPUT_FILE.toString()))).thenReturn(getUkBiobankFileEntity());
 
-        final Result result = reEncryptService.reEncrypt(INPUT_FILE, INPUT_PASSWORD, outputFile, OUTPUT_PASSWORD);
+        final Result result = reEncryptService.reEncryptAndStoreInProFiler(INPUT_FILE, INPUT_PASSWORD, outputFile, outputFile, OUTPUT_PASSWORD);
         assertThat(result.getStatus()).isEqualTo(Result.Status.SUCCESS);
 
         final String fileAsString = decryptFile(outputFile, OUTPUT_PASSWORD);

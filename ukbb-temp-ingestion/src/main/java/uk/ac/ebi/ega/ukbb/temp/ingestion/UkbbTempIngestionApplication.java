@@ -75,6 +75,6 @@ public class UkbbTempIngestionApplication implements CommandLineRunner {
 		return reEncryptService
 				.getReEncryptionResultFor(inputFilePath)
 				.filter(r -> Result.Status.SUCCESS.equals(r.getStatus()))
-				.orElse(reEncryptService.reEncrypt(inputFilePath, inputPassword, outputPassword));
+				.orElse(reEncryptService.reEncryptAndStoreInProFiler(inputFilePath, inputPassword, outputPassword));
 	}
 }
