@@ -21,6 +21,7 @@ import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.Result;
 
 import javax.persistence.Entity;
 import javax.persistence.EntityListeners;
+import javax.persistence.Id;
 import javax.persistence.Table;
 import java.time.LocalDateTime;
 
@@ -35,8 +36,9 @@ public class UkBiobankReEncryptedFileEntity implements Persistable<String> {
 
     private transient boolean persist = true;
 
-    // TODO bjuhasz: which column should be the primary key?
-    //@Id
+    @Id
+    private long re_encrypted_file_id;
+
     private String originalFilePath;
     private String newReEncryptedFilePath;
 

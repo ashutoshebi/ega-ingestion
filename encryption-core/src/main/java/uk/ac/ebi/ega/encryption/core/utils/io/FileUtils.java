@@ -121,7 +121,7 @@ public class FileUtils {
     //  database-commons/src/main/java/uk/ac/ebi/ega/database/commons/utils/FileUtils.java
     public static String getType(String fileName) {
 
-        String components[] = new File(fileName).getName().split("\\.");
+        String[] components = new File(fileName).getName().split("\\.");
         if (components.length == 1) {
             return "";
         }
@@ -135,7 +135,7 @@ public class FileUtils {
         }
         // Now we continue until we find the encrypted format adding all the file extensions
         for (; i < components.length; i++) {
-            if (components[i].equals("cip") || components[i].equals("gpg")) {
+            if ("cip".equals(components[i]) || "gpg".equals(components[i])) {
                 break;
             }
             stringBuilder.append(".").append(components[i]);
