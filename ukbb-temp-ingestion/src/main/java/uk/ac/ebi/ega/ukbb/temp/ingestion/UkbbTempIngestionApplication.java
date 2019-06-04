@@ -11,6 +11,8 @@ import org.springframework.context.ApplicationContext;
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.Result;
 import uk.ac.ebi.ega.ukbb.temp.ingestion.services.ReEncryptService;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -31,12 +33,12 @@ public class UkbbTempIngestionApplication implements CommandLineRunner {
     }
 
     @Override
-    public void run(final String... args) {
+    public void run(final String... args) throws IOException {
         assertCorrectNumberOfCommandLineArguments(args);
 
         final Path inputFilePath = Paths.get(args[0]);
-        final String inputPassword = args[1];
-        final String outputPassword = args[2];
+        final String inputPassword = readPasswordFromFile(args[1]);
+        final String outputPassword = readPasswordFromFile(args[2]);
 
         final Result result = reRunReEncryptionIfNeeded(inputFilePath,
                 inputPassword, outputPassword);
@@ -54,11 +56,22 @@ public class UkbbTempIngestionApplication implements CommandLineRunner {
     private void assertCorrectNumberOfCommandLineArguments(final String... args) {
         if (args.length != 3) {
             final String message = "3 arguments are needed:\n" +
-                    "INPUT_FILE INPUT_PASSWORD OUTPUT_PASSWORD";
+                    "INPUT_FILE_PATH INPUT_PASSWORD_FILE_PATH OUTPUT_PASSWORD_FILE_PATH";
             LOGGER.error(message);
 
             // https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#boot-features-application-exit
             System.exit(SpringApplication.exit(applicationContext, () -> 1));
+        }
+    }
+
+    private String readPasswordFromFile(final String fileName) throws IOException {
+        try {
+            return Files.readAllLines(Paths.get(fileName)).get(0);
+        } catch (IOException | IndexOutOfBoundsException e) {
+            final String message = String.format("Could not read the password from file %s. " +
+                    "%s should contain a password as its first line.", fileName, fileName);
+            LOGGER.error(message, e);
+            throw e;
         }
     }
 
