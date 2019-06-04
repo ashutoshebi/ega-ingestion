@@ -139,11 +139,16 @@ public class ReEncryptService {
 
             checkMd5(expectedUnencryptedMd5, originalEncryptedMd5, unencryptedMd5);
 
-            final long proFilerId = storeReEncryptedFileInProFiler(reEncryptionResult.outputFile,
-                    outputFileRelativePathInsideStaging, newReEncryptedMd5);
-
             LOGGER.debug("{} was re-encrypted into {}", inputFilePath, outputFileAbsolutePath);
-            LOGGER.info("{} was re-encrypted and stored in pro-filer with ID: {}", inputFilePath, proFilerId);
+
+            if (reEncryptProperties.shouldStoreFileInFire()) {
+                final long proFilerId = storeReEncryptedFileInProFiler(reEncryptionResult.outputFile,
+                        outputFileRelativePathInsideStaging, newReEncryptedMd5);
+                LOGGER.info("{} was re-encrypted and stored in pro-filer with ID: {}", inputFilePath, proFilerId);
+            } else {
+                LOGGER.info("{} was re-encrypted but it was NOT stored in pro-filer " +
+                        "because the \"store-file-in-fire\" property is set to false.", inputFilePath);
+            }
 
             finalResult = Result.correct(start);
 

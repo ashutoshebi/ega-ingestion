@@ -21,11 +21,13 @@ public class ReEncryptProperties {
 
     private String relativePathInsideStaging;
 
+    private boolean storeFileInFire = false;
+
     public String getStagingPath() {
         return stagingPath;
     }
 
-    public void setStagingPath(String stagingPath) {
+    public void setStagingPath(final String stagingPath) {
         this.stagingPath = stagingPath;
     }
 
@@ -33,8 +35,19 @@ public class ReEncryptProperties {
         return relativePathInsideStaging;
     }
 
-    public void setRelativePathInsideStaging(String relativePathInsideStaging) {
+    public void setRelativePathInsideStaging(final String relativePathInsideStaging) {
         this.relativePathInsideStaging = relativePathInsideStaging;
     }
 
+    public boolean isStoreFileInFire() {
+        return storeFileInFire;
+    }
+
+    public boolean shouldStoreFileInFire() {
+        return isStoreFileInFire();
+    }
+
+    public void setStoreFileInFire(final boolean storeFileInFire) {
+        this.storeFileInFire = storeFileInFire;
+    }
 }

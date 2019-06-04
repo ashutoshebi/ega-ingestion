@@ -62,6 +62,7 @@ public class ReEncryptServiceTest {
     private UkBiobankFilesRepository originalFilesRepository = mock(UkBiobankFilesRepository.class);
     private UkBiobankReEncryptedFilesRepository reEncryptedFilesRepository = mock(UkBiobankReEncryptedFilesRepository.class);
     private ProFilerService proFilerService = mock(ProFilerService.class);
+    private ReEncryptProperties reEncryptProperties = mock(ReEncryptProperties.class);
 
     private ReEncryptService reEncryptService;
     private Path outputFile;
@@ -71,8 +72,11 @@ public class ReEncryptServiceTest {
 
     @Before
     public void setUp() throws IOException {
-        this.reEncryptService = new ReEncryptService(originalFilesRepository,
-                reEncryptedFilesRepository, proFilerService, new ReEncryptProperties());
+        when(reEncryptProperties.shouldStoreFileInFire()).thenReturn(true);
+
+        reEncryptService = new ReEncryptService(originalFilesRepository,
+                reEncryptedFilesRepository, proFilerService, reEncryptProperties);
+
         outputFile = temporaryFolder.newFile("temporaryOutputFile").toPath();
     }
 
@@ -85,6 +89,18 @@ public class ReEncryptServiceTest {
         assertThat(result.getStatus()).isEqualTo(Result.Status.SUCCESS);
         assertThatResultIsSavedIntoDatabase();
         assertThatOutputFileIsStoredInFire();
+    }
+
+    @Test
+    public void reEncrypt_WhenInstructedToNotToSaveIntoFire_ThenItDoesNotSaveIntoFire() {
+        when(reEncryptProperties.shouldStoreFileInFire()).thenReturn(false);
+        when(originalFilesRepository.findByFilePath(eq(INPUT_FILE.toString()))).thenReturn(getUkBiobankFileEntity());
+
+        final Result result = reEncryptService.reEncryptAndStoreInProFiler(INPUT_FILE, INPUT_PASSWORD, outputFile, outputFile, OUTPUT_PASSWORD);
+
+        assertThat(result.getStatus()).isEqualTo(Result.Status.SUCCESS);
+        assertThatResultIsSavedIntoDatabase();
+        assertThatOutputFileIsNotStoredInFire();
     }
 
     @Test
