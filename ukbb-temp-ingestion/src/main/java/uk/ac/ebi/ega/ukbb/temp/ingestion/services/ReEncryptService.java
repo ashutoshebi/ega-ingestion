@@ -89,8 +89,6 @@ public class ReEncryptService {
                                               final String inputPassword,
                                               final String outputPassword) {
 
-        // TODO bjuhasz: what permissions are needed for this Spring Boot application
-        //  to be able to write into the stagingPath directory?
         final Path stagingPath = Paths.get(reEncryptProperties.getStagingPath());
         final String relativePathInsideStaging = reEncryptProperties.getRelativePathInsideStaging();
 

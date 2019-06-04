@@ -47,7 +47,6 @@ public class UkBiobankReEncryptedFileEntity implements Persistable<Long> {
     private String newReEncryptedFilePath;
 
     // The MD5 of the original, encrypted file.
-    // "original_encrypted_md5 REFERENCES ukbiobank.files(md5_checksum)" // TODO bjuhasz: I think this one is not true.
     private String originalEncryptedMd5;
 
     // The MD5 of the original, encrypted file, after it has been decrypted.

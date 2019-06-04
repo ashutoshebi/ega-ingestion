@@ -109,7 +109,7 @@ public class ProFilerService {
         parameters.addValue("size", file.length());
         parameters.addValue("relative_path", relativePath);
         parameters.addValue("volume_name", "vol1");
-        parameters.addValue("priority", "50"); // TODO bjuhasz: shouldn't this be 50 without the quotation marks?
+        parameters.addValue("priority", "50");
         parameters.addValue("created", date);
         parameters.addValue("updated", date);
         parameters.addValue("archive_action_id", 1);

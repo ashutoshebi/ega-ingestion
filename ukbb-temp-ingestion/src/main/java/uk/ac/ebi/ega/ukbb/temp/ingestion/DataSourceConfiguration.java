@@ -28,7 +28,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.orm.jpa.JpaTransactionManager;
-import uk.ac.ebi.ega.ingestion.file.manager.utils.CustomDataSourceInitialization;
+import uk.ac.ebi.ega.ukbb.temp.ingestion.utils.CustomDataSourceInitialization;
 
 import javax.persistence.EntityManagerFactory;
 
