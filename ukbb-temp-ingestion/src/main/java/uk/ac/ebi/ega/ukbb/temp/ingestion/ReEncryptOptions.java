@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Optional;
 
+// TODO bjuhasz: this class should be used to parse the cmdline args.
 public class ReEncryptOptions {
 
     private static final Logger logger = LoggerFactory.getLogger(ReEncryptOptions.class);

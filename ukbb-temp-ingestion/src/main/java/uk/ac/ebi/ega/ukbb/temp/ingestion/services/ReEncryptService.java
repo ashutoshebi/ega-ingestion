@@ -146,8 +146,9 @@ public class ReEncryptService {
                         outputFileRelativePathInsideStaging, newReEncryptedMd5);
                 LOGGER.info("{} was re-encrypted and stored in pro-filer with ID: {}", inputFilePath, proFilerId);
             } else {
-                LOGGER.info("{} was re-encrypted but it was NOT stored in pro-filer " +
-                        "because the \"store-file-in-fire\" property is set to false.", inputFilePath);
+                LOGGER.info("The {} file was re-encrypted but it was NOT stored in pro-filer (Fire) " +
+                        "because the \"store-file-in-fire\" property (in the application.properties) " +
+                        "is set to false.", inputFilePath);
             }
 
             finalResult = Result.correct(start);
@@ -204,6 +205,7 @@ public class ReEncryptService {
 
             final long unencryptedSize = IOUtils.bufferedPipe(decryptedInput, reEncryptedOutput, BUFFER_SIZE);
             reEncryptedOutput.flush();
+            LOGGER.trace("The size of the unencrypted file is: {}", unencryptedSize);
 
             final String originalEncryptedMd5 = Hash.normalize(messageDigestOfEncryptedFile);
             final String unencryptedMd5 = decryptedInput.getUnencryptedMd5();

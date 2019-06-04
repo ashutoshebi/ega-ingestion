@@ -15,24 +15,17 @@
  */
 package uk.ac.ebi.ega.ukbb.temp.ingestion.persistence.entity;
 
-import org.springframework.data.domain.Persistable;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.EntityListeners;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
 /**
- * Class representing the egadev.ukbiobank.files database table.
+ * Class representing the ukbiobank.files database table.
  */
 @Entity
 @Table(schema = "UKBIOBANK", name = "FILES")
-@EntityListeners(AuditingEntityListener.class)
-public class UkBiobankFileEntity implements Persistable<String> {
-
-    private transient boolean persist = true;
+public class UkBiobankFileEntity {
 
     @Id
     private String filePath;
@@ -67,20 +60,6 @@ public class UkBiobankFileEntity implements Persistable<String> {
         this.sampleId = sampleId;
         this.sex = sex;
         this.ethnicity = ethnicity;
-    }
-
-    @Override
-    public String getId() {
-        return filePath;
-    }
-
-    @Override
-    public boolean isNew() {
-        return persist;
-    }
-
-    public void setPersist(boolean persist) {
-        this.persist = persist;
     }
 
     public String getFilePath() {

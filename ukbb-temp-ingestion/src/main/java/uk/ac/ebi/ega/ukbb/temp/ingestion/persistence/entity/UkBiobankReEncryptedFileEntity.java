@@ -26,7 +26,7 @@ import javax.persistence.Table;
 import java.time.LocalDateTime;
 
 /**
- * Class representing the egadev.ukbiobank.re_encrypted_files database table.
+ * Class representing the ukbiobank.re_encrypted_files database table.
  */
 
 @Entity

@@ -27,7 +27,7 @@ import java.util.Optional;
 public class ReEncryptConfiguration {
 
     // TODO bjuhasz: use this class in the UkbbTempIngestionApplication class
-    @Bean
+    //@Bean
     public CommandLineRunner clr() {
         return args -> {
             Optional<ReEncryptOptions> var = ReEncryptOptions.parse(args);

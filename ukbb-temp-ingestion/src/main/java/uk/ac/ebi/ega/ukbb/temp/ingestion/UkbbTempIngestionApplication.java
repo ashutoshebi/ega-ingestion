@@ -64,6 +64,12 @@ public class UkbbTempIngestionApplication implements CommandLineRunner {
         }
     }
 
+    /**
+     * Returns the first line of the given file.
+     * @param fileName the file to be read.
+     * @return the first line of the given file.
+     * @throws IOException when there's a problem while reading the file.
+     */
     private String readPasswordFromFile(final String fileName) throws IOException {
         try {
             return Files.readAllLines(Paths.get(fileName)).get(0);
