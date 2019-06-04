@@ -28,13 +28,13 @@ import java.net.MalformedURLException;
 public class FireConfiguration {
 
     @Bean
-    @ConfigurationProperties("fire")
+    @ConfigurationProperties(prefix = "fire")
     public FireProperties fireProperties() {
         return new FireProperties();
     }
 
     @Bean
-    public IFireService fireService(FireProperties fireProperties) throws MalformedURLException {
+    public IFireService fireService(final FireProperties fireProperties) throws MalformedURLException {
         return new FireService(fireProperties);
     }
 

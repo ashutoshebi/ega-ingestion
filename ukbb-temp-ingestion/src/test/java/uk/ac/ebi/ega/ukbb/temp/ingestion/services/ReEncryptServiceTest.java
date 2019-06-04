@@ -28,6 +28,7 @@ import uk.ac.ebi.ega.ukbb.temp.ingestion.persistence.entity.UkBiobankFileEntity;
 import uk.ac.ebi.ega.ukbb.temp.ingestion.persistence.entity.UkBiobankReEncryptedFileEntity;
 import uk.ac.ebi.ega.ukbb.temp.ingestion.persistence.repository.UkBiobankFilesRepository;
 import uk.ac.ebi.ega.ukbb.temp.ingestion.persistence.repository.UkBiobankReEncryptedFilesRepository;
+import uk.ac.ebi.ega.ukbb.temp.ingestion.properties.ReEncryptProperties;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -69,7 +70,7 @@ public class ReEncryptServiceTest {
     @Before
     public void setUp() throws IOException {
         this.reEncryptService = new ReEncryptService(originalFilesRepository,
-                reEncryptedFilesRepository, proFilerService);
+                reEncryptedFilesRepository, proFilerService, new ReEncryptProperties());
         outputFile = temporaryFolder.newFile("temporaryOutputFile").toPath();
     }
 

@@ -24,9 +24,9 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Optional;
 
-public class FileReEncryptOptions {
+public class ReEncryptOptions {
 
-    private static final Logger logger = LoggerFactory.getLogger(FileReEncryptOptions.class);
+    private static final Logger logger = LoggerFactory.getLogger(ReEncryptOptions.class);
 
     private static final String EGA_ID = "egaId";
     private static final String EGAD = "EGAD";
@@ -36,7 +36,7 @@ public class FileReEncryptOptions {
 
     private boolean dataset;
 
-    private FileReEncryptOptions(OptionSet optionSet) {
+    private ReEncryptOptions(OptionSet optionSet) {
         egaId = (String) optionSet.valueOf(EGA_ID);
         if (egaId.startsWith(EGAD)) {
             dataset = true;
@@ -47,10 +47,10 @@ public class FileReEncryptOptions {
         }
     }
 
-    public static Optional<FileReEncryptOptions> parse(String... parameters) throws IOException {
+    public static Optional<ReEncryptOptions> parse(String... parameters) throws IOException {
         OptionParser parser = buildParser();
         try {
-            return Optional.of(new FileReEncryptOptions(parser.parse(parameters)));
+            return Optional.of(new ReEncryptOptions(parser.parse(parameters)));
         } catch (OptionException e) {
             parser.printHelpOn(System.out);
             return Optional.empty();

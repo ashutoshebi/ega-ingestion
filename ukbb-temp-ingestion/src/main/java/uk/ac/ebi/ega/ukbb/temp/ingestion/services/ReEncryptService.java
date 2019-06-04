@@ -18,6 +18,7 @@ package uk.ac.ebi.ega.ukbb.temp.ingestion.services;
 import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.orm.ObjectRetrievalFailureException;
 import org.springframework.stereotype.Service;
@@ -36,6 +37,7 @@ import uk.ac.ebi.ega.ukbb.temp.ingestion.persistence.entity.UkBiobankFileEntity;
 import uk.ac.ebi.ega.ukbb.temp.ingestion.persistence.entity.UkBiobankReEncryptedFileEntity;
 import uk.ac.ebi.ega.ukbb.temp.ingestion.persistence.repository.UkBiobankFilesRepository;
 import uk.ac.ebi.ega.ukbb.temp.ingestion.persistence.repository.UkBiobankReEncryptedFilesRepository;
+import uk.ac.ebi.ega.ukbb.temp.ingestion.properties.ReEncryptProperties;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -59,24 +61,22 @@ public class ReEncryptService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ReEncryptService.class);
 
-    // TODO bjuhasz: what permissions are needed for this Spring Boot application
-    //  to be able to write into the STAGING_PATH directory?
-    // TODO bjuhasz: box_staging or staging?
-    private static final Path STAGING_PATH = Paths.get("/nfs/ega/public/box_staging");
-    private static final String RELATIVE_PATH_INSIDE_STAGING = "ukbb-temp-ingestion/re-encrypted-files";
-
     private static final int BUFFER_SIZE = 8192;
 
     private UkBiobankFilesRepository originalFilesRepository;
     private UkBiobankReEncryptedFilesRepository reEncryptedFilesRepository;
     private ProFilerService proFilerService;
+    private ReEncryptProperties reEncryptProperties;
 
+    @Autowired
     public ReEncryptService(final UkBiobankFilesRepository originalFilesRepository,
                             final UkBiobankReEncryptedFilesRepository reEncryptedFilesRepository,
-                            final ProFilerService proFilerService) {
+                            final ProFilerService proFilerService,
+                            final ReEncryptProperties reEncryptProperties) {
         this.originalFilesRepository = originalFilesRepository;
         this.reEncryptedFilesRepository = reEncryptedFilesRepository;
         this.proFilerService = proFilerService;
+        this.reEncryptProperties = reEncryptProperties;
     }
 
     public Optional<Result> getReEncryptionResultFor(final Path originalFilePath) {
@@ -89,10 +89,16 @@ public class ReEncryptService {
                                               final String inputPassword,
                                               final String outputPassword) {
 
+        // TODO bjuhasz: what permissions are needed for this Spring Boot application
+        //  to be able to write into the stagingPath directory?
+        // TODO bjuhasz: document these variables:
+        final Path stagingPath = Paths.get(reEncryptProperties.getStagingPath());
+        final String relativePathInsideStaging = reEncryptProperties.getRelativePath();
+
         final Path fileName = getFileName(inputFilePath);
-        final Path outputFileAbsolutePath = STAGING_PATH.resolve(RELATIVE_PATH_INSIDE_STAGING).resolve(fileName);
+        final Path outputFileAbsolutePath = stagingPath.resolve(relativePathInsideStaging).resolve(fileName);
         final Path outputFileRelativePathInsideStaging = Paths.get("/")
-                .resolve(RELATIVE_PATH_INSIDE_STAGING).resolve(fileName);
+                .resolve(relativePathInsideStaging).resolve(fileName);
 
         return reEncryptAndStoreInProFiler(inputFilePath, inputPassword,
                 outputFileAbsolutePath, outputFileRelativePathInsideStaging, outputPassword);

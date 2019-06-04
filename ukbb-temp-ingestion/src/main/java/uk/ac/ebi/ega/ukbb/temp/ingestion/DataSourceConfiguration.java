@@ -24,24 +24,25 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 
 @Configuration
-public class DatabaseConfiguration {
+public class DataSourceConfiguration {
 
     @Bean("re_encrypt_datasource_properties")
-    @ConfigurationProperties("file-re-encrypt.datasource.re-encrypt")
+    @ConfigurationProperties(prefix = "ega.ukbb.temp.ingestion.datasource.re-encrypt")
     public DataSourceProperties reEncryptDataSourceProperties() {
         return new DataSourceProperties();
     }
 
     @Bean("re_encrypt_datasource")
-    @ConfigurationProperties("file-re-encrypt.datasource.re-encrypt.hikari")
+    @ConfigurationProperties(prefix = "ega.ukbb.temp.ingestion.datasource.re-encrypt.hikari")
     public HikariDataSource reEncryptDataSource() {
         return reEncryptDataSourceProperties().initializeDataSourceBuilder().type(HikariDataSource.class).build();
     }
 
-    @Bean("re_encrypt_jdbc_template")
-    public NamedParameterJdbcTemplate reEncryptJdbcTemplate() {
-        return new NamedParameterJdbcTemplate(reEncryptDataSource());
-    }
+    // TODO bjuhasz: delete if not needed
+//    @Bean("re_encrypt_jdbc_template")
+//    public NamedParameterJdbcTemplate reEncryptJdbcTemplate() {
+//        return new NamedParameterJdbcTemplate(reEncryptDataSource());
+//    }
 
     @Bean("re_encrypt_transaction_manager")
     public DataSourceTransactionManager reEncryptTransactionManager() {
@@ -49,13 +50,13 @@ public class DatabaseConfiguration {
     }
 
     @Bean("pro_filer_datasource_properties")
-    @ConfigurationProperties("file-re-encrypt.datasource.pro-filer")
+    @ConfigurationProperties(prefix = "ega.ukbb.temp.ingestion.datasource.pro-filer")
     public DataSourceProperties proFilerDataSourceProperties() {
         return new DataSourceProperties();
     }
 
     @Bean("pro_filer_datasource")
-    @ConfigurationProperties("file-re-encrypt.datasource.pro-filer.hikari")
+    @ConfigurationProperties(prefix = "ega.ukbb.temp.ingestion.datasource.pro-filer.hikari")
     public HikariDataSource proFilerDataSource() {
         return proFilerDataSourceProperties().initializeDataSourceBuilder().type(HikariDataSource.class).build();
     }

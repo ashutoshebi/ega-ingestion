@@ -15,6 +15,7 @@
  */
 package uk.ac.ebi.ega.ukbb.temp.ingestion.services;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -31,10 +32,9 @@ import java.util.Calendar;
 @Service
 public class ProFilerService {
 
-    private static final int BATCH = 1000;
-
     private final NamedParameterJdbcTemplate proFilerTemplate;
 
+    @Autowired
     public ProFilerService(NamedParameterJdbcTemplate proFilerTemplate) {
         this.proFilerTemplate = proFilerTemplate;
     }

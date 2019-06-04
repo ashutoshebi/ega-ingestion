@@ -15,9 +15,7 @@
  */
 package uk.ac.ebi.ega.ukbb.temp.ingestion.properties;
 
-import java.io.File;
-
-public class FileReEncryptProperties {
+public class ReEncryptProperties {
 
     private String stagingPath;
 
@@ -37,10 +35,6 @@ public class FileReEncryptProperties {
 
     public void setRelativePath(String relativePath) {
         this.relativePath = relativePath;
-    }
-
-    public File getOutputPath() {
-        return new File(relativePath, stagingPath);
     }
 
 }
