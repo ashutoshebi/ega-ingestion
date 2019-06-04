@@ -15,6 +15,7 @@
  */
 package uk.ac.ebi.ega.ukbb.temp.ingestion.services;
 
+import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
@@ -60,7 +61,8 @@ public class ReEncryptService {
 
     // TODO bjuhasz: what permissions are needed for this Spring Boot application
     //  to be able to write into the STAGING_PATH directory?
-    private static final Path STAGING_PATH = Paths.get("/nfs/ega/public/staging");
+    // TODO bjuhasz: box_staging or staging?
+    private static final Path STAGING_PATH = Paths.get("/nfs/ega/public/box_staging");
     private static final String RELATIVE_PATH_INSIDE_STAGING = "ukbb-temp-ingestion/re-encrypted-files";
 
     private static final int BUFFER_SIZE = 8192;
@@ -96,6 +98,16 @@ public class ReEncryptService {
                 outputFileAbsolutePath, outputFileRelativePathInsideStaging, outputPassword);
     }
 
+    /**
+     * TODO bjuhasz: document this
+     *
+     * @param inputFilePath
+     * @param inputPassword
+     * @param outputFileAbsolutePath
+     * @param outputFileRelativePathInsideStaging
+     * @param outputPassword
+     * @return
+     */
     Result reEncryptAndStoreInProFiler(final Path inputFilePath,
                                        final String inputPassword,
                                        final Path outputFileAbsolutePath,
@@ -144,7 +156,7 @@ public class ReEncryptService {
         }
 
         try {
-            storeReEncryptionResultInDatabase(inputFilePath, outputFileAbsolutePath,
+            upsertReEncryptionResultInDatabase(inputFilePath, outputFileAbsolutePath,
                     originalEncryptedMd5, unencryptedMd5, newReEncryptedMd5,
                     finalResult);
         } catch (DataAccessException e) {
@@ -198,9 +210,12 @@ public class ReEncryptService {
     }
 
     private Result reEncryptedFileEntityToResult(final UkBiobankReEncryptedFileEntity reEncryptedFileEntity) {
+        final Exception exception = Strings.isBlank(reEncryptedFileEntity.getResultStatusException()) ?
+                null : new Exception(reEncryptedFileEntity.getResultStatusException());
+
         return new Result(reEncryptedFileEntity.getResultStatus(),
                 reEncryptedFileEntity.getResultStatusMessage(),
-                new RuntimeException(reEncryptedFileEntity.getResultStatusException()),
+                exception,
                 reEncryptedFileEntity.getStartTime());
     }
 
@@ -228,19 +243,67 @@ public class ReEncryptService {
         return md5;
     }
 
-    private void storeReEncryptionResultInDatabase(final Path inputFilePath, final Path outputFilePath,
-                                                   final String originalEncryptedMd5,
-                                                   final String unencryptedMd5, final String newReEncryptedMd5,
-                                                   final Result result) {
+    private void upsertReEncryptionResultInDatabase(final Path inputFilePath, final Path outputFilePath,
+                                                    final String originalEncryptedMd5,
+                                                    final String unencryptedMd5, final String newReEncryptedMd5,
+                                                    final Result result) {
         final String exceptionMessage = result.getException() != null ? result.getException().getMessage() : "";
 
-        final UkBiobankReEncryptedFileEntity entity = new UkBiobankReEncryptedFileEntity(
-                inputFilePath.toString(), outputFilePath.toString(),
-                unencryptedMd5, originalEncryptedMd5, newReEncryptedMd5,
-                result.getStatus(), result.getMessage(), exceptionMessage,
-                result.getStartTime(), result.getEndTime());
 
+        final Optional<UkBiobankReEncryptedFileEntity> optionalEntity = reEncryptedFilesRepository
+                .findByOriginalFilePath(inputFilePath.toString());
+        final UkBiobankReEncryptedFileEntity entity;
+
+        if (optionalEntity.isPresent()) {
+            entity = optionalEntity.get();
+            LOGGER.debug("entity is already present in the DB: {}", entity);
+
+            update(entity, outputFilePath, originalEncryptedMd5, unencryptedMd5, newReEncryptedMd5,
+                    result, exceptionMessage);
+        } else {
+            entity = new UkBiobankReEncryptedFileEntity(
+                    inputFilePath.toString(), outputFilePath.toString(),
+                    originalEncryptedMd5, unencryptedMd5, newReEncryptedMd5,
+                    result.getStatus(), result.getMessage(), exceptionMessage,
+                    result.getStartTime(), result.getEndTime());
+            LOGGER.debug("entity was not present in the DB, creating it: {}", entity);
+        }
+
+/*
+TODO bjuhasz: if every test is green, then use the code below, instead of the one above:
+
+        final UkBiobankReEncryptedFileEntity entity = reEncryptedFilesRepository
+                .findByOriginalFilePath(inputFilePath.toString())
+                .map(e -> update(e, outputFilePath, originalEncryptedMd5, unencryptedMd5, newReEncryptedMd5,
+                        result, exceptionMessage))
+                .orElse(new UkBiobankReEncryptedFileEntity(
+                                inputFilePath.toString(), outputFilePath.toString(),
+                                originalEncryptedMd5, unencryptedMd5, newReEncryptedMd5,
+                                result.getStatus(), result.getMessage(), exceptionMessage,
+                                result.getStartTime(), result.getEndTime()));
+*/
         reEncryptedFilesRepository.save(entity);
+    }
+
+    // TODO bjuhasz: document this function
+    private UkBiobankReEncryptedFileEntity update(final UkBiobankReEncryptedFileEntity entity,
+                                                  final Path outputFilePath,
+                                                  final String originalEncryptedMd5,
+                                                  final String unencryptedMd5,
+                                                  final String newReEncryptedMd5,
+                                                  final Result result,
+                                                  final String exceptionMessage) {
+        entity.setNewReEncryptedFilePath(outputFilePath.toString());
+        entity.setOriginalEncryptedMd5(originalEncryptedMd5);
+        entity.setUnencryptedMd5(unencryptedMd5);
+        entity.setNewReEncryptedMd5(newReEncryptedMd5);
+        entity.setResultStatus(result.getStatus());
+        entity.setResultStatusMessage(result.getMessage());
+        entity.setResultStatusException(exceptionMessage);
+        entity.setStartTime(result.getStartTime());
+        entity.setEndTime(result.getEndTime());
+        entity.setAlreadyExistInDb(true);
+        return entity;
     }
 
     private Path getFileName(final Path inputFilePath) {

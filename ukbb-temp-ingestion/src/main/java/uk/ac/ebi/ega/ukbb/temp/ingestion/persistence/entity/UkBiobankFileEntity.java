@@ -18,6 +18,7 @@ package uk.ac.ebi.ega.ukbb.temp.ingestion.persistence.entity;
 import org.springframework.data.domain.Persistable;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EntityListeners;
 import javax.persistence.Id;
@@ -27,7 +28,7 @@ import javax.persistence.Table;
  * Class representing the egadev.ukbiobank.files database table.
  */
 @Entity
-@Table(name = "FILES")
+@Table(schema = "UKBIOBANK", name = "FILES")
 @EntityListeners(AuditingEntityListener.class)
 public class UkBiobankFileEntity implements Persistable<String> {
 
@@ -38,7 +39,10 @@ public class UkBiobankFileEntity implements Persistable<String> {
 
     private String fileName;
     private long fileSize;
+
+    @Column(name="md5_checksum")
     private String md5Checksum;
+
     private String project;
     private String sampleId;
     private String sex;

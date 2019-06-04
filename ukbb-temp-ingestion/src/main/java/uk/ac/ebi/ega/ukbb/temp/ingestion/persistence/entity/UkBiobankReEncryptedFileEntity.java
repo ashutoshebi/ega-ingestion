@@ -30,15 +30,18 @@ import java.time.LocalDateTime;
  */
 
 @Entity
-@Table(name = "RE_ENCRYPTED_FILES")
+@Table(schema = "UKBIOBANK", name = "RE_ENCRYPTED_FILES")
 @EntityListeners(AuditingEntityListener.class)
-public class UkBiobankReEncryptedFileEntity implements Persistable<String> {
+public class UkBiobankReEncryptedFileEntity implements Persistable<Long> {
 
-    private transient boolean persist = true;
+    private transient boolean alreadyExistInDb = false;
 
     @Id
     private long re_encrypted_file_id;
 
+    /**
+     * TODO bjuhasz: document these fields
+     */
     private String originalFilePath;
     private String newReEncryptedFilePath;
 
@@ -46,7 +49,9 @@ public class UkBiobankReEncryptedFileEntity implements Persistable<String> {
     private String originalEncryptedMd5;
     private String newReEncryptedMd5;
 
-    private Result.Status resultStatus;
+    // TODO bjuhasz: use @OneToOne
+    private int resultStatusId;
+
     private String resultStatusMessage;
     private String resultStatusException;
     private LocalDateTime startTime;
@@ -58,8 +63,8 @@ public class UkBiobankReEncryptedFileEntity implements Persistable<String> {
 
     public UkBiobankReEncryptedFileEntity(final String originalFilePath,
                                           final String newReEncryptedFilePath,
-                                          final String unencryptedMd5,
                                           final String originalEncryptedMd5,
+                                          final String unencryptedMd5,
                                           final String newReEncryptedMd5,
                                           final Result.Status resultStatus,
                                           final String resultStatusMessage,
@@ -68,10 +73,10 @@ public class UkBiobankReEncryptedFileEntity implements Persistable<String> {
                                           final LocalDateTime endTime) {
         this.originalFilePath = originalFilePath;
         this.newReEncryptedFilePath = newReEncryptedFilePath;
-        this.unencryptedMd5 = unencryptedMd5;
         this.originalEncryptedMd5 = originalEncryptedMd5;
+        this.unencryptedMd5 = unencryptedMd5;
         this.newReEncryptedMd5 = newReEncryptedMd5;
-        this.resultStatus = resultStatus;
+        this.resultStatusId = resultStatus.getEnumValue();
         this.resultStatusMessage = resultStatusMessage;
         this.resultStatusException = resultStatusException;
         this.startTime = startTime;
@@ -79,56 +84,116 @@ public class UkBiobankReEncryptedFileEntity implements Persistable<String> {
     }
 
     @Override
-    public String getId() {
-        return originalFilePath;
+    public Long getId() {
+        return re_encrypted_file_id;
     }
 
     @Override
     public boolean isNew() {
-        return persist;
+        return !alreadyExistInDb;
     }
 
-    public void setPersist(boolean persist) {
-        this.persist = persist;
+    /**
+     * TODO bjuhasz: document this
+     * @param alreadyExistInDb
+     */
+    public void setAlreadyExistInDb(boolean alreadyExistInDb) {
+        this.alreadyExistInDb = alreadyExistInDb;
     }
 
     public String getOriginalFilePath() {
         return originalFilePath;
     }
 
+    public void setOriginalFilePath(final String originalFilePath) {
+        this.originalFilePath = originalFilePath;
+    }
+
     public String getNewReEncryptedFilePath() {
         return newReEncryptedFilePath;
+    }
+
+    public void setNewReEncryptedFilePath(final String newReEncryptedFilePath) {
+        this.newReEncryptedFilePath = newReEncryptedFilePath;
     }
 
     public String getUnencryptedMd5() {
         return unencryptedMd5;
     }
 
+    public void setUnencryptedMd5(final String unencryptedMd5) {
+        this.unencryptedMd5 = unencryptedMd5;
+    }
+
     public String getOriginalEncryptedMd5() {
         return originalEncryptedMd5;
+    }
+
+    public void setOriginalEncryptedMd5(final String originalEncryptedMd5) {
+        this.originalEncryptedMd5 = originalEncryptedMd5;
     }
 
     public String getNewReEncryptedMd5() {
         return newReEncryptedMd5;
     }
 
+    public void setNewReEncryptedMd5(final String newReEncryptedMd5) {
+        this.newReEncryptedMd5 = newReEncryptedMd5;
+    }
+
     public Result.Status getResultStatus() {
-        return resultStatus;
+        return Result.Status.getStatusBy(resultStatusId);
+    }
+
+    public void setResultStatus(final Result.Status resultStatus) {
+        this.resultStatusId = resultStatus.getEnumValue();
     }
 
     public String getResultStatusMessage() {
         return resultStatusMessage;
     }
 
+    public void setResultStatusMessage(final String resultStatusMessage) {
+        this.resultStatusMessage = resultStatusMessage;
+    }
+
     public String getResultStatusException() {
         return resultStatusException;
+    }
+
+    public void setResultStatusException(final String resultStatusException) {
+        this.resultStatusException = resultStatusException;
     }
 
     public LocalDateTime getStartTime() {
         return startTime;
     }
 
+    public void setStartTime(final LocalDateTime startTime) {
+        this.startTime = startTime;
+    }
+
     public LocalDateTime getEndTime() {
         return endTime;
+    }
+
+    public void setEndTime(final LocalDateTime endTime) {
+        this.endTime = endTime;
+    }
+
+    @Override
+    public String toString() {
+        return "UkBiobankReEncryptedFileEntity{" +
+                "originalFilePath='" + originalFilePath + '\'' +
+                ", newReEncryptedFilePath='" + newReEncryptedFilePath + '\'' +
+                ", unencryptedMd5='" + unencryptedMd5 + '\'' +
+                ", originalEncryptedMd5='" + originalEncryptedMd5 + '\'' +
+                ", newReEncryptedMd5='" + newReEncryptedMd5 + '\'' +
+                ", resultStatusId=" + resultStatusId +
+                ", resultStatusMessage='" + resultStatusMessage + '\'' +
+                ", resultStatusException='" + resultStatusException + '\'' +
+                ", startTime=" + startTime +
+                ", endTime=" + endTime +
+                '}';
     }
 }
