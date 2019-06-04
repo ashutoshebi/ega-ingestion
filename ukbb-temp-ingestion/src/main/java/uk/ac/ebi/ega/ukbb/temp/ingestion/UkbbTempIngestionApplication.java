@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.context.ApplicationContext;
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.Result;
 import uk.ac.ebi.ega.ukbb.temp.ingestion.services.ReEncryptService;
@@ -13,7 +14,7 @@ import uk.ac.ebi.ega.ukbb.temp.ingestion.services.ReEncryptService;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-@SpringBootApplication
+@SpringBootApplication(exclude = {DataSourceAutoConfiguration.class})
 public class UkbbTempIngestionApplication implements CommandLineRunner {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(UkbbTempIngestionApplication.class);

@@ -43,8 +43,10 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -114,7 +116,7 @@ public class ReEncryptServiceTest {
     }
 
     @Test
-    public void reEncrypt_WhenTheReEncryptionReportCannotBeSavedToTheDb_ThenFileIsNotStoredInFire() {
+    public void reEncrypt_WhenTheReEncryptionReportCannotBeSavedToTheDb_ThenTheUserIsStillInformedAboutTheFailure() {
         when(reEncryptedFilesRepository.save(any())).thenThrow(new DataRetrievalFailureException("example exception from a test"));
         when(originalFilesRepository.findByFilePath(eq(INPUT_FILE.toString()))).thenReturn(getUkBiobankFileEntity());
 
@@ -125,7 +127,6 @@ public class ReEncryptServiceTest {
         assertThat(result.getMessageAndException())
                 .contains("DataRetrievalFailureException")
                 .contains("Error while saving the result to the DB");
-        assertThatOutputFileIsNotStoredInFire();
     }
 
     @Test
@@ -154,11 +155,13 @@ public class ReEncryptServiceTest {
     }
 
     private void assertThatOutputFileIsStoredInFire() {
-        // TODO bjuhasz: implement this function
+        verify(proFilerService, times(1)).insertFile(any(), any(), anyString());
+        verify(proFilerService, times(1)).insertArchive(any(), anyString(), any(), anyString());
     }
 
     private void assertThatOutputFileIsNotStoredInFire() {
-        // TODO bjuhasz: implement this function
+        verify(proFilerService, never()).insertFile(anyString(), any(), anyString());
+        verify(proFilerService, never()).insertArchive(any(), anyString(), any(), anyString());
     }
 
     private void assertThatResultIsSavedIntoDatabase() {

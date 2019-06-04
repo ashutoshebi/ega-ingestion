@@ -39,14 +39,22 @@ public class UkBiobankReEncryptedFileEntity implements Persistable<Long> {
     @Id
     private long re_encrypted_file_id;
 
-    /**
-     * TODO bjuhasz: document these fields
-     */
+    // The path of the original, encrypted file.
+    // "original_file_path REFERENCES ukbiobank.files(file_path)"
     private String originalFilePath;
+
+    // The path of the newly re-encrypted file.
     private String newReEncryptedFilePath;
 
-    private String unencryptedMd5;
+    // The MD5 of the original, encrypted file.
+    // "original_encrypted_md5 REFERENCES ukbiobank.files(md5_checksum)" // TODO bjuhasz: I think this one is not true.
     private String originalEncryptedMd5;
+
+    // The MD5 of the original, encrypted file, after it has been decrypted.
+    // "unencryptedMd5 REFERENCES ukbiobank.files(md5_checksum)"
+    private String unencryptedMd5;
+
+    // The MD5 of the newly re-encrypted file.
     private String newReEncryptedMd5;
 
     // TODO bjuhasz: use @OneToOne
@@ -94,7 +102,8 @@ public class UkBiobankReEncryptedFileEntity implements Persistable<Long> {
     }
 
     /**
-     * TODO bjuhasz: document this
+     * Call this function with true, in order to signal
+     * that the entity already exists in the DB.
      * @param alreadyExistInDb
      */
     public void setAlreadyExistInDb(boolean alreadyExistInDb) {

@@ -109,7 +109,7 @@ public class ProFilerService {
         parameters.addValue("size", file.length());
         parameters.addValue("relative_path", relativePath);
         parameters.addValue("volume_name", "vol1");
-        parameters.addValue("priority", "50");
+        parameters.addValue("priority", 50); // TODO bjuhasz: was: "50"
         parameters.addValue("created", date);
         parameters.addValue("updated", date);
         parameters.addValue("archive_action_id", 1);
@@ -124,33 +124,4 @@ public class ProFilerService {
         return new Timestamp(Calendar.getInstance().toInstant().toEpochMilli());
     }
 
-    /*
-    public Map<Long, Integer> getFireIdsExitCodes(List<Long> fireArchiveIds) {
-        return Batch.doInBatchesMap(fireArchiveIds, this::doGetFireIdsExitCodes, BATCH);
-    }
-
-    private Map<Long, Integer> doGetFireIdsExitCodes(List<Long> fireArchiveIds) {
-        String query = "SELECT " +
-                "archive_id, " +
-                "fire_exit_code " +
-                "FROM ega_ARCHIVE.archive " +
-                "WHERE archive_id in (:archive_id)";
-        MapSqlParameterSource parameters = new MapSqlParameterSource();
-        parameters.addValue("archive_id", fireArchiveIds);
-
-        return proFilerTemplate.query(query, parameters, resultSet -> {
-            Map<Long, Integer> result = new HashMap<>();
-            while (resultSet.next()) {
-                Integer fireExitCode = resultSet.getObject("fire_exit_code") != null ?
-                        resultSet.getInt("fire_exit_code") : null;
-                result.put(new Long(resultSet.getLong("archive_id")), fireExitCode);
-            }
-            return result;
-        });
-    }
-
-    public Integer getFireIdExitCode(long fireArchiveId) {
-        return doGetFireIdsExitCodes(Arrays.asList(fireArchiveId)).get(fireArchiveId);
-    }
-    */
 }

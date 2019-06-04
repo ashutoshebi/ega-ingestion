@@ -17,7 +17,7 @@ create table ukbiobank.re_encrypted_files
 	original_file_path varchar unique not null, -- references ukbiobank.files(file_path),
 	new_re_encrypted_file_path varchar unique null,
 
-	unencrypted_md5 varchar(256) unique not null, -- references ukbiobank.files(md5_checksum),
+	unencrypted_md5 varchar(256) unique not null,
 	original_encrypted_md5 varchar(256) unique null,
 	new_re_encrypted_md5 varchar(256) unique null,
 

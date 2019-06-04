@@ -91,9 +91,8 @@ public class ReEncryptService {
 
         // TODO bjuhasz: what permissions are needed for this Spring Boot application
         //  to be able to write into the stagingPath directory?
-        // TODO bjuhasz: document these variables:
         final Path stagingPath = Paths.get(reEncryptProperties.getStagingPath());
-        final String relativePathInsideStaging = reEncryptProperties.getRelativePath();
+        final String relativePathInsideStaging = reEncryptProperties.getRelativePathInsideStaging();
 
         final Path fileName = getFileName(inputFilePath);
         final Path outputFileAbsolutePath = stagingPath.resolve(relativePathInsideStaging).resolve(fileName);
@@ -105,14 +104,18 @@ public class ReEncryptService {
     }
 
     /**
-     * TODO bjuhasz: document this
+     * The input file is first decrypted using the AES-256-CBC algorithm and with the given inputPassword,
+     * then it's re-encrypted with the AES-256-CTR algorithm and the given outputPassword.
+     * Finally, the re-encrypted file is stored in the Fire Data Object Store.
      *
-     * @param inputFilePath
-     * @param inputPassword
-     * @param outputFileAbsolutePath
-     * @param outputFileRelativePathInsideStaging
-     * @param outputPassword
-     * @return
+     * @param inputFilePath an already encrypted file which has to be re-encrypted
+     * @param inputPassword the password for the already encrypted input file
+     * @param outputFileAbsolutePath the absolute path of the resulting re-encrypted file
+     * @param outputFileRelativePathInsideStaging a portion of the outputFileAbsolutePath:
+     *                                            a path without the leading path-of-staging
+     *                                            TODO bjuhasz: explain this better
+     * @param outputPassword the password to be used during the re-encryption
+     * @return an object holding information about the re-encryption process
      */
     Result reEncryptAndStoreInProFiler(final Path inputFilePath,
                                        final String inputPassword,
@@ -255,7 +258,8 @@ public class ReEncryptService {
                                                     final Result result) {
         final String exceptionMessage = result.getException() != null ? result.getException().getMessage() : "";
 
-
+        // TODO bjuhasz: delete this if no longer needed
+/*
         final Optional<UkBiobankReEncryptedFileEntity> optionalEntity = reEncryptedFilesRepository
                 .findByOriginalFilePath(inputFilePath.toString());
         final UkBiobankReEncryptedFileEntity entity;
@@ -274,24 +278,23 @@ public class ReEncryptService {
                     result.getStartTime(), result.getEndTime());
             LOGGER.debug("entity was not present in the DB, creating it: {}", entity);
         }
-
-/*
-TODO bjuhasz: if every test is green, then use the code below, instead of the one above:
+*/
 
         final UkBiobankReEncryptedFileEntity entity = reEncryptedFilesRepository
                 .findByOriginalFilePath(inputFilePath.toString())
-                .map(e -> update(e, outputFilePath, originalEncryptedMd5, unencryptedMd5, newReEncryptedMd5,
+                .map(alreadyExistingEntity -> update(alreadyExistingEntity,
+                        outputFilePath, originalEncryptedMd5, unencryptedMd5, newReEncryptedMd5,
                         result, exceptionMessage))
                 .orElse(new UkBiobankReEncryptedFileEntity(
                                 inputFilePath.toString(), outputFilePath.toString(),
                                 originalEncryptedMd5, unencryptedMd5, newReEncryptedMd5,
                                 result.getStatus(), result.getMessage(), exceptionMessage,
                                 result.getStartTime(), result.getEndTime()));
-*/
+
         reEncryptedFilesRepository.save(entity);
     }
 
-    // TODO bjuhasz: document this function
+    // Updates the fields of the given UkBiobankReEncryptedFileEntity with the given values.
     private UkBiobankReEncryptedFileEntity update(final UkBiobankReEncryptedFileEntity entity,
                                                   final Path outputFilePath,
                                                   final String originalEncryptedMd5,

@@ -19,7 +19,7 @@ public class ReEncryptProperties {
 
     private String stagingPath;
 
-    private String relativePath;
+    private String relativePathInsideStaging;
 
     public String getStagingPath() {
         return stagingPath;
@@ -29,12 +29,12 @@ public class ReEncryptProperties {
         this.stagingPath = stagingPath;
     }
 
-    public String getRelativePath() {
-        return relativePath;
+    public String getRelativePathInsideStaging() {
+        return relativePathInsideStaging;
     }
 
-    public void setRelativePath(String relativePath) {
-        this.relativePath = relativePath;
+    public void setRelativePathInsideStaging(String relativePathInsideStaging) {
+        this.relativePathInsideStaging = relativePathInsideStaging;
     }
 
 }
