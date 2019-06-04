@@ -76,5 +76,4 @@ public class FileReEncryptionStartup implements ApplicationListener<ApplicationR
             logger.info("No process pending execution was found");
         }
     }
-
 }

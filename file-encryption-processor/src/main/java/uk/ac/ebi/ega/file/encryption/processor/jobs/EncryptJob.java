@@ -15,25 +15,26 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.file.encryption.processor.services;
+package uk.ac.ebi.ega.file.encryption.processor.jobs;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.ac.ebi.ega.file.encryption.processor.exceptions.SkipIngestionException;
-import uk.ac.ebi.ega.file.encryption.processor.models.FileEncryptionJob;
+import uk.ac.ebi.ega.file.encryption.processor.models.EncryptJobParameters;
 import uk.ac.ebi.ega.file.encryption.processor.pipelines.exceptions.SystemErrorException;
 import uk.ac.ebi.ega.file.encryption.processor.pipelines.exceptions.UserErrorException;
+import uk.ac.ebi.ega.file.encryption.processor.services.PipelineService;
 import uk.ac.ebi.ega.file.encryption.processor.utils.FileToProcess;
+import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.Job;
+import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.Result;
 
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-public class ProcessEncryptionFileServiceImpl implements ProcessEncryptionFileService {
+public class EncryptJob implements Job<EncryptJobParameters> {
 
-    private final static Logger logger = LoggerFactory.getLogger(ProcessEncryptionFileServiceImpl.class);
-
-    private FileEncryptionJobService jobService;
+    private final static Logger logger = LoggerFactory.getLogger(EncryptJob.class);
 
     private PipelineService pipelineService;
 
@@ -41,50 +42,55 @@ public class ProcessEncryptionFileServiceImpl implements ProcessEncryptionFileSe
 
     private Path stagingRoot;
 
-    public ProcessEncryptionFileServiceImpl(FileEncryptionJobService jobService, PipelineService pipelineService,
-                                            String clientId, Path stagingRoot) {
-        this.jobService = jobService;
+    public EncryptJob(PipelineService pipelineService, String clientId, Path stagingRoot) {
         this.pipelineService = pipelineService;
         this.clientId = clientId;
         this.stagingRoot = stagingRoot;
     }
 
     @Override
-    public void processFile(String accountId, String stagingId, Path filePath, long size, LocalDateTime lastUpdate,
-                            Path md5FilePath, long md5Size, LocalDateTime md5LastUpdate) throws SystemErrorException, UserErrorException {
+    public Result execute(EncryptJobParameters jobParameters) {
+
+        final LocalDateTime start = LocalDateTime.now();
+
+        final Path filePath = jobParameters.getFilePath();
+        final long size = jobParameters.getSize();
+        final LocalDateTime lastUpdate = jobParameters.getLastUpdate();
+        final Path md5FilePath = jobParameters.getMd5FilePath();
+
         String generatedName = generateName();
         logger.info("Starting process for file {} - id {}", filePath.toString(), generatedName);
         FileToProcess file = new FileToProcess(filePath, size, lastUpdate, stagingRoot, generatedName + ".gpg");
         FileToProcess fileMd5 = new FileToProcess(md5FilePath, size, lastUpdate, stagingRoot, generatedName + ".md5");
 
-
-        FileEncryptionJob job = jobService.startJob(clientId, accountId, stagingId, file.getStagingFile(),
-                fileMd5.getStagingFile());
+        /*FileEncryptionJob job = jobService.startJob(clientId, jobParameters.getAccountId(), jobParameters.getStagingId(), file.getStagingFile(),
+                fileMd5.getStagingFile());*/ //TODO Will be removed
 
         try {
             file.moveFileToStaging();
             fileMd5.moveFileToStaging();
             pipelineService.getPipeline(file.getStagingFile()).process();
         } catch (SystemErrorException e) {
-            jobService.endJob(job, e);
+            //jobService.endJob(job, e);
             file.rollbackFileToStaging();
             fileMd5.rollbackFileToStaging();
-            throw e;
+            return Result.abort("System is unable to execute the task at the moment", e, start);
         } catch (UserErrorException e) {
-            jobService.endJob(job, e);
+            // jobService.endJob(job, e);
             file.rollbackFileToStaging();
             fileMd5.deleteStagingFile();
-            throw e;
+            return Result.abort("User has provided invalid input", e, start);
         } catch (SkipIngestionException e) {
-            logger.info("Skipping process for file {} - id {}", filePath.toString(), generatedName);
+            logger.error("Skipping process for file {} - id {}", filePath.toString(), generatedName);
             file.rollbackFileToStaging();
             fileMd5.rollbackFileToStaging();
-            return;
-        }
+            return Result.abort("File not found", e, start);
+        }//TODO Need to revisit error messages/constant if not done appropriately
+
+        return Result.correct(start);
     }
 
     private String generateName() {
         return clientId + "-" + UUID.randomUUID();
     }
-
 }

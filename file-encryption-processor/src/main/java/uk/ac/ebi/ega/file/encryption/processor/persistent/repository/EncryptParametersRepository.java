@@ -15,9 +15,10 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.file.encryption.processor.persistence.repository;
+package uk.ac.ebi.ega.file.encryption.processor.persistent.repository;
 
 import org.springframework.data.repository.CrudRepository;
+import uk.ac.ebi.ega.file.encryption.processor.persistent.entity.EncryptParametersEntity;
 
-public interface FileEncryptionJobImplRepository extends CrudRepository<FileEncryptionJobImpl,Long> {
+public interface EncryptParametersRepository extends CrudRepository<EncryptParametersEntity, String> {
 }

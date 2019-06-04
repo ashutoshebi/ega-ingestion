@@ -17,26 +17,12 @@
  */
 package uk.ac.ebi.ega.file.encryption.processor;
 
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import uk.ac.ebi.ega.file.encryption.processor.persistence.FileEncryptionJobServiceImpl;
-import uk.ac.ebi.ega.file.encryption.processor.persistence.repository.FileEncryptionJobImplRepository;
-import uk.ac.ebi.ega.file.encryption.processor.persistence.repository.FileEncryptionLogFailedRepository;
-import uk.ac.ebi.ega.file.encryption.processor.persistence.repository.FileEncryptionLogSuccessfulRepository;
-import uk.ac.ebi.ega.file.encryption.processor.services.FileEncryptionJobService;
 
 @Configuration
 @EnableJpaRepositories
 @EnableJpaAuditing
 public class DatabaseConfiguration {
-
-    @Bean
-    public FileEncryptionJobService kiwiService(FileEncryptionJobImplRepository repository,
-                                                FileEncryptionLogSuccessfulRepository logRepository,
-                                                FileEncryptionLogFailedRepository failedLogRepository) {
-        return new FileEncryptionJobServiceImpl(repository, logRepository, failedLogRepository);
-    }
-
 }
