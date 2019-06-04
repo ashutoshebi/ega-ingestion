@@ -111,9 +111,8 @@ public class ReEncryptService {
      * @param inputFilePath an already encrypted file which has to be re-encrypted
      * @param inputPassword the password for the already encrypted input file
      * @param outputFileAbsolutePath the absolute path of the resulting re-encrypted file
-     * @param outputFileRelativePathInsideStaging a portion of the outputFileAbsolutePath:
-     *                                            a path without the leading path-of-staging
-     *                                            TODO bjuhasz: explain this better
+     * @param outputFileRelativePathInsideStaging a trailing part of the outputFileAbsolutePath,
+     *                                            which doesn't contain the path-of-staging
      * @param outputPassword the password to be used during the re-encryption
      * @return an object holding information about the re-encryption process
      */
@@ -257,28 +256,6 @@ public class ReEncryptService {
                                                     final String unencryptedMd5, final String newReEncryptedMd5,
                                                     final Result result) {
         final String exceptionMessage = result.getException() != null ? result.getException().getMessage() : "";
-
-        // TODO bjuhasz: delete this if no longer needed
-/*
-        final Optional<UkBiobankReEncryptedFileEntity> optionalEntity = reEncryptedFilesRepository
-                .findByOriginalFilePath(inputFilePath.toString());
-        final UkBiobankReEncryptedFileEntity entity;
-
-        if (optionalEntity.isPresent()) {
-            entity = optionalEntity.get();
-            LOGGER.debug("entity is already present in the DB: {}", entity);
-
-            update(entity, outputFilePath, originalEncryptedMd5, unencryptedMd5, newReEncryptedMd5,
-                    result, exceptionMessage);
-        } else {
-            entity = new UkBiobankReEncryptedFileEntity(
-                    inputFilePath.toString(), outputFilePath.toString(),
-                    originalEncryptedMd5, unencryptedMd5, newReEncryptedMd5,
-                    result.getStatus(), result.getMessage(), exceptionMessage,
-                    result.getStartTime(), result.getEndTime());
-            LOGGER.debug("entity was not present in the DB, creating it: {}", entity);
-        }
-*/
 
         final UkBiobankReEncryptedFileEntity entity = reEncryptedFilesRepository
                 .findByOriginalFilePath(inputFilePath.toString())
