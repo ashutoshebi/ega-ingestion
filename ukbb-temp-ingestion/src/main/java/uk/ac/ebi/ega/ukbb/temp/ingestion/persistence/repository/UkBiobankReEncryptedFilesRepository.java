@@ -20,7 +20,7 @@ import uk.ac.ebi.ega.ukbb.temp.ingestion.persistence.entity.UkBiobankReEncrypted
 
 import java.util.Optional;
 
-public interface UkBiobankReEncryptedFilesRepository extends CrudRepository<UkBiobankReEncryptedFileEntity, String> {
+public interface UkBiobankReEncryptedFilesRepository extends CrudRepository<UkBiobankReEncryptedFileEntity, Long> {
 
     Optional<UkBiobankReEncryptedFileEntity> findByOriginalFilePath(String originalFilePath);
 

@@ -14,12 +14,12 @@ create table ukbiobank.re_encrypted_files
 (
 	re_encrypted_file_id bigserial primary key,
 
-	original_file_path varchar unique not null, -- references ukbiobank.files(file_path),
-	new_re_encrypted_file_path varchar unique null,
+	original_file_path varchar unique not null,
+	new_re_encrypted_file_path varchar null,
 
-	unencrypted_md5 varchar(256) unique not null,
-	original_encrypted_md5 varchar(256) unique null,
-	new_re_encrypted_md5 varchar(256) unique null,
+	unencrypted_md5 varchar(256) not null,
+	original_encrypted_md5 varchar(256) null,
+	new_re_encrypted_md5 varchar(256) null,
 
 	result_status_id smallint not null references ukbiobank.result_statuses(result_status_id),
 	result_status_message varchar null,

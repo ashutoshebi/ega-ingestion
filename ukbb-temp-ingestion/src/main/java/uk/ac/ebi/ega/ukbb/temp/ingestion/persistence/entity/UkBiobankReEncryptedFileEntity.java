@@ -21,7 +21,10 @@ import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.Result;
 
 import javax.persistence.Entity;
 import javax.persistence.EntityListeners;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.time.LocalDateTime;
 
@@ -37,6 +40,12 @@ public class UkBiobankReEncryptedFileEntity implements Persistable<Long> {
     private transient boolean alreadyExistInDb = false;
 
     @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE,
+            generator = "re_encrypted_file_id_seq")
+    @SequenceGenerator(name = "re_encrypted_file_id_seq",
+            schema = "UKBIOBANK",
+            sequenceName = "re_encrypted_files_re_encrypted_file_id_seq",
+            allocationSize = 1)
     private long re_encrypted_file_id;
 
     // The path of the original, encrypted file.
