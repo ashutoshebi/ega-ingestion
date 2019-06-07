@@ -72,20 +72,6 @@ public class IngestionEventListener {
         } else {
             logger.info("key: {} is being processed, skip event", key);
         }
-
-        /*try {
-            processEncryptionFileService.processFile(data.getAccountId(), data.getLocationId(),
-                    data.getAbsolutePathFile(), data.getSize(), data.getLastModified(), data.getAbsolutePathMd5File(),
-                    data.getMd5Size(), data.getMd5LastModified());
-        } catch (UserErrorException e) {
-            // Error with password / key used to encrypt, user uploaded something wrong on the first bytes of the file
-            // original file is restored, maybe we could contemplate to delete the file instead. Better get real usage
-            // first
-            logger.warn(e.getMessage());
-        } catch (SystemErrorException e) {
-            // Big problem on the problem, dead letter to team, files should have been reverted to original places
-            logger.error(e.getMessage());
-        }*/
     }
 
     private void exitApplication(final String message) {

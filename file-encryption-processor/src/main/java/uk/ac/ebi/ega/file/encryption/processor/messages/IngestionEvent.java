@@ -17,7 +17,6 @@
  */
 package uk.ac.ebi.ega.file.encryption.processor.messages;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 
