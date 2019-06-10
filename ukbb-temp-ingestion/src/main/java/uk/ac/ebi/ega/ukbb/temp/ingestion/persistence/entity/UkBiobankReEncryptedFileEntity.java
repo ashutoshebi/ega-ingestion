@@ -15,10 +15,10 @@
  */
 package uk.ac.ebi.ega.ukbb.temp.ingestion.persistence.entity;
 
-import org.springframework.data.domain.Persistable;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.Result;
+import uk.ac.ebi.ega.ukbb.temp.ingestion.exceptions.TerminateProgramException;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EntityListeners;
 import javax.persistence.GeneratedValue;
@@ -26,6 +26,9 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 
 /**
@@ -35,9 +38,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(schema = "UKBIOBANK", name = "RE_ENCRYPTED_FILES")
 @EntityListeners(AuditingEntityListener.class)
-public class UkBiobankReEncryptedFileEntity implements Persistable<Long> {
-
-    private transient boolean alreadyExistInDb = false;
+public class UkBiobankReEncryptedFileEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE,
@@ -46,7 +47,8 @@ public class UkBiobankReEncryptedFileEntity implements Persistable<Long> {
             schema = "UKBIOBANK",
             sequenceName = "re_encrypted_files_re_encrypted_file_id_seq",
             allocationSize = 1)
-    private long re_encrypted_file_id;
+    @Column(name = "re_encrypted_file_id")
+    private long reEncryptedFileId;
 
     // The path of the original, encrypted file.
     // "original_file_path REFERENCES ukbiobank.files(file_path)"
@@ -65,152 +67,57 @@ public class UkBiobankReEncryptedFileEntity implements Persistable<Long> {
     // The MD5 of the newly re-encrypted file.
     private String newReEncryptedMd5;
 
-    // TODO bjuhasz: use @OneToOne
-    private int resultStatusId;
+    private long unencryptedSize;
+
+    private Long fireId;
 
     private String resultStatusMessage;
-    private String resultStatusException;
-    private LocalDateTime startTime;
-    private LocalDateTime endTime;
 
+    private String resultStatusException;
+
+    private LocalDateTime startTime;
+
+    private LocalDateTime endTime;
 
     UkBiobankReEncryptedFileEntity() {
     }
 
-    public UkBiobankReEncryptedFileEntity(final String originalFilePath,
-                                          final String newReEncryptedFilePath,
-                                          final String originalEncryptedMd5,
-                                          final String unencryptedMd5,
-                                          final String newReEncryptedMd5,
-                                          final Result.Status resultStatus,
-                                          final String resultStatusMessage,
-                                          final String resultStatusException,
-                                          final LocalDateTime startTime,
-                                          final LocalDateTime endTime) {
-        this.originalFilePath = originalFilePath;
-        this.newReEncryptedFilePath = newReEncryptedFilePath;
+    public UkBiobankReEncryptedFileEntity(Path originalFilePath) {
+        this.originalFilePath = originalFilePath.toString();
+        start();
+    }
+
+    public boolean isFinishedSuccessfully() {
+        return resultStatusMessage == null && endTime != null;
+    }
+
+    public long getReEncryptedFileId() {
+        return reEncryptedFileId;
+    }
+
+    public void finish(Path outputFilePath, String originalEncryptedMd5, String unencryptedMd5,
+                       String newReEncryptedMd5, long unencryptedSize, Long fireId) {
+        this.newReEncryptedFilePath = outputFilePath.toString();
+        this.resultStatusMessage = null;
+        this.resultStatusException = null;
         this.originalEncryptedMd5 = originalEncryptedMd5;
         this.unencryptedMd5 = unencryptedMd5;
+        this.unencryptedSize = unencryptedSize;
+        this.fireId = fireId;
         this.newReEncryptedMd5 = newReEncryptedMd5;
-        this.resultStatusId = resultStatus.getEnumValue();
-        this.resultStatusMessage = resultStatusMessage;
-        this.resultStatusException = resultStatusException;
-        this.startTime = startTime;
-        this.endTime = endTime;
+        this.endTime = LocalDateTime.now();
     }
 
-    @Override
-    public Long getId() {
-        return re_encrypted_file_id;
+    public void finish(TerminateProgramException e) {
+        StringWriter stringWriter = new StringWriter();
+        e.printStackTrace(new PrintWriter(stringWriter));
+        this.resultStatusMessage = e.getMessage();
+        this.resultStatusException = stringWriter.toString();
+        this.endTime = LocalDateTime.now();
     }
 
-    @Override
-    public boolean isNew() {
-        return !alreadyExistInDb;
-    }
-
-    /**
-     * Call this function with true, in order to signal
-     * that the entity already exists in the DB.
-     * @param alreadyExistInDb
-     */
-    public void setAlreadyExistInDb(boolean alreadyExistInDb) {
-        this.alreadyExistInDb = alreadyExistInDb;
-    }
-
-    public String getOriginalFilePath() {
-        return originalFilePath;
-    }
-
-    public void setOriginalFilePath(final String originalFilePath) {
-        this.originalFilePath = originalFilePath;
-    }
-
-    public String getNewReEncryptedFilePath() {
-        return newReEncryptedFilePath;
-    }
-
-    public void setNewReEncryptedFilePath(final String newReEncryptedFilePath) {
-        this.newReEncryptedFilePath = newReEncryptedFilePath;
-    }
-
-    public String getUnencryptedMd5() {
-        return unencryptedMd5;
-    }
-
-    public void setUnencryptedMd5(final String unencryptedMd5) {
-        this.unencryptedMd5 = unencryptedMd5;
-    }
-
-    public String getOriginalEncryptedMd5() {
-        return originalEncryptedMd5;
-    }
-
-    public void setOriginalEncryptedMd5(final String originalEncryptedMd5) {
-        this.originalEncryptedMd5 = originalEncryptedMd5;
-    }
-
-    public String getNewReEncryptedMd5() {
-        return newReEncryptedMd5;
-    }
-
-    public void setNewReEncryptedMd5(final String newReEncryptedMd5) {
-        this.newReEncryptedMd5 = newReEncryptedMd5;
-    }
-
-    public Result.Status getResultStatus() {
-        return Result.Status.getStatusBy(resultStatusId);
-    }
-
-    public void setResultStatus(final Result.Status resultStatus) {
-        this.resultStatusId = resultStatus.getEnumValue();
-    }
-
-    public String getResultStatusMessage() {
-        return resultStatusMessage;
-    }
-
-    public void setResultStatusMessage(final String resultStatusMessage) {
-        this.resultStatusMessage = resultStatusMessage;
-    }
-
-    public String getResultStatusException() {
-        return resultStatusException;
-    }
-
-    public void setResultStatusException(final String resultStatusException) {
-        this.resultStatusException = resultStatusException;
-    }
-
-    public LocalDateTime getStartTime() {
-        return startTime;
-    }
-
-    public void setStartTime(final LocalDateTime startTime) {
-        this.startTime = startTime;
-    }
-
-    public LocalDateTime getEndTime() {
-        return endTime;
-    }
-
-    public void setEndTime(final LocalDateTime endTime) {
-        this.endTime = endTime;
-    }
-
-    @Override
-    public String toString() {
-        return "UkBiobankReEncryptedFileEntity{" +
-                "originalFilePath='" + originalFilePath + '\'' +
-                ", newReEncryptedFilePath='" + newReEncryptedFilePath + '\'' +
-                ", unencryptedMd5='" + unencryptedMd5 + '\'' +
-                ", originalEncryptedMd5='" + originalEncryptedMd5 + '\'' +
-                ", newReEncryptedMd5='" + newReEncryptedMd5 + '\'' +
-                ", resultStatusId=" + resultStatusId +
-                ", resultStatusMessage='" + resultStatusMessage + '\'' +
-                ", resultStatusException='" + resultStatusException + '\'' +
-                ", startTime=" + startTime +
-                ", endTime=" + endTime +
-                '}';
+    public void start() {
+        this.resultStatusMessage = "processing";
+        this.startTime = LocalDateTime.now();
     }
 }

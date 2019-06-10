@@ -21,6 +21,8 @@ public class ReEncryptProperties {
 
     private String relativePathInsideStaging;
 
+    private String ukbbPath;
+
     private boolean storeFileInFire = false;
 
     public String getStagingPath() {
@@ -49,5 +51,13 @@ public class ReEncryptProperties {
 
     public void setStoreFileInFire(final boolean storeFileInFire) {
         this.storeFileInFire = storeFileInFire;
+    }
+
+    public String getUkbbPath() {
+        return ukbbPath;
+    }
+
+    public void setUkbbPath(String ukbbPath) {
+        this.ukbbPath = ukbbPath;
     }
 }

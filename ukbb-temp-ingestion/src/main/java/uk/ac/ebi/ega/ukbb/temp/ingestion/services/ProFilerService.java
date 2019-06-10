@@ -29,7 +29,6 @@ import java.util.Calendar;
 
 // Copied from https://github.com/EbiEga/ega-production/blob/master/
 //  database-commons/src/main/java/uk/ac/ebi/ega/database/commons/services/ProFilerService.java
-@Service
 public class ProFilerService {
 
     private final NamedParameterJdbcTemplate proFilerTemplate;
