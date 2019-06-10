@@ -60,7 +60,7 @@ public class IngestionCommandLineRunner implements CommandLineRunner {
     }
 
     private int handleTerminateProgramException(TerminateProgramException e) {
-        if (e.termCode == 0) {
+        if (e.getTermCode() == 0) {
             logger.info(e.getMessage());
         } else {
             if (e.getCause() != null) {

@@ -111,7 +111,8 @@ public class UkbbReEncryptProcessService implements IUkbbReEncryptProcessService
         if (reEncryptProperties.isStoreFileInFire()) {
             long fileId = proFilerService.insertFile("UKBB_" + jobId, outputFilePath.toFile(),
                     reEncryptionResult.getNewReEncryptedMd5());
-            return proFilerService.insertArchive(fileId, relativePathToFire(outputFilePath), outputFilePath.toFile(),
+            return proFilerService.insertArchive(fileId, reEncryptProperties.getRelativePathInsideStaging(),
+                    outputFilePath.toFile(),
                     reEncryptionResult.getNewReEncryptedMd5());
         } else {
             logger.info("Ingestion into fire skipped");
@@ -119,18 +120,13 @@ public class UkbbReEncryptProcessService implements IUkbbReEncryptProcessService
         }
     }
 
-    private String relativePathToFire(Path outputFilePath) {
-        // TODO
-        return null;
-    }
-
     private void checkChecksum(Path outputFilePath, String plainFileMd5, ReEncryptionResult reEncryptionResult)
             throws TerminateProgramException {
         if (!Objects.equals(plainFileMd5, reEncryptionResult.getUnencryptedMd5())) {
-            logger.error("File md5 missmatch manifest {}, calculated {}.",
+            logger.error("File md5 mismatch manifest {}, calculated {}.",
                     plainFileMd5, reEncryptionResult.getUnencryptedMd5());
             outputFilePath.toFile().delete();
-            throw TerminateProgramException.checksumMissmatch();
+            throw TerminateProgramException.checksumMismatch();
         }
     }
 

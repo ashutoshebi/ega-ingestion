@@ -22,16 +22,16 @@ import java.nio.file.Path;
 
 public class TerminateProgramException extends Exception {
 
-    public int termCode;
+    private int termCode;
 
-    public TerminateProgramException(int termCode, String s) {
-        super(s);
-        termCode = termCode;
+    public TerminateProgramException(int termCode, String message) {
+        super(message);
+        this.termCode = termCode;
     }
 
-    public TerminateProgramException(int i, String s, Exception e) {
-        super(s, e);
-        termCode = termCode;
+    public TerminateProgramException(int termCode, String message, Exception exception) {
+        super(message, exception);
+        this.termCode = termCode;
     }
 
     public static TerminateProgramException fileNotFound(Path path) {
@@ -46,8 +46,8 @@ public class TerminateProgramException extends Exception {
         return new TerminateProgramException(0, "Unexpected exception.", e);
     }
 
-    public static TerminateProgramException checksumMissmatch() {
-        return new TerminateProgramException(3, "Checksum missmatch");
+    public static TerminateProgramException checksumMismatch() {
+        return new TerminateProgramException(3, "Checksum mismatch");
     }
 
     public int getTermCode() {
