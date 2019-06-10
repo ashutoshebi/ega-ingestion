@@ -24,7 +24,7 @@ import uk.ac.ebi.ega.fire.properties.FireProperties;
 
 import java.net.MalformedURLException;
 
-@Configuration
+//@Configuration
 public class FireConfiguration {
 
     @Bean
