@@ -24,7 +24,7 @@ import javax.persistence.Table;
  * Class representing the ukbiobank.files database table.
  */
 @Entity
-@Table(schema = "UKBIOBANK", name = "FILES")
+@Table(name = "FILES")
 public class UkBiobankFileEntity {
 
     @Id

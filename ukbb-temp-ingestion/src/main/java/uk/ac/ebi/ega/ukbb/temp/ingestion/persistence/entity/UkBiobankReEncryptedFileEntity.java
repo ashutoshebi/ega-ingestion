@@ -36,7 +36,7 @@ import java.time.LocalDateTime;
  */
 
 @Entity
-@Table(schema = "UKBIOBANK", name = "RE_ENCRYPTED_FILES")
+@Table(name = "RE_ENCRYPTED_FILES")
 @EntityListeners(AuditingEntityListener.class)
 public class UkBiobankReEncryptedFileEntity {
 
