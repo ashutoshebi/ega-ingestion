@@ -17,16 +17,12 @@
  */
 package uk.ac.ebi.ega.ukbb.temp.ingestion.services;
 
-import uk.ac.ebi.ega.encryption.core.encryption.exceptions.AlgorithmInitializationException;
-import uk.ac.ebi.ega.ukbb.temp.ingestion.reencryption.ReEncryptionResult;
+import uk.ac.ebi.ega.ukbb.temp.ingestion.exceptions.TerminateProgramException;
 
-import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 
-public interface IReEncryptService {
+public interface IUkbbReEncryptProcessService {
 
-    ReEncryptionResult reEncrypt(char[] inputPassword, char[] outputPassword, File inputFile, Path outputFilePath) throws IOException,
-            AlgorithmInitializationException;
+    void reEncrypt(Path srcKeyFile, Path dstKeyFile, Path filePath) throws TerminateProgramException;
 
 }

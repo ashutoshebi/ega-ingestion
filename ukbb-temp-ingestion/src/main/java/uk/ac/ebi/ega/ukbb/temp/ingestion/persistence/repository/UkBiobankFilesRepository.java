@@ -1,5 +1,4 @@
 /*
- *
  * Copyright 2019 EMBL - European Bioinformatics Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,20 +12,16 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
-package uk.ac.ebi.ega.ukbb.temp.ingestion.services;
+package uk.ac.ebi.ega.ukbb.temp.ingestion.persistence.repository;
 
-import uk.ac.ebi.ega.encryption.core.encryption.exceptions.AlgorithmInitializationException;
-import uk.ac.ebi.ega.ukbb.temp.ingestion.reencryption.ReEncryptionResult;
+import org.springframework.data.repository.CrudRepository;
+import uk.ac.ebi.ega.ukbb.temp.ingestion.persistence.entity.UkBiobankFileEntity;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Path;
+import java.util.Optional;
 
-public interface IReEncryptService {
+public interface UkBiobankFilesRepository extends CrudRepository<UkBiobankFileEntity, String> {
 
-    ReEncryptionResult reEncrypt(char[] inputPassword, char[] outputPassword, File inputFile, Path outputFilePath) throws IOException,
-            AlgorithmInitializationException;
+    Optional<UkBiobankFileEntity> findByFilePath(String filePath);
 
 }

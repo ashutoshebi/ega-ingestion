@@ -1,4 +1,5 @@
 /*
+ *
  * Copyright 2019 EMBL - European Bioinformatics Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,22 +13,26 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 package uk.ac.ebi.ega.ukbb.temp.ingestion.services;
 
-import org.springframework.stereotype.Service;
-import uk.ac.ebi.ega.encryption.core.services.IPasswordEncryptionService;
-import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.Result;
+import uk.ac.ebi.ega.ukbb.temp.ingestion.exceptions.TerminateProgramException;
 
-import java.time.LocalDateTime;
+import java.io.File;
+import java.nio.file.Path;
 
-@Service
-public class ReEncryptService implements IReEncryptService {
+public interface IUkbbJobService {
 
-    private IPasswordEncryptionService passwordService;
+    boolean isJobFinishedSuccessfully(Path absolutePath);
 
-    @Override
-    public Result reEncrypt(String fileName, String inputPassword, String outputPassword) {
-        return Result.correct(LocalDateTime.now());
-    }
+    String getSummaryFileMd5(File file);
+
+    long startJob(Path filePath) throws TerminateProgramException;
+
+    void finishJob(File file, Path outputFilePath, String originalEncryptedMd5, String unencryptedMd5,
+                   String newReEncryptedMd5, long size, Long fireId);
+
+    void finishJob(Path filePath, TerminateProgramException e);
+
 }

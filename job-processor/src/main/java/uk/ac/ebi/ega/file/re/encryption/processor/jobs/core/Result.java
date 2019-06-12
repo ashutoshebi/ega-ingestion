@@ -25,12 +25,28 @@ public class Result {
 
     public enum Status {
 
-        SUCCESS,
+        SUCCESS(1),
+        FAILURE(2),
+        ABORTED(3);
 
-        FAILURE,
+        private int enumValue;
 
-        ABORTED;
+        Status(final int enumValue) {
+            this.enumValue = enumValue;
+        }
 
+        public static Status getStatusBy(final int enumValue) {
+            for (final Status status : Status.values()) {
+                if (enumValue == status.getEnumValue()) {
+                    return status;
+                }
+            }
+            throw new IllegalArgumentException("No matching Status for value " + enumValue);
+        }
+
+        public int getEnumValue() {
+            return enumValue;
+        }
     }
 
     private Status status;
