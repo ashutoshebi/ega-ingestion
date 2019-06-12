@@ -46,6 +46,16 @@ public class EncryptOutputStream extends OutputStream {
     }
 
     @Override
+    public void write(byte[] bytes) throws IOException {
+        encryptedOutput.write(bytes);
+    }
+
+    @Override
+    public void write(byte[] bytes, int i, int i1) throws IOException {
+        encryptedOutput.write(bytes, i, i1);
+    }
+
+    @Override
     public void close() throws IOException {
         encryptedOutput.close();
     }
