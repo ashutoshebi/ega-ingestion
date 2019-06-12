@@ -79,6 +79,11 @@ public class Result<T> {
         this.startTime = startTime;
     }
 
+    public Result(final Status status, final T data) {
+        this.status = status;
+        this.data = data;
+    }
+
     public Status getStatus() {
         return status;
     }
@@ -118,6 +123,10 @@ public class Result<T> {
     @SuppressWarnings("unchecked")
     public static <T> Result success(final T data, final LocalDateTime startTime) {
         return new Result(Status.SUCCESS, data, startTime);
+    }
+
+    public static <T> Result success(final T data) {
+        return new Result(Status.SUCCESS, data);
     }
 
     public String getMessageAndException() {

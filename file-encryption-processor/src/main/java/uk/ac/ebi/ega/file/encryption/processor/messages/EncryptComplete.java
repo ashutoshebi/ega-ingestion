@@ -17,6 +17,9 @@
  */
 package uk.ac.ebi.ega.file.encryption.processor.messages;
 
+import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.Result;
+
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 public class EncryptComplete {
@@ -27,16 +30,25 @@ public class EncryptComplete {
     private final long encryptedSize;
     private final String encryptedMd5;
     private final String encryptionPassword;
+    private final String status;
+    private final String message;
+    private final LocalDateTime startTime;
+    private final LocalDateTime endTime;
 
     public EncryptComplete(final String fileName, final long plainSize,
                            final String plainMd5, final long encryptedSize, final String encryptedMd5,
-                           final String encryptionPassword) {
+                           final String encryptionPassword, final Result.Status status, final String message,
+                           final LocalDateTime startTime, final LocalDateTime endTime) {
         this.fileName = Objects.requireNonNull(fileName);
         this.plainSize = Objects.requireNonNull(plainSize);
         this.plainMd5 = Objects.requireNonNull(plainMd5);
         this.encryptedSize = Objects.requireNonNull(encryptedSize);
         this.encryptedMd5 = Objects.requireNonNull(encryptedMd5);
         this.encryptionPassword = Objects.requireNonNull(encryptionPassword);
+        this.status = Objects.requireNonNull(status).toString();
+        this.message = Objects.requireNonNull(message);
+        this.startTime = Objects.requireNonNull(startTime);
+        this.endTime = Objects.requireNonNull(endTime);
     }
 
     public String getFileName() {
@@ -61,5 +73,21 @@ public class EncryptComplete {
 
     public String getEncryptionPassword() {
         return encryptionPassword;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public LocalDateTime getStartTime() {
+        return startTime;
+    }
+
+    public LocalDateTime getEndTime() {
+        return endTime;
     }
 }

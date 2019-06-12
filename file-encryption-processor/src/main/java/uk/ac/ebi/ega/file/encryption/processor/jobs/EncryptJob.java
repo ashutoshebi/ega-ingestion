@@ -43,14 +43,14 @@ public class EncryptJob implements Job<EncryptJobParameters> {
     private PipelineService pipelineService;
     private String clientId;
     private Path stagingRoot;
-  //  private EncryptionAlgorithm encryptionAlgorithm; //TODO Not sure about purpose for sending encrypted password to kafka
+    //  private EncryptionAlgorithm encryptionAlgorithm; //TODO Not sure about purpose for sending encrypted password to kafka
 
     public EncryptJob(PipelineService pipelineService, String clientId, Path stagingRoot/*,
                       EncryptionAlgorithm encryptionAlgorithm*/) {
         this.pipelineService = pipelineService;
         this.clientId = clientId;
         this.stagingRoot = stagingRoot;
-     //   this.encryptionAlgorithm = encryptionAlgorithm;
+        //   this.encryptionAlgorithm = encryptionAlgorithm;
     }
 
     @Override
@@ -74,14 +74,16 @@ public class EncryptJob implements Job<EncryptJobParameters> {
             final IngestionPipelineResult ingestionPipelineResult = pipelineService.getPipeline(file.getStagingFile())
                     .process();
 
+            final LocalDateTime end = LocalDateTime.now();
+
             final IngestionPipelineFile originalIngestionPipelineFile = ingestionPipelineResult.getOriginalFile();
             final IngestionPipelineFile encryptedIngestionPipelineFile = ingestionPipelineResult.getEncryptedFile();
 
             final EncryptComplete encryptComplete = new EncryptComplete(generatedName, originalIngestionPipelineFile.getFileSize(),
                     originalIngestionPipelineFile.getMd5(), encryptedIngestionPipelineFile.getFileSize(), encryptedIngestionPipelineFile.getMd5(),
-                    "");//TODO Need to Encrypt the password & pass here. Currently not sure about the purpose.
+                    "", Result.Status.SUCCESS, "Encryption process has been completed successfully", start, end);//TODO Need to Encrypt the password & pass here. Currently not sure about the purpose.
 
-            return Result.success(encryptComplete, start);
+            return Result.success(encryptComplete);//TODO need to check purpose of sending start time. removed for the time being.
         } catch (SystemErrorException | IOException e) { //TODO need to check can be clubbed with SystemErrorException
             file.rollbackFileToStaging();
             fileMd5.rollbackFileToStaging();
