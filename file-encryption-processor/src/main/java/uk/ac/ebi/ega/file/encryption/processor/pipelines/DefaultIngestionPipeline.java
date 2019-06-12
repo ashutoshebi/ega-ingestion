@@ -39,24 +39,19 @@ import java.util.List;
 public class DefaultIngestionPipeline implements IngestionPipeline {
 
     private final List<File> outputFiles;
-
-    protected File origin;
-
     private File secretRing;
-
     private File secretRingKey;
-
+    protected File origin;
     protected File output;
-
     protected char[] password;
 
-    public DefaultIngestionPipeline(File origin, File secretRing, File secretRingKey, File output, char[] password) {
+    public DefaultIngestionPipeline(File origin, File secretRing, File secretRingKey, File output, File password) throws IOException {
         this.outputFiles = new ArrayList<>();
         this.origin = origin;
         this.secretRing = secretRing;
         this.secretRingKey = secretRingKey;
         this.output = output;
-        this.password = password;
+        this.password = FileUtils.readPasswordFile(password.toPath());
     }
 
     @Override
@@ -84,14 +79,14 @@ public class DefaultIngestionPipeline implements IngestionPipeline {
                 final PipelineStream stream = StreamPipelineBuilder
                         .source(decryptInputStream)
                         .to(encryptOutputStream)
-                        .build();
+                        .build()
         ) {
             stream.execute();
             return new IngestionPipelineResult(
-                    new IngestionPipelineFile(origin, decryptInputStream.getMd5()),
+                    new IngestionPipelineFile(origin, decryptInputStream.getMd5(), decryptInputStream.available()),
                     decryptInputStream.getUnencryptedMd5(),
                     password,
-                    new IngestionPipelineFile(output, encryptOutputStream.getMd5())
+                    new IngestionPipelineFile(output, encryptOutputStream.getMd5(), output.length())
             );
         }
     }

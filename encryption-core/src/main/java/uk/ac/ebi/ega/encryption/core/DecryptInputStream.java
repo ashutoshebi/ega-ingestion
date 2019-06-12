@@ -38,8 +38,8 @@ public class DecryptInputStream extends InputStream {
             throws AlgorithmInitializationException {
         this.messageDigest = Hash.getMd5();
         this.unencryptedMessageDigest = Hash.getMd5();
-        this.digestedDecryptedInput = new DigestInputStream(algorithm.decrypt(
-                new DigestInputStream(input, messageDigest), password), unencryptedMessageDigest);
+        this.digestedDecryptedInput = new DigestInputStream(
+                algorithm.decrypt(new DigestInputStream(input, messageDigest), password), unencryptedMessageDigest);
     }
 
     @Override

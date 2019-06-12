@@ -21,7 +21,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.time.LocalDateTime;
 
-public class Result {
+public class Result<T> {
 
     public enum Status {
 
@@ -49,6 +49,8 @@ public class Result {
         }
     }
 
+    private T data;
+
     private Status status;
 
     private String message;
@@ -71,6 +73,12 @@ public class Result {
         this.endTime = endTime;
     }
 
+    public Result(final Status status, final T data, final LocalDateTime startTime) {
+        this.status = status;
+        this.data = data;
+        this.startTime = startTime;
+    }
+
     public Status getStatus() {
         return status;
     }
@@ -91,7 +99,11 @@ public class Result {
         return endTime;
     }
 
-    public static Result correct(LocalDateTime startTime) {
+    public T getData() {
+        return data;
+    }
+
+    public static Result success(LocalDateTime startTime) {
         return new Result(Status.SUCCESS, null, null, startTime);
     }
 
@@ -101,6 +113,11 @@ public class Result {
 
     public static Result abort(String msg, Exception e, LocalDateTime startTime) {
         return new Result(Status.ABORTED, msg, e, startTime);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> Result success(final T data, final LocalDateTime startTime) {
+        return new Result(Status.SUCCESS, data, startTime);
     }
 
     public String getMessageAndException() {

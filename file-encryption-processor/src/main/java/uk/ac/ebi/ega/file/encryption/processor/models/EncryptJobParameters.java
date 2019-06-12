@@ -31,8 +31,8 @@ public class EncryptJobParameters implements JobParameters { //TODO JobParameter
     private final LocalDateTime lastUpdate;
     private final Path md5FilePath;
 
-    public EncryptJobParameters(final String accountId, final String stagingId, final Path filePath, final long size, final LocalDateTime lastUpdate,
-                                final Path md5FilePath) {
+    public EncryptJobParameters(final String accountId, final String stagingId, final Path filePath, final long size,
+                                final LocalDateTime lastUpdate, final Path md5FilePath) {
         this.accountId = accountId;
         this.stagingId = stagingId;
         this.filePath = filePath;

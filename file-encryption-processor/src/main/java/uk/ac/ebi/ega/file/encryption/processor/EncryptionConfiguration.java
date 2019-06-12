@@ -79,17 +79,22 @@ public class EncryptionConfiguration {
     @Bean("pipelineService")
     public PipelineService ingestionPipelineService(
             @Value("${file.encryption.keyring.private}") String privateKeyRing,
-            @Value("${file.encryption.keyring.private.key}") String privateKeyRingPassword)
+            @Value("${file.encryption.keyring.private.key}") String privateKeyRingPassword,
+            @Value("${file.output.encryption.key}") String encryptionKeyPath)
             throws FileNotFoundException {
-        File privateKeyRingFile = new File(privateKeyRing);
+        final File privateKeyRingFile = new File(privateKeyRing);
         if (!privateKeyRingFile.exists()) {
             throw new FileNotFoundException("Private key ring file could not be found");
         }
-        File privateKeyRingPasswordFile = new File(privateKeyRingPassword);
+        final File privateKeyRingPasswordFile = new File(privateKeyRingPassword);
         if (!privateKeyRingPasswordFile.exists()) {
             throw new FileNotFoundException("Password file for private key ring could not be found");
         }
-        return new PipelineBuilder(privateKeyRingFile, privateKeyRingPasswordFile);
+        final File encryptPasswordFile = new File(encryptionKeyPath);
+        if (!encryptPasswordFile.exists()) {
+            throw new FileNotFoundException("Password file to encrypt output file could not be found");
+        }
+        return new PipelineBuilder(privateKeyRingFile, privateKeyRingPasswordFile, encryptPasswordFile);
     }
 
     @Bean

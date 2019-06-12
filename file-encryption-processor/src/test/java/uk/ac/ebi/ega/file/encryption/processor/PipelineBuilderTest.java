@@ -47,7 +47,7 @@ public class PipelineBuilderTest {
     public void testPipelineBuilderBasic() throws URISyntaxException, IOException, UserErrorException,
             SystemErrorException {
         File fileInStaging = copyToTemporaryFolder("/keyPairTest/test_file.txt.gpg");
-        PipelineService service = new PipelineBuilder(getPrivateKeyRing(), getPrivateKeyRingPassword());
+        PipelineService service = new PipelineBuilder(getPrivateKeyRing(), getPrivateKeyRingPassword(), getEncryptKey());
         final IngestionPipelineResult process = service.getPipeline(fileInStaging).process();
 
         assertNotNull(process.getEncryptedFile());
@@ -62,7 +62,7 @@ public class PipelineBuilderTest {
     public void testPipelineBuilderBam() throws URISyntaxException, IOException, UserErrorException,
             SystemErrorException {
         File fileInStaging = copyToTemporaryFolder("/keyPairTest/test.bam.gpg");
-        PipelineService service = new PipelineBuilder(getPrivateKeyRing(), getPrivateKeyRingPassword());
+        PipelineService service = new PipelineBuilder(getPrivateKeyRing(), getPrivateKeyRingPassword(), getEncryptKey());
         assertTrue(service.getPipeline(fileInStaging) instanceof IngestionSamToolsIndex);
         final IngestionPipelineResult process = service.getPipeline(fileInStaging).process();
 
@@ -80,7 +80,7 @@ public class PipelineBuilderTest {
     public void testPipelineBuilderBadBam() throws URISyntaxException, IOException, UserErrorException,
             SystemErrorException {
         File fileInStaging = copyToTemporaryFolder("/keyPairTest/bad_bam.bam.gpg");
-        PipelineService service = new PipelineBuilder(getPrivateKeyRing(), getPrivateKeyRingPassword());
+        PipelineService service = new PipelineBuilder(getPrivateKeyRing(), getPrivateKeyRingPassword(), getEncryptKey());
         assertTrue(service.getPipeline(fileInStaging) instanceof IngestionSamToolsIndex);
         service.getPipeline(fileInStaging).process();
     }
@@ -104,24 +104,28 @@ public class PipelineBuilderTest {
         return new File(this.getClass().getResource("/keyPairTest/password.txt").toURI());
     }
 
+    private File getEncryptKey() throws URISyntaxException {
+        return new File(this.getClass().getResource("/keyPairTest/encrypt_key.txt").toURI());
+    }
+
     @Test(expected = UserErrorException.class)
     public void testWrongPgpFile() throws URISyntaxException, IOException, UserErrorException, SystemErrorException {
         File fileInStaging = copyToTemporaryFolder("/keyPairTest/test_file.txt.original");
-        PipelineService service = new PipelineBuilder(getPrivateKeyRing(), getPrivateKeyRingPassword());
+        PipelineService service = new PipelineBuilder(getPrivateKeyRing(), getPrivateKeyRingPassword(), getEncryptKey());
         service.getPipeline(fileInStaging).process();
     }
 
     @Test(expected = SystemErrorException.class)
     public void testWrongPgpPassword() throws URISyntaxException, IOException, UserErrorException, SystemErrorException {
         File fileInStaging = copyToTemporaryFolder("/keyPairTest/test_file.txt.gpg");
-        PipelineService service = new PipelineBuilder(getPrivateKeyRing(), getWrongPrivateKeyRingPassword());
+        PipelineService service = new PipelineBuilder(getPrivateKeyRing(), getWrongPrivateKeyRingPassword(), getEncryptKey());
         service.getPipeline(fileInStaging).process();
     }
 
     @Test(expected = SystemErrorException.class)
     public void testMissingFile() throws URISyntaxException, IOException, UserErrorException, SystemErrorException {
         File fileInStaging = copyToTemporaryFolder("/keyPairTest/test_file.txt.gpg");
-        PipelineService service = new PipelineBuilder(getPrivateKeyRing(), new File("/nope"));
+        PipelineService service = new PipelineBuilder(getPrivateKeyRing(), new File("/nope"), getEncryptKey());
         service.getPipeline(fileInStaging).process();
     }
 

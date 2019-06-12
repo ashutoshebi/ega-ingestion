@@ -22,12 +22,13 @@ import java.io.File;
 public class IngestionPipelineFile {
 
     private File file;
-
     private String md5;
+    private long fileSize;
 
-    public IngestionPipelineFile(File file, String md5) {
+    public IngestionPipelineFile(File file, String md5, long fileSize) {
         this.file = file;
         this.md5 = md5;
+        this.fileSize = fileSize;
     }
 
     public File getFile() {
@@ -38,4 +39,7 @@ public class IngestionPipelineFile {
         return md5;
     }
 
+    public long getFileSize() {
+        return fileSize;
+    }
 }

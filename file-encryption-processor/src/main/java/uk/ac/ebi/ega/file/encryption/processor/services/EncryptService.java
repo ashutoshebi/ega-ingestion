@@ -72,11 +72,11 @@ public class EncryptService extends JobExecutor implements IEncryptService {
             result = Result.abort("Unexpected exception - JobParameters not registered", jobNotRegistered,
                     LocalDateTime.now());
         }
-        if (result.getStatus() != Result.Status.SUCCESS) {
+        if (!Result.Status.SUCCESS.equals(result.getStatus())) {
             //TODO Needs to be implemented
             // mailingService.sendSimpleMessage(reportTo, result.getMessage(), result.getException());
         }
-        if (result.getStatus() != Result.Status.ABORTED) {
+        if (!Result.Status.ABORTED.equals(result.getStatus())) {
             // report to file manager if it has finished.
             reportToFileManager(jobExecution.getJobId(), startExecution, result);
         }
@@ -88,8 +88,7 @@ public class EncryptService extends JobExecutor implements IEncryptService {
         return getAssignedExecution(ENCRYPT_JOB, EncryptJobParameters.class);
     }
 
-    private void reportToFileManager(String jobId, LocalDateTime startTime, Result result) {
-        kafkaTemplate.send(completeJobTopic, jobId, new EncryptComplete(result.getStatus(),
-                result.getMessage(), startTime, result.getEndTime()));
+    private void reportToFileManager(String jobId, LocalDateTime startTime, Result<EncryptComplete> result) {
+        kafkaTemplate.send(completeJobTopic, jobId, result.getData());
     }
 }

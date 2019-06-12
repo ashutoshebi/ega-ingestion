@@ -20,9 +20,10 @@ package uk.ac.ebi.ega.file.encryption.processor.services;
 import uk.ac.ebi.ega.file.encryption.processor.pipelines.IngestionPipeline;
 
 import java.io.File;
+import java.io.IOException;
 
 public interface PipelineService {
 
-    IngestionPipeline getPipeline(File fileOrigin);
+    IngestionPipeline getPipeline(File fileOrigin) throws IOException;
 
 }
