@@ -111,13 +111,17 @@ public class UkbbReEncryptProcessService implements IUkbbReEncryptProcessService
         if (reEncryptProperties.isStoreFileInFire()) {
             long fileId = proFilerService.insertFile("UKBB_" + jobId, outputFilePath.toFile(),
                     reEncryptionResult.getNewReEncryptedMd5());
-            return proFilerService.insertArchive(fileId, reEncryptProperties.getRelativePathInsideStaging(),
-                    outputFilePath.toFile(),
+            return proFilerService.insertArchive(fileId, relativePathToFire(outputFilePath), outputFilePath.toFile(),
                     reEncryptionResult.getNewReEncryptedMd5());
         } else {
             logger.info("Ingestion into fire skipped");
             return null;
         }
+    }
+
+    private String relativePathToFire(Path outputFilePath) {
+        final Path stagingPath = Paths.get(reEncryptProperties.getStagingPath());
+        return Paths.get("/").resolve(stagingPath.relativize(outputFilePath.getParent())).toString();
     }
 
     private void checkChecksum(Path outputFilePath, String plainFileMd5, ReEncryptionResult reEncryptionResult)

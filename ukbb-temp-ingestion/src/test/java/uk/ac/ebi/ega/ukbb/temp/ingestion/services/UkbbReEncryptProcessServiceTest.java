@@ -137,6 +137,24 @@ public class UkbbReEncryptProcessServiceTest {
         assertThatOutputFileIsNotStoredInFire();
     }
 
+    @Test
+    public void correctRelativePathIsGenerated() {
+        final Path outputFilePath = Paths.get("/nfs/ega/public/staging/ukbb/vanguard/1023216/UKBB1023216_27592_14.bwa.bam.stats.cip");
+        final String expectedRelativePath = "/ukbb/vanguard/1023216";
+
+        final String actualRelativePath = relativePathToFire(outputFilePath);
+
+        assertThat(actualRelativePath).isEqualTo(expectedRelativePath);
+    }
+
+    private String relativePathToFire(Path outputFilePath) {
+        final Path stagingPath = Paths.get("/nfs/ega/public/staging");
+        final Path outputFilePathWithoutStagingPath = stagingPath.relativize(outputFilePath);
+        final Path outputFilePathWithoutStagingPathAndWithoutFileName = outputFilePathWithoutStagingPath.getParent();
+        final Path pathWithPrependingSlash = Paths.get("/").resolve(outputFilePathWithoutStagingPathAndWithoutFileName);
+        return pathWithPrependingSlash.toString();
+    }
+
     private void assertThatOutputFileIsStoredInFire() {
         verify(proFilerService, times(1)).insertFile(any(), any(), anyString());
         verify(proFilerService, times(1)).insertArchive(anyLong(), anyString(), any(), anyString());
@@ -173,7 +191,7 @@ public class UkbbReEncryptProcessServiceTest {
 
         reEncryptProperties.setUkbbPath(inputFilePath.getRoot().toString());
         reEncryptProperties.setStagingPath(temporaryFolder.newFolder().toString());
-        reEncryptProperties.setRelativePathInsideStaging("relativePathInsideStaging");
+        reEncryptProperties.setRelativePathInsideStaging("ukbb/vanguard");
 
         reEncryptProperties.setStoreFileInFire(true);
 
