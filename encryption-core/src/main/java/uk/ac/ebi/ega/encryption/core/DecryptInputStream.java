@@ -48,6 +48,16 @@ public class DecryptInputStream extends InputStream {
     }
 
     @Override
+    public int read(byte[] bytes) throws IOException {
+        return digestedDecryptedInput.read(bytes);
+    }
+
+    @Override
+    public int read(byte[] bytes, int i, int i1) throws IOException {
+        return digestedDecryptedInput.read(bytes, i, i1);
+    }
+
+    @Override
     public void close() throws IOException {
         digestedDecryptedInput.close();
     }

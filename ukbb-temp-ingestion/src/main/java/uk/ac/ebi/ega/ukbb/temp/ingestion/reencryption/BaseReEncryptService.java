@@ -17,6 +17,7 @@
  */
 package uk.ac.ebi.ega.ukbb.temp.ingestion.reencryption;
 
+import org.apache.commons.codec.binary.Base64InputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.ac.ebi.ega.encryption.core.DecryptInputStream;
@@ -62,7 +63,7 @@ public class BaseReEncryptService implements IReEncryptService {
 
         try (final InputStream encryptedInput = new FileInputStream(inputFile);
              final InputStream messageDigestedEncryptedInput = new DigestInputStream(encryptedInput, messageDigestOfEncryptedFile);
-             final InputStream base64DecodedInput = Base64.getMimeDecoder().wrap(messageDigestedEncryptedInput);
+             final InputStream base64DecodedInput = new Base64InputStream(messageDigestedEncryptedInput);
              final DecryptInputStream decryptedInput = new DecryptInputStream(base64DecodedInput,
                      decryptionAlgorithm, inputPassword);
 
