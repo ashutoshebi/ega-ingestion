@@ -101,7 +101,8 @@ public class ReEncryptJob implements Job<ReEncryptJobParameters> {
         } catch (FireConfigurationException | ParseException | IOException e) {
             return Result.abort("Unrecoverable error", e, start);
         }
-        return Result.success(start);
+        LocalDateTime end = LocalDateTime.now();
+        return Result.success(start, end);
     }
 
     private File getOutputFile(String resultPath) throws IOException {

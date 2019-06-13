@@ -73,15 +73,11 @@ public class Result<T> {
         this.endTime = endTime;
     }
 
-    public Result(final Status status, final T data, final LocalDateTime startTime) {
+    public Result(final Status status, final T data, final LocalDateTime startTime, final LocalDateTime endTime) {
         this.status = status;
         this.data = data;
         this.startTime = startTime;
-    }
-
-    public Result(final Status status, final T data) {
-        this.status = status;
-        this.data = data;
+        this.endTime = endTime;
     }
 
     public Status getStatus() {
@@ -108,8 +104,8 @@ public class Result<T> {
         return data;
     }
 
-    public static Result success(LocalDateTime startTime) {
-        return new Result(Status.SUCCESS, null, null, startTime);
+    public static Result success(LocalDateTime startTime, LocalDateTime endTime) {
+        return new Result(Status.SUCCESS, null, null, startTime, endTime);
     }
 
     public static Result failure(String msg, Exception e, LocalDateTime startTime) {
@@ -121,12 +117,8 @@ public class Result<T> {
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> Result success(final T data, final LocalDateTime startTime) {
-        return new Result(Status.SUCCESS, data, startTime);
-    }
-
-    public static <T> Result success(final T data) {
-        return new Result(Status.SUCCESS, data);
+    public static <T> Result success(final T data, final LocalDateTime startTime, final LocalDateTime endTime) {
+        return new Result(Status.SUCCESS, data, startTime, endTime);
     }
 
     public String getMessageAndException() {

@@ -32,13 +32,13 @@ public class EncryptComplete {
     private final String encryptionPassword;
     private final String status;
     private final String message;
-    private final LocalDateTime startTime;
-    private final LocalDateTime endTime;
+    private final LocalDateTime startDateTime;
+    private final LocalDateTime endDateTime;
 
     public EncryptComplete(final String fileName, final long plainSize,
                            final String plainMd5, final long encryptedSize, final String encryptedMd5,
                            final String encryptionPassword, final Result.Status status, final String message,
-                           final LocalDateTime startTime, final LocalDateTime endTime) {
+                           final LocalDateTime startDateTime, final LocalDateTime endDateTime) {
         this.fileName = Objects.requireNonNull(fileName);
         this.plainSize = Objects.requireNonNull(plainSize);
         this.plainMd5 = Objects.requireNonNull(plainMd5);
@@ -47,8 +47,8 @@ public class EncryptComplete {
         this.encryptionPassword = Objects.requireNonNull(encryptionPassword);
         this.status = Objects.requireNonNull(status).toString();
         this.message = Objects.requireNonNull(message);
-        this.startTime = Objects.requireNonNull(startTime);
-        this.endTime = Objects.requireNonNull(endTime);
+        this.startDateTime = Objects.requireNonNull(startDateTime);
+        this.endDateTime = Objects.requireNonNull(endDateTime);
     }
 
     public String getFileName() {
@@ -83,11 +83,11 @@ public class EncryptComplete {
         return message;
     }
 
-    public LocalDateTime getStartTime() {
-        return startTime;
+    public LocalDateTime getStartDateTime() {
+        return startDateTime;
     }
 
-    public LocalDateTime getEndTime() {
-        return endTime;
+    public LocalDateTime getEndDateTime() {
+        return endDateTime;
     }
 }

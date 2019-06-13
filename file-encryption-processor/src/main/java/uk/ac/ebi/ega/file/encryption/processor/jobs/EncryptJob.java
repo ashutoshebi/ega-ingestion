@@ -83,8 +83,8 @@ public class EncryptJob implements Job<EncryptJobParameters> {
                     originalIngestionPipelineFile.getMd5(), encryptedIngestionPipelineFile.getFileSize(), encryptedIngestionPipelineFile.getMd5(),
                     "", Result.Status.SUCCESS, "Encryption process has been completed successfully", start, end);//TODO Need to Encrypt the password & pass here. Currently not sure about the purpose.
 
-            return Result.success(encryptComplete);//TODO need to check purpose of sending start time. removed for the time being.
-        } catch (SystemErrorException | IOException e) { //TODO need to check can be clubbed with SystemErrorException
+            return Result.success(encryptComplete, start, end);
+        } catch (SystemErrorException | IOException e) {
             file.rollbackFileToStaging();
             fileMd5.rollbackFileToStaging();
             return Result.abort("System is unable to execute the task at the moment", e, start);
@@ -97,7 +97,7 @@ public class EncryptJob implements Job<EncryptJobParameters> {
             file.rollbackFileToStaging();
             fileMd5.rollbackFileToStaging();
             return Result.abort("File not found", e, start);
-        }//TODO Need to revisit error messages/constant if not done appropriately
+        }
     }
 
     private String generateName() {
