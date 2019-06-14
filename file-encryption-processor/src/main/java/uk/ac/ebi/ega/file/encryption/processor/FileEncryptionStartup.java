@@ -29,8 +29,8 @@ import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
 import org.springframework.stereotype.Component;
 import uk.ac.ebi.ega.file.encryption.processor.models.EncryptJobParameters;
 import uk.ac.ebi.ega.file.encryption.processor.services.IEncryptService;
-import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.JobExecution;
-import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.Result;
+import uk.ac.ebi.ega.jobs.core.JobExecution;
+import uk.ac.ebi.ega.jobs.core.Result;
 
 import java.util.Optional;
 

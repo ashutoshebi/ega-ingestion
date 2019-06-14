@@ -29,8 +29,8 @@ import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
 import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.listener.MessageListenerContainer;
 import org.springframework.stereotype.Component;
-import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.JobExecution;
-import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.Result;
+import uk.ac.ebi.ega.jobs.core.JobExecution;
+import uk.ac.ebi.ega.jobs.core.Result;
 import uk.ac.ebi.ega.file.re.encryption.processor.models.ReEncryptJobParameters;
 import uk.ac.ebi.ega.file.re.encryption.processor.services.IReEncryptService;
 

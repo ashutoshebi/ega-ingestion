@@ -28,8 +28,8 @@ import uk.ac.ebi.ega.file.encryption.processor.pipelines.exceptions.SystemErrorE
 import uk.ac.ebi.ega.file.encryption.processor.pipelines.exceptions.UserErrorException;
 import uk.ac.ebi.ega.file.encryption.processor.services.PipelineService;
 import uk.ac.ebi.ega.file.encryption.processor.utils.FileToProcess;
-import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.Job;
-import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.Result;
+import uk.ac.ebi.ega.jobs.core.Job;
+import uk.ac.ebi.ega.jobs.core.Result;
 
 import java.io.IOException;
 import java.nio.file.Path;

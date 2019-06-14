@@ -17,7 +17,7 @@
  */
 package uk.ac.ebi.ega.file.re.encryption.processor.messages;
 
-import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.Result;
+import uk.ac.ebi.ega.jobs.core.Result;
 
 import java.time.LocalDateTime;
 

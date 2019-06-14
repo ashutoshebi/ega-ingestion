@@ -17,7 +17,7 @@
  */
 package uk.ac.ebi.ega.file.encryption.processor.models;
 
-import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.JobParameters;
+import uk.ac.ebi.ega.jobs.core.JobParameters;
 
 import java.nio.file.Path;
 import java.time.LocalDateTime;

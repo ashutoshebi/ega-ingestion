@@ -18,9 +18,9 @@
 package uk.ac.ebi.ega.file.encryption.processor.services;
 
 import uk.ac.ebi.ega.file.encryption.processor.models.EncryptJobParameters;
-import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.JobExecution;
-import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.Result;
-import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.exceptions.JobNotRegistered;
+import uk.ac.ebi.ega.jobs.core.JobExecution;
+import uk.ac.ebi.ega.jobs.core.Result;
+import uk.ac.ebi.ega.jobs.core.exceptions.JobNotRegistered;
 
 import java.nio.file.Path;
 import java.time.LocalDateTime;

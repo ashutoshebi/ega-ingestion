@@ -18,10 +18,10 @@
 package uk.ac.ebi.ega.file.encryption.processor.services;
 
 import uk.ac.ebi.ega.file.encryption.processor.models.EncryptJobParameters;
-import uk.ac.ebi.ega.file.encryption.processor.persistent.services.EncryptJobParameterService;
-import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.persistence.repository.JobExecutionRepository;
-import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.persistence.repository.JobRunRepository;
-import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.services.BasicExecutorPersistenceService;
+import uk.ac.ebi.ega.file.encryption.processor.persistence.services.EncryptJobParameterService;
+import uk.ac.ebi.ega.jobs.core.persistence.repository.JobExecutionRepository;
+import uk.ac.ebi.ega.jobs.core.persistence.repository.JobRunRepository;
+import uk.ac.ebi.ega.jobs.core.services.BasicExecutorPersistenceService;
 
 public class EncryptPersistenceService extends BasicExecutorPersistenceService {
 
