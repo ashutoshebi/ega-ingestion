@@ -17,6 +17,7 @@
  */
 package uk.ac.ebi.ega.ingestion.file.manager;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,12 +29,15 @@ import uk.ac.ebi.ega.encryption.core.services.PasswordEncryptionService;
 import uk.ac.ebi.ega.ingestion.file.manager.kafka.message.DownloadBoxFileProcess;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.DownloadBoxFileJobRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.DownloadBoxJobRepository;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.EncryptJobRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.HistoricDownloadBoxFileJobRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.HistoricDownloadBoxJobRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.services.DatasetService;
 import uk.ac.ebi.ega.ingestion.file.manager.services.DownloadBoxJobService;
+import uk.ac.ebi.ega.ingestion.file.manager.services.EncryptJobService;
 import uk.ac.ebi.ega.ingestion.file.manager.services.IDatasetService;
 import uk.ac.ebi.ega.ingestion.file.manager.services.IDownloadBoxJobService;
+import uk.ac.ebi.ega.ingestion.file.manager.services.IEncryptJobService;
 import uk.ac.ebi.ega.ingestion.file.manager.services.IKeyGenerator;
 import uk.ac.ebi.ega.ingestion.file.manager.services.IMailingService;
 import uk.ac.ebi.ega.ingestion.file.manager.services.MailingService;
@@ -87,13 +91,18 @@ public class FileManagerConfiguration {
     }
 
     @Bean
-    public IDatasetService datasetService(NamedParameterJdbcTemplate jdbcTemplate) {
+    public IDatasetService datasetService(@Qualifier("pea_jdbc_template") NamedParameterJdbcTemplate jdbcTemplate) {
         return new DatasetService(jdbcTemplate);
+    }
+
+    @Bean
+    public IEncryptJobService encryptJobService(EncryptJobRepository encryptJobRepository,
+                                                @Qualifier("fire_jdbc_template") NamedParameterJdbcTemplate jdbcTemplate) {
+        return new EncryptJobService(encryptJobRepository, jdbcTemplate);
     }
 
     @Bean
     public IPasswordEncryptionService passwordEncryptionService() {
         return new PasswordEncryptionService(passwordEncryptionKey);
     }
-
 }

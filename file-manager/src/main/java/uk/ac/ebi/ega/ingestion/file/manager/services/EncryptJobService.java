@@ -1,0 +1,176 @@
+/*
+ *
+ * Copyright 2019 EMBL - European Bioinformatics Institute
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+package uk.ac.ebi.ega.ingestion.file.manager.services;
+
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.transaction.annotation.Transactional;
+import uk.ac.ebi.ega.encryption.core.utils.io.FileUtils;
+import uk.ac.ebi.ega.ingestion.file.manager.kafka.message.EncryptComplete;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.EncryptJob;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.EncryptJobRepository;
+
+import java.time.LocalDateTime;
+
+public class EncryptJobService implements IEncryptJobService {
+
+    private EncryptJobRepository encryptJobRepository;
+    private NamedParameterJdbcTemplate jdbcTemplate;
+
+    public EncryptJobService(final EncryptJobRepository encryptJobRepository,
+                             final NamedParameterJdbcTemplate jdbcTemplate) {
+        this.encryptJobRepository = encryptJobRepository;
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
+    @Transactional(transactionManager = "fileManagerFireChainedTransactionManager",
+            rollbackFor = Exception.class)
+    @Override
+    public void notify(final String jobId, final EncryptComplete encryptComplete) {
+
+        // Persist data received on message queue in FileManager database
+        final EncryptJob encryptJob = EncryptJob.newInstance(jobId, encryptComplete);
+        persistEncryptJob(encryptJob);
+
+        // Add entries into FIRE database
+
+        insertRecordIntoFileTable(encryptComplete);
+        insertRecordIntoArchiveTable(encryptComplete);
+    }
+
+    private void persistEncryptJob(final EncryptJob encryptJob) {
+        encryptJobRepository.save(encryptJob);
+    }
+
+    /**
+     * @return long Database Generated key
+     * @See https://github.com/EbiEga/ega-production/blob/master/database-commons/src/main/java/uk/ac/ebi/ega/database/commons/services/ProFilerService.java
+     */
+    private long insertRecordIntoFileTable(final EncryptComplete encryptComplete) {
+        final String insertFilePreparedQuery = getInsertIntoFilePreparedQuery();
+        final MapSqlParameterSource parameters = new MapSqlParameterSource();
+        final KeyHolder keyHolder = new GeneratedKeyHolder();
+
+        setMappingsForFile(encryptComplete, parameters);
+        jdbcTemplate.update(insertFilePreparedQuery, parameters, keyHolder);
+
+        final Number number = keyHolder.getKey(); //Returns newly generated key. E.g. table has autoincrement primary key
+
+        return number.longValue();
+    }
+
+    /**
+     * @return long Database Generated key
+     * @See https://github.com/EbiEga/ega-production/blob/master/database-commons/src/main/java/uk/ac/ebi/ega/database/commons/services/ProFilerService.java
+     */
+    private long insertRecordIntoArchiveTable(final EncryptComplete encryptComplete) {
+        final String insertArchivePreparedQuery = getInsertIntoArchivePreparedQuery();
+        final MapSqlParameterSource parameters = new MapSqlParameterSource();
+        final KeyHolder keyHolder = new GeneratedKeyHolder();
+
+        setMappingsForArchive(encryptComplete, parameters);
+        jdbcTemplate.update(insertArchivePreparedQuery, parameters, keyHolder);
+
+        final Number number = keyHolder.getKey(); // Returns newly generated key. E.g. table has autoincrement primary key
+
+        return number.longValue();
+    }
+
+    private void setMappingsForFile(final EncryptComplete source, final MapSqlParameterSource destination) {
+
+        final LocalDateTime localDateTime = LocalDateTime.now();
+
+        destination.addValue("name", source.getFileName());
+        destination.addValue("md5", source.getEncryptedMd5());
+        destination.addValue("type", FileUtils.getType(source.getFileName()));
+        destination.addValue("size", source.getEncryptedSize());
+        destination.addValue("host_id", 1);
+        destination.addValue("created", localDateTime);
+        destination.addValue("updated", localDateTime);
+        destination.addValue("ega_id", "egaFileId"); //TODO need to check how to get. Replace with actual value.
+    }
+
+    private void setMappingsForArchive(final EncryptComplete source, final MapSqlParameterSource destination) {
+
+        final LocalDateTime localDateTime = LocalDateTime.now();
+
+        destination.addValue("name", source.getFileName());
+        destination.addValue("file_id", "fileId"); //TODO need to check how to get. Replace with actual value.
+        destination.addValue("md5", source.getEncryptedMd5());
+        destination.addValue("size", source.getEncryptedSize());
+        destination.addValue("relative_path", "relativePath"); //TODO need to check how to get. Replace with actual value.
+        destination.addValue("volume_name", "vol1");
+        destination.addValue("priority", "50");
+        destination.addValue("created", localDateTime);
+        destination.addValue("updated", localDateTime);
+        destination.addValue("archive_action_id", 1);
+        destination.addValue("archive_location_id", 1);
+    }
+
+    private String getInsertIntoFilePreparedQuery() {
+        return "INSERT INTO file(" +
+                "name," +
+                "md5," +
+                "type," +
+                "size," +
+                "host_id," +
+                "created," +
+                "updated," +
+                "ega_file_stable_id" +
+                ") " +
+                "VALUES(" +
+                ":name," +
+                ":md5," +
+                ":type," +
+                ":size," +
+                ":host_id," +
+                ":created," +
+                ":updated," +
+                ":ega_id)";
+    }
+
+    private String getInsertIntoArchivePreparedQuery() {
+        return "INSERT INTO archive(" +
+                "name," +
+                "file_id," +
+                "md5," +
+                "size," +
+                "relative_path," +
+                "volume_name," +
+                "priority," +
+                "created," +
+                "updated," +
+                "archive_action_id," +
+                "archive_location_id" +
+                ") " +
+                "VALUES(" +
+                ":name," +
+                ":file_id," +
+                ":md5," +
+                ":size," +
+                ":relative_path," +
+                ":volume_name," +
+                ":priority," +
+                ":created," +
+                ":updated," +
+                ":archive_action_id," +
+                ":archive_location_id)";
+    }
+}
