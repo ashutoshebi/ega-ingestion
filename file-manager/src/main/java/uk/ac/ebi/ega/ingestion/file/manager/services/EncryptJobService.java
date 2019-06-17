@@ -31,8 +31,8 @@ import java.time.LocalDateTime;
 
 public class EncryptJobService implements IEncryptJobService {
 
-    private EncryptJobRepository encryptJobRepository;
-    private NamedParameterJdbcTemplate jdbcTemplate;
+    private final EncryptJobRepository encryptJobRepository;
+    private final NamedParameterJdbcTemplate jdbcTemplate;
 
     public EncryptJobService(final EncryptJobRepository encryptJobRepository,
                              final NamedParameterJdbcTemplate jdbcTemplate) {
@@ -64,12 +64,12 @@ public class EncryptJobService implements IEncryptJobService {
      * @See https://github.com/EbiEga/ega-production/blob/master/database-commons/src/main/java/uk/ac/ebi/ega/database/commons/services/ProFilerService.java
      */
     private long insertRecordIntoFileTable(final EncryptComplete encryptComplete) {
-        final String insertFilePreparedQuery = getInsertIntoFilePreparedQuery();
+        final String insertFileSQL = getInsertIntoFileSQL();
         final MapSqlParameterSource parameters = new MapSqlParameterSource();
         final KeyHolder keyHolder = new GeneratedKeyHolder();
 
         setMappingsForFile(encryptComplete, parameters);
-        jdbcTemplate.update(insertFilePreparedQuery, parameters, keyHolder);
+        jdbcTemplate.update(insertFileSQL, parameters, keyHolder);
 
         final Number number = keyHolder.getKey(); //Returns newly generated key. E.g. table has autoincrement primary key
 
@@ -81,12 +81,12 @@ public class EncryptJobService implements IEncryptJobService {
      * @See https://github.com/EbiEga/ega-production/blob/master/database-commons/src/main/java/uk/ac/ebi/ega/database/commons/services/ProFilerService.java
      */
     private long insertRecordIntoArchiveTable(final EncryptComplete encryptComplete) {
-        final String insertArchivePreparedQuery = getInsertIntoArchivePreparedQuery();
+        final String insertArchiveSQL = getInsertIntoArchiveSQL();
         final MapSqlParameterSource parameters = new MapSqlParameterSource();
         final KeyHolder keyHolder = new GeneratedKeyHolder();
 
         setMappingsForArchive(encryptComplete, parameters);
-        jdbcTemplate.update(insertArchivePreparedQuery, parameters, keyHolder);
+        jdbcTemplate.update(insertArchiveSQL, parameters, keyHolder);
 
         final Number number = keyHolder.getKey(); // Returns newly generated key. E.g. table has autoincrement primary key
 
@@ -124,7 +124,7 @@ public class EncryptJobService implements IEncryptJobService {
         destination.addValue("archive_location_id", 1);
     }
 
-    private String getInsertIntoFilePreparedQuery() {
+    private String getInsertIntoFileSQL() {
         return "INSERT INTO file(" +
                 "name," +
                 "md5," +
@@ -146,7 +146,7 @@ public class EncryptJobService implements IEncryptJobService {
                 ":ega_id)";
     }
 
-    private String getInsertIntoArchivePreparedQuery() {
+    private String getInsertIntoArchiveSQL() {
         return "INSERT INTO archive(" +
                 "name," +
                 "file_id," +
