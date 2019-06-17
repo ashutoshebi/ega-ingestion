@@ -30,7 +30,7 @@ public class FileEncryptListener {
 
     private final Logger log = LoggerFactory.getLogger(FileEncryptListener.class);
 
-    final private IEncryptJobService encryptJobService;
+    private final IEncryptJobService encryptJobService;
 
     public FileEncryptListener(final IEncryptJobService encryptJobService) {
         this.encryptJobService = encryptJobService;
