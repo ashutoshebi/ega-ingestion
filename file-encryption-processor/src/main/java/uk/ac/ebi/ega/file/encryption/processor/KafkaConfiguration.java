@@ -23,17 +23,20 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.config.KafkaListenerContainerFactory;
-import org.springframework.kafka.core.ConsumerFactory;
-import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
+import org.springframework.kafka.core.*;
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
 import org.springframework.kafka.support.converter.StringJsonMessageConverter;
+import org.springframework.kafka.support.serializer.JsonSerializer;
+import uk.ac.ebi.ega.file.encryption.processor.messages.EncryptComplete;
 import uk.ac.ebi.ega.file.encryption.processor.messages.IngestionEvent;
 
 import java.util.HashMap;
@@ -92,4 +95,26 @@ public class KafkaConfiguration {
         return properties;
     }
 
+    @Bean
+    public Map<String, Object> producerConfigs() {
+        Map<String, Object> properties = new HashMap<>();
+        properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        // introduce a delay on the send to allow more messages to accumulate
+        properties.put(ProducerConfig.LINGER_MS_CONFIG, 1);
+        return properties;
+    }
+
+    @Bean
+    public ProducerFactory<String, EncryptComplete> producerFactory() {
+        DefaultKafkaProducerFactory<String, EncryptComplete> factory =
+                new DefaultKafkaProducerFactory<>(producerConfigs());
+        factory.setValueSerializer(new JsonSerializer<>(getObjectMapper()));
+        return factory;
+    }
+
+    @Bean
+    public KafkaTemplate<String, EncryptComplete> kafkaTemplate() {
+        return new KafkaTemplate<>(producerFactory());
+    }
 }

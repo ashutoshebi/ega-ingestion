@@ -17,7 +17,7 @@
  */
 package uk.ac.ebi.ega.file.re.encryption.processor.persistence.service;
 
-import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.services.JobParameterService;
+import uk.ac.ebi.ega.jobs.core.services.JobParameterService;
 import uk.ac.ebi.ega.file.re.encryption.processor.models.ReEncryptJobParameters;
 import uk.ac.ebi.ega.file.re.encryption.processor.persistence.entity.ReEncryptParametersEntity;
 import uk.ac.ebi.ega.file.re.encryption.processor.persistence.repository.ReEncryptParametersRepository;

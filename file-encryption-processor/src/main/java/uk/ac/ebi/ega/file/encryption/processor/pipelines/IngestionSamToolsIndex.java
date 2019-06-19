@@ -36,7 +36,7 @@ public class IngestionSamToolsIndex extends DefaultIngestionPipeline {
     private File indexError;
 
     public IngestionSamToolsIndex(File origin, File secretRing, File passphrase, File output,
-                                  File index, char[] password) {
+                                  File index, File password) throws IOException {
         super(origin, secretRing, passphrase, output, password);
         this.index = index;
         this.indexError = new File(index.getAbsolutePath() + ".error");
@@ -62,11 +62,11 @@ public class IngestionSamToolsIndex extends DefaultIngestionPipeline {
             waitForSuccessfulProcessEnd(process);
             indexError.delete();
             return new IngestionPipelineResult(
-                    new IngestionPipelineFile(origin, decryptInputStream.getMd5()),
+                    new IngestionPipelineFile(origin, decryptInputStream.getMd5(), decryptInputStream.available()),
                     decryptInputStream.getUnencryptedMd5(),
                     password,
-                    new IngestionPipelineFile(output, encryptOutputStream.getMd5()),
-                    new IngestionPipelineFile(index, encryptIndexOutputStream.getMd5())
+                    new IngestionPipelineFile(output, encryptOutputStream.getMd5(), output.length()),
+                    new IngestionPipelineFile(index, encryptIndexOutputStream.getMd5(), index.length())
             );
         } catch (SystemErrorException e) {
             process.terminateProcess();

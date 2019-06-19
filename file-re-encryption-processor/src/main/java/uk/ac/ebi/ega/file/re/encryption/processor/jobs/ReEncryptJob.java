@@ -24,9 +24,9 @@ import uk.ac.ebi.ega.encryption.core.EncryptOutputStream;
 import uk.ac.ebi.ega.encryption.core.encryption.AesCtr256Ega;
 import uk.ac.ebi.ega.encryption.core.encryption.exceptions.AlgorithmInitializationException;
 import uk.ac.ebi.ega.encryption.core.utils.io.FileUtils;
-import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.Job;
-import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.Result;
-import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.exceptions.JobRetryException;
+import uk.ac.ebi.ega.jobs.core.Job;
+import uk.ac.ebi.ega.jobs.core.Result;
+import uk.ac.ebi.ega.jobs.core.exceptions.JobRetryException;
 import uk.ac.ebi.ega.file.re.encryption.processor.models.ReEncryptJobParameters;
 import uk.ac.ebi.ega.fire.IFireFile;
 import uk.ac.ebi.ega.fire.IFireService;
@@ -101,7 +101,8 @@ public class ReEncryptJob implements Job<ReEncryptJobParameters> {
         } catch (FireConfigurationException | ParseException | IOException e) {
             return Result.abort("Unrecoverable error", e, start);
         }
-        return Result.correct(start);
+        LocalDateTime end = LocalDateTime.now();
+        return Result.success(start, end);
     }
 
     private File getOutputFile(String resultPath) throws IOException {

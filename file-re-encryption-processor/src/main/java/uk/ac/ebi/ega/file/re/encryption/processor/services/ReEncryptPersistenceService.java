@@ -17,9 +17,9 @@
  */
 package uk.ac.ebi.ega.file.re.encryption.processor.services;
 
-import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.persistence.repository.JobExecutionRepository;
-import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.persistence.repository.JobRunRepository;
-import uk.ac.ebi.ega.file.re.encryption.processor.jobs.core.services.BasicExecutorPersistenceService;
+import uk.ac.ebi.ega.jobs.core.persistence.repository.JobExecutionRepository;
+import uk.ac.ebi.ega.jobs.core.persistence.repository.JobRunRepository;
+import uk.ac.ebi.ega.jobs.core.services.BasicExecutorPersistenceService;
 import uk.ac.ebi.ega.file.re.encryption.processor.models.ReEncryptJobParameters;
 import uk.ac.ebi.ega.file.re.encryption.processor.persistence.service.ReEncryptJobParameterService;
 

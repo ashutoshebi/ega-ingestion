@@ -21,20 +21,22 @@ import uk.ac.ebi.ega.file.encryption.processor.models.FileType;
 import uk.ac.ebi.ega.file.encryption.processor.services.PipelineService;
 
 import java.io.File;
+import java.io.IOException;
 
 public class PipelineBuilder implements PipelineService {
 
     private File secretRing;
-
     private File secretRingPassphrase;
+    private File encryptPassword;
 
-    public PipelineBuilder(File secretRing, File secretRingPassphrase) {
+    public PipelineBuilder(File secretRing, File secretRingPassphrase, File encryptPassword) {
         this.secretRing = secretRing;
         this.secretRingPassphrase = secretRingPassphrase;
+        this.encryptPassword = encryptPassword;
     }
 
     @Override
-    public IngestionPipeline getPipeline(File fileOrigin) {
+    public IngestionPipeline getPipeline(File fileOrigin) throws IOException {
         switch (FileType.fromExtension(fileOrigin)) {
             case BAM:
                 return buildWithSamToolsIndex(fileOrigin);
@@ -43,20 +45,18 @@ public class PipelineBuilder implements PipelineService {
         }
     }
 
-    private IngestionPipeline buildDefault(File file) {
+    private IngestionPipeline buildDefault(File file) throws IOException {
         File output = changeExtension(file, "gpg", "cip");
-        char[] password = "kiwi".toCharArray();
-        return new DefaultIngestionPipeline(file, secretRing, secretRingPassphrase, output, password);
+        return new DefaultIngestionPipeline(file, secretRing, secretRingPassphrase, output, encryptPassword);
     }
 
-    private IngestionPipeline buildWithSamToolsIndex(File file) {
+    private IngestionPipeline buildWithSamToolsIndex(File file) throws IOException {
         File output = changeExtension(file, "gpg", "cip");
         File index = changeExtension(file, "bam.gpg", "bai.cip");
-        char[] password = "kiwi".toCharArray();
-        return new IngestionSamToolsIndex(file, secretRing, secretRingPassphrase, output, index, password);
+        return new IngestionSamToolsIndex(file, secretRing, secretRingPassphrase, output, index, encryptPassword);
     }
 
-    public static File changeExtension(File file, String currentExtension, String newExtension) {
+    private static File changeExtension(File file, String currentExtension, String newExtension) {
         String absolutePath = file.getAbsolutePath();
         return new File(absolutePath.substring(0, absolutePath.length() - currentExtension.length()) + newExtension);
     }

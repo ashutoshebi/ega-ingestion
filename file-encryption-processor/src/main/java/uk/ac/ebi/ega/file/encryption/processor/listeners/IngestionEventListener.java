@@ -20,12 +20,21 @@ package uk.ac.ebi.ega.file.encryption.processor.listeners;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.SpringApplication;
+import org.springframework.context.ApplicationContext;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.support.Acknowledgment;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 import uk.ac.ebi.ega.file.encryption.processor.messages.IngestionEvent;
-import uk.ac.ebi.ega.file.encryption.processor.pipelines.exceptions.SystemErrorException;
-import uk.ac.ebi.ega.file.encryption.processor.pipelines.exceptions.UserErrorException;
-import uk.ac.ebi.ega.file.encryption.processor.services.ProcessEncryptionFileService;
+import uk.ac.ebi.ega.file.encryption.processor.models.EncryptJobParameters;
+import uk.ac.ebi.ega.file.encryption.processor.services.IEncryptService;
+import uk.ac.ebi.ega.jobs.core.JobExecution;
+import uk.ac.ebi.ega.jobs.core.Result;
+import uk.ac.ebi.ega.jobs.core.exceptions.JobNotRegistered;
+
+import java.util.Optional;
 
 @Component
 public class IngestionEventListener {
@@ -33,26 +42,40 @@ public class IngestionEventListener {
     private final Logger logger = LoggerFactory.getLogger(IngestionEventListener.class);
 
     @Autowired
-    private ProcessEncryptionFileService processEncryptionFileService;
+    private ApplicationContext applicationContext;
+
+    @Autowired
+    private IEncryptService encryptService;
 
     @KafkaListener(id = "${spring.kafka.client-id}", topics = "${spring.kafka.file.ingestion.queue.name}", groupId = "encryption",
             clientIdPrefix = "executor", autoStartup = "false")
-    public void listen(IngestionEvent data) {
-        logger.error("Received {}", data);
+    public void listen(@Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) String key, IngestionEvent data, Acknowledgment acknowledgment) {
+
+        logger.info("Received {}", data);
+
+        Optional<JobExecution<EncryptJobParameters>> optionalJob = Optional.empty();
 
         try {
-            processEncryptionFileService.processFile(data.getAccountId(), data.getLocationId(),
-                    data.getAbsolutePathFile(), data.getSize(), data.getLastModified(), data.getAbsolutePathMd5File(),
-                    data.getMd5Size(), data.getMd5LastModified());
-        } catch (UserErrorException e) {
-            // Error with password / key used to encrypt, user uploaded something wrong on the first bytes of the file
-            // original file is restored, maybe we could contemplate to delete the file instead. Better get real usage
-            // first
-            logger.warn(e.getMessage());
-        } catch (SystemErrorException e) {
-            // Big problem on the problem, dead letter to team, files should have been reverted to original places
-            logger.error(e.getMessage());
+            optionalJob = encryptService.createJob(key, data.getAccountId(), data.getLocationId(),
+                    data.getAbsolutePathFile(), data.getSize(), data.getLastModified(), data.getAbsolutePathMd5File());
+        } catch (JobNotRegistered exception) {
+            exitApplication("Critical error: Job is not registered: " + exception.getMessage());
+        }
+
+        acknowledgment.acknowledge();
+
+        if (optionalJob.isPresent()) {
+            final Result result = encryptService.encrypt(optionalJob.get());
+            if (result.getStatus() == Result.Status.ABORTED) {
+                exitApplication("Process was aborted due to critical error. Unexpected application termination");
+            }
+        } else {
+            logger.info("key: {} is being processed, skip event", key);
         }
     }
 
+    private void exitApplication(final String message) {
+        logger.error(message);
+        SpringApplication.exit(applicationContext, () -> 1);
+    }
 }
