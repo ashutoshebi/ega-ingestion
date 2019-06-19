@@ -17,27 +17,26 @@
  */
 package uk.ac.ebi.ega.ingestion.file.manager.services;
 
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.transaction.annotation.Transactional;
-import uk.ac.ebi.ega.encryption.core.utils.io.FileUtils;
+import uk.ac.ebi.ega.fire.ingestion.model.FireIngestionModel;
+import uk.ac.ebi.ega.fire.ingestion.service.IFireIngestion;
+import uk.ac.ebi.ega.fire.ingestion.service.IFireIngestionModelMapper;
 import uk.ac.ebi.ega.ingestion.file.manager.kafka.message.EncryptComplete;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.EncryptJob;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.EncryptJobRepository;
 
-import java.time.LocalDateTime;
-
 public class EncryptJobService implements IEncryptJobService {
 
     private final EncryptJobRepository encryptJobRepository;
-    private final NamedParameterJdbcTemplate jdbcTemplate;
+    private final IFireIngestion fireIngestion;
+    private final IFireIngestionModelMapper<EncryptComplete> fireIngestionModelMapper;
 
     public EncryptJobService(final EncryptJobRepository encryptJobRepository,
-                             final NamedParameterJdbcTemplate jdbcTemplate) {
+                             final IFireIngestion fireIngestion,
+                             final IFireIngestionModelMapper<EncryptComplete> fireIngestionModelMapper) {
         this.encryptJobRepository = encryptJobRepository;
-        this.jdbcTemplate = jdbcTemplate;
+        this.fireIngestion = fireIngestion;
+        this.fireIngestionModelMapper = fireIngestionModelMapper;
     }
 
     @Transactional(transactionManager = "fileManagerFireChainedTransactionManager",
@@ -50,127 +49,11 @@ public class EncryptJobService implements IEncryptJobService {
         persistEncryptJob(encryptJob);
 
         // Add entries into FIRE database
-
-        insertRecordIntoFileTable(encryptComplete);
-        insertRecordIntoArchiveTable(encryptComplete);
+        final FireIngestionModel fireIngestionModel = fireIngestionModelMapper.map(encryptComplete);
+        fireIngestion.ingest(fireIngestionModel);
     }
 
     private void persistEncryptJob(final EncryptJob encryptJob) {
         encryptJobRepository.save(encryptJob);
-    }
-
-    /**
-     * @return long Database Generated key
-     * @See https://github.com/EbiEga/ega-production/blob/master/database-commons/src/main/java/uk/ac/ebi/ega/database/commons/services/ProFilerService.java
-     */
-    private long insertRecordIntoFileTable(final EncryptComplete encryptComplete) {
-        final String insertFileSQL = getInsertIntoFileSQL();
-        final MapSqlParameterSource parameters = new MapSqlParameterSource();
-        final KeyHolder keyHolder = new GeneratedKeyHolder();
-
-        setMappingsForFile(encryptComplete, parameters);
-        jdbcTemplate.update(insertFileSQL, parameters, keyHolder);
-
-        final Number number = keyHolder.getKey(); //Returns newly generated key. E.g. table has autoincrement primary key
-
-        return number.longValue();
-    }
-
-    /**
-     * @return long Database Generated key
-     * @See https://github.com/EbiEga/ega-production/blob/master/database-commons/src/main/java/uk/ac/ebi/ega/database/commons/services/ProFilerService.java
-     */
-    private long insertRecordIntoArchiveTable(final EncryptComplete encryptComplete) {
-        final String insertArchiveSQL = getInsertIntoArchiveSQL();
-        final MapSqlParameterSource parameters = new MapSqlParameterSource();
-        final KeyHolder keyHolder = new GeneratedKeyHolder();
-
-        setMappingsForArchive(encryptComplete, parameters);
-        jdbcTemplate.update(insertArchiveSQL, parameters, keyHolder);
-
-        final Number number = keyHolder.getKey(); // Returns newly generated key. E.g. table has autoincrement primary key
-
-        return number.longValue();
-    }
-
-    private void setMappingsForFile(final EncryptComplete source, final MapSqlParameterSource destination) {
-
-        final LocalDateTime localDateTime = LocalDateTime.now();
-
-        destination.addValue("name", source.getFileName());
-        destination.addValue("md5", source.getEncryptedMd5());
-        destination.addValue("type", FileUtils.getType(source.getFileName()));
-        destination.addValue("size", source.getEncryptedSize());
-        destination.addValue("host_id", 1);
-        destination.addValue("created", localDateTime);
-        destination.addValue("updated", localDateTime);
-        destination.addValue("ega_id", "egaFileId"); //TODO need to check how to get. Replace with actual value.
-    }
-
-    private void setMappingsForArchive(final EncryptComplete source, final MapSqlParameterSource destination) {
-
-        final LocalDateTime localDateTime = LocalDateTime.now();
-
-        destination.addValue("name", source.getFileName());
-        destination.addValue("file_id", "fileId"); //TODO need to check how to get. Replace with actual value.
-        destination.addValue("md5", source.getEncryptedMd5());
-        destination.addValue("size", source.getEncryptedSize());
-        destination.addValue("relative_path", "relativePath"); //TODO need to check how to get. Replace with actual value.
-        destination.addValue("volume_name", "vol1");
-        destination.addValue("priority", "50");
-        destination.addValue("created", localDateTime);
-        destination.addValue("updated", localDateTime);
-        destination.addValue("archive_action_id", 1);
-        destination.addValue("archive_location_id", 1);
-    }
-
-    private String getInsertIntoFileSQL() {
-        return "INSERT INTO file(" +
-                "name," +
-                "md5," +
-                "type," +
-                "size," +
-                "host_id," +
-                "created," +
-                "updated," +
-                "ega_file_stable_id" +
-                ") " +
-                "VALUES(" +
-                ":name," +
-                ":md5," +
-                ":type," +
-                ":size," +
-                ":host_id," +
-                ":created," +
-                ":updated," +
-                ":ega_id)";
-    }
-
-    private String getInsertIntoArchiveSQL() {
-        return "INSERT INTO archive(" +
-                "name," +
-                "file_id," +
-                "md5," +
-                "size," +
-                "relative_path," +
-                "volume_name," +
-                "priority," +
-                "created," +
-                "updated," +
-                "archive_action_id," +
-                "archive_location_id" +
-                ") " +
-                "VALUES(" +
-                ":name," +
-                ":file_id," +
-                ":md5," +
-                ":size," +
-                ":relative_path," +
-                ":volume_name," +
-                ":priority," +
-                ":created," +
-                ":updated," +
-                ":archive_action_id," +
-                ":archive_location_id)";
     }
 }
