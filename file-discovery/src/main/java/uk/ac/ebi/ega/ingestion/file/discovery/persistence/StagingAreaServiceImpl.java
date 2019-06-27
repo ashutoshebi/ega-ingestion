@@ -117,7 +117,7 @@ public class StagingAreaServiceImpl implements StagingAreaService {
             stagingArea.setDiscoveryEnabled(discoveryEnabled);
         }
         if (ingestionEnabled != null) {
-            stagingArea.setIngestionEnabled(discoveryEnabled);
+            stagingArea.setIngestionEnabled(ingestionEnabled);
         }
         if (discoveryPollingPeriod != null) {
             stagingArea.setDiscoveryPollingPeriod(discoveryPollingPeriod);
