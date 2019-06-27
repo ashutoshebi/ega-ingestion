@@ -20,7 +20,7 @@ create table STAGING_AREA_FILES
     ID              varchar(255) primary key,
     STAGING_AREA_ID varchar(255) not null,
     RELATIVE_PATH   text         not null,
-    FILE_SIZE       integer      not null,
+    FILE_SIZE       bigint      not null,
     UPDATE_DATE     timestamp    not null,
     CONSTRAINT FK_STAGING_AREA_FILE_TO_AREA_ID FOREIGN KEY (STAGING_AREA_ID) REFERENCES STAGING_AREAS (ID)
 );
