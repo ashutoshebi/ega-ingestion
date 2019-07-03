@@ -21,6 +21,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.springframework.integration.file.filters.IgnoreHiddenFileListFilter;
+import uk.ac.ebi.ega.ingestion.commons.models.FileStatic;
 
 import java.io.IOException;
 import java.nio.file.Files;

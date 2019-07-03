@@ -18,13 +18,13 @@
 package uk.ac.ebi.ega.ingestion.file.discovery.persistence.repositories;
 
 
-import uk.ac.ebi.ega.ingestion.file.discovery.message.FileEvent;
-import uk.ac.ebi.ega.ingestion.file.discovery.models.StagingFile;
-import uk.ac.ebi.ega.ingestion.file.discovery.utils.Hash;
+import uk.ac.ebi.ega.ingestion.commons.messages.FileEvent;
+import uk.ac.ebi.ega.ingestion.commons.models.FileStatic;
+import uk.ac.ebi.ega.ingestion.commons.models.StagingFile;
+import uk.ac.ebi.ega.ingestion.file.discovery.utils.StagingFileId;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
-import javax.xml.bind.DatatypeConverter;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -56,18 +56,13 @@ public class StagingFileImpl implements StagingFile {
     }
 
     public StagingFileImpl(String stagingAreaId, String relativePath, long fileSize, LocalDateTime updateDate) {
-        this(calculateId(stagingAreaId, relativePath), stagingAreaId, relativePath, fileSize, updateDate);
+        this(StagingFileId.calculateId(stagingAreaId, relativePath), stagingAreaId, relativePath, fileSize, updateDate);
     }
 
     public StagingFileImpl(FileEvent fileEvent) {
-        this(calculateId(fileEvent.getLocationId(), fileEvent.getRelativePath()), fileEvent.getLocationId(),
-                fileEvent.getRelativePath(), fileEvent.getSize(),
+        this(StagingFileId.calculateId(fileEvent.getLocationId(), fileEvent.getRelativePath()),
+                fileEvent.getLocationId(), fileEvent.getRelativePath(), fileEvent.getSize(),
                 Instant.ofEpochMilli(fileEvent.getLastModified()).atZone(ZoneId.systemDefault()).toLocalDateTime());
-    }
-
-    private static String calculateId(String stagingAreaId, String relativePath) {
-        return (DatatypeConverter.printHexBinary(Hash.getMd5().digest(stagingAreaId.getBytes())) +
-                DatatypeConverter.printHexBinary(Hash.getSha256().digest(relativePath.getBytes()))).toLowerCase();
     }
 
     public String getId() {
@@ -91,6 +86,11 @@ public class StagingFileImpl implements StagingFile {
     @Override
     public LocalDateTime getUpdateDate() {
         return updateDate;
+    }
+
+    @Override
+    public FileStatic toFileStatic() {
+        return new FileStatic(relativePath, fileSize, updateDate.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());
     }
 
 }

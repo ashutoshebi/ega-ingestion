@@ -19,8 +19,8 @@ package uk.ac.ebi.ega.ingestion.file.discovery.message.sources.ingestion;
 
 import org.springframework.integration.endpoint.AbstractMessageSource;
 import org.springframework.integration.support.AbstractIntegrationMessageBuilder;
-import uk.ac.ebi.ega.ingestion.file.discovery.message.IngestionEvent;
-import uk.ac.ebi.ega.ingestion.file.discovery.models.StagingFile;
+import uk.ac.ebi.ega.ingestion.commons.messages.IngestionEvent;
+import uk.ac.ebi.ega.ingestion.commons.models.StagingFile;
 
 import java.nio.file.Path;
 import java.time.LocalDateTime;
@@ -92,24 +92,36 @@ public class IngestionMessageSource extends AbstractMessageSource<IngestionEvent
     private Collection<? extends IngestionEvent> scanForEvents() {
         LocalDateTime cutOff = LocalDateTime.now().minus(olderThan, ChronoUnit.MILLIS);
         ArrayList<IngestionEvent> events = new ArrayList<>();
-        HashMap<String, StagingFile> stagingFiles = new HashMap<>();
+
+        HashMap<String, StagingFile> encryptedStagingFiles = new HashMap<>();
+        HashMap<String, StagingFile> encryptedStagingFileMd5s = new HashMap<>();
+        HashMap<String, StagingFile> plainStagingFileMd5s = new HashMap<>();
+
         supplier.apply(locationId, cutOff).forEach(stagingFile -> {
             String pathToSearch = stagingFile.getRelativePath();
-            StagingFile stagingFileContent;
-            StagingFile stagingFileMd5;
-            if (pathToSearch.endsWith(".md5")) {
-                stagingFileContent = stagingFiles.get(pathToSearch.substring(0, pathToSearch.length() - 4));
-                stagingFileMd5 = stagingFile;
-            } else {
-                stagingFileContent = stagingFile;
-                stagingFileMd5 = stagingFiles.get(pathToSearch.concat(".md5"));
+            if (pathToSearch.endsWith(".gpg")) {
+                encryptedStagingFiles.put(pathToSearch.substring(0, pathToSearch.length() - 4), stagingFile);
+                return;
             }
-            if (stagingFileContent != null && stagingFileMd5 != null) {
-                events.add(new IngestionEvent(accountId, locationId, directory, stagingFileContent, stagingFileMd5));
-            } else {
-                stagingFiles.put(stagingFile.getRelativePath(), stagingFile);
+            if (pathToSearch.endsWith(".gpg.md5")) {
+                encryptedStagingFileMd5s.put(pathToSearch.substring(0, pathToSearch.length() - 8), stagingFile);
+                return;
+            }
+            if (pathToSearch.endsWith(".md5")) {
+                plainStagingFileMd5s.put(pathToSearch.substring(0, pathToSearch.length() - 4), stagingFile);
+                return;
             }
         });
+        encryptedStagingFiles.keySet().forEach(s -> {
+            if (encryptedStagingFileMd5s.containsKey(s) && plainStagingFileMd5s.containsKey(s)) {
+                StagingFile encryptedStagingFile = encryptedStagingFiles.get(s);
+                StagingFile encryptedStagingFileMd5 = encryptedStagingFileMd5s.get(s);
+                StagingFile plainStagingFileMd5 = plainStagingFileMd5s.get(s);
+                events.add(new IngestionEvent(accountId, locationId, directory, encryptedStagingFile.toFileStatic(),
+                        plainStagingFileMd5.toFileStatic(), encryptedStagingFileMd5.toFileStatic()));
+            }
+        });
+
         return events;
     }
 

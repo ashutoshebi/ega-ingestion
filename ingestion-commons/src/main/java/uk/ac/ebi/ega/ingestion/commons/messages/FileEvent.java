@@ -15,9 +15,9 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.ingestion.file.discovery.message;
+package uk.ac.ebi.ega.ingestion.commons.messages;
 
-import uk.ac.ebi.ega.ingestion.file.discovery.message.sources.file.event.FileStatic;
+import uk.ac.ebi.ega.ingestion.commons.models.FileStatic;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;

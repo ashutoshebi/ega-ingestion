@@ -26,6 +26,7 @@
     </properties>
 
     <modules>
+        <module>ingestion-commons</module>
         <module>file-discovery</module>
         <module>file-encryption-processor</module>
         <module>encryption-core</module>

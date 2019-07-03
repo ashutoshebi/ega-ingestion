@@ -19,8 +19,8 @@ package uk.ac.ebi.ega.ingestion.file.discovery.message.handlers;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.ac.ebi.ega.ingestion.file.discovery.message.FileEvent;
 import uk.ac.ebi.ega.ingestion.file.discovery.services.StagingAreaService;
+import uk.ac.ebi.ega.ingestion.commons.messages.FileEvent;
 
 import java.util.List;
 

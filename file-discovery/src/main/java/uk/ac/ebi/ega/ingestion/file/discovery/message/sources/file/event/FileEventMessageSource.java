@@ -21,7 +21,7 @@ import org.springframework.context.Lifecycle;
 import org.springframework.integration.endpoint.AbstractMessageSource;
 import org.springframework.integration.support.AbstractIntegrationMessageBuilder;
 import org.springframework.util.Assert;
-import uk.ac.ebi.ega.ingestion.file.discovery.message.FileEvent;
+import uk.ac.ebi.ega.ingestion.commons.messages.FileEvent;
 
 import java.io.File;
 import java.util.Queue;

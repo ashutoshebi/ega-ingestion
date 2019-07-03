@@ -28,9 +28,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import uk.ac.ebi.ega.ingestion.file.discovery.controller.dto.resources.StagingFileResource;
 import uk.ac.ebi.ega.ingestion.file.discovery.controller.dto.resources.assemblers.StagingFileResourceAssembler;
 import uk.ac.ebi.ega.ingestion.file.discovery.controller.exceptions.StagingFileNotFoundException;
-import uk.ac.ebi.ega.ingestion.file.discovery.controller.dto.resources.StagingFileResource;
 import uk.ac.ebi.ega.ingestion.file.discovery.persistence.repositories.StagingFileImpl;
 import uk.ac.ebi.ega.ingestion.file.discovery.persistence.repositories.StagingFileRepository;
 

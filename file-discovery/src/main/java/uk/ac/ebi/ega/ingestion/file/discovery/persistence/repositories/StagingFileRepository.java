@@ -26,7 +26,7 @@ import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 import org.springframework.data.querydsl.binding.QuerydslBinderCustomizer;
 import org.springframework.data.querydsl.binding.QuerydslBindings;
 import org.springframework.data.repository.PagingAndSortingRepository;
-import uk.ac.ebi.ega.ingestion.file.discovery.models.StagingFile;
+import uk.ac.ebi.ega.ingestion.commons.models.StagingFile;
 
 import java.time.LocalDateTime;
 

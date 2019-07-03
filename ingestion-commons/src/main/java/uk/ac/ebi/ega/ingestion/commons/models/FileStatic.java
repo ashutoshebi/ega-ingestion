@@ -15,16 +15,20 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.ingestion.file.discovery.message.sources.file.event;
+package uk.ac.ebi.ega.ingestion.commons.models;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.io.File;
 
-public class FileStatic {
+public class FileStatic implements Comparable<FileStatic> {
 
     private String absolutePath;
 
+    @JsonProperty
     private long length;
 
+    @JsonProperty
     private long lastModified;
 
     public FileStatic(File file) {
@@ -47,5 +51,14 @@ public class FileStatic {
 
     public long lastModified() {
         return lastModified;
+    }
+
+    @Override
+    public int compareTo(FileStatic fileStatic) {
+        int path = absolutePath.compareTo(fileStatic.absolutePath);
+        if (path != 0) {
+            return path;
+        }
+        return Long.compare(lastModified, fileStatic.lastModified);
     }
 }
