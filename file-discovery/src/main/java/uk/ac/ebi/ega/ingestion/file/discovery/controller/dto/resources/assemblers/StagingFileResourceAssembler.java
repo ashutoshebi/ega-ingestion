@@ -22,7 +22,8 @@ import org.springframework.hateoas.mvc.ResourceAssemblerSupport;
 import uk.ac.ebi.ega.ingestion.file.discovery.controller.StagingAreaController;
 import uk.ac.ebi.ega.ingestion.file.discovery.controller.StagingFilesController;
 import uk.ac.ebi.ega.ingestion.file.discovery.controller.dto.resources.StagingFileResource;
-import uk.ac.ebi.ega.ingestion.file.discovery.models.StagingFile;
+import uk.ac.ebi.ega.ingestion.commons.models.StagingFile;
+
 
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
 

@@ -20,8 +20,8 @@ package uk.ac.ebi.ega.ingestion.file.discovery.controller.dto.resources.assemble
 import org.springframework.beans.BeanUtils;
 import org.springframework.hateoas.mvc.ResourceAssemblerSupport;
 import uk.ac.ebi.ega.ingestion.file.discovery.controller.StagingAreaController;
-import uk.ac.ebi.ega.ingestion.file.discovery.controller.dto.resources.StagingAreaResource;
 import uk.ac.ebi.ega.ingestion.file.discovery.models.StagingArea;
+import uk.ac.ebi.ega.ingestion.file.discovery.controller.dto.resources.StagingAreaResource;
 
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
 

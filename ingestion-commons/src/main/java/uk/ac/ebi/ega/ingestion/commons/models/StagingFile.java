@@ -15,14 +15,22 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.ingestion.file.discovery.message.handlers;
+package uk.ac.ebi.ega.ingestion.commons.models;
 
-import uk.ac.ebi.ega.ingestion.commons.messages.FileEvent;
+import java.time.LocalDateTime;
 
-import java.util.List;
+public interface StagingFile {
 
-public interface PersistStagingFileChangesHandler {
+    String getId();
 
-    void persistStagingFileChanges(List<FileEvent> fileEvents);
+    String getRelativePath();
+
+    String getStagingAreaId();
+
+    Long getFileSize();
+
+    LocalDateTime getUpdateDate();
+
+    FileStatic toFileStatic();
 
 }

@@ -18,6 +18,7 @@
 package uk.ac.ebi.ega.ingestion.file.discovery.message.sources.file.event;
 
 import org.springframework.integration.file.filters.AbstractFileListFilter;
+import uk.ac.ebi.ega.ingestion.commons.models.FileStatic;
 
 import java.io.File;
 import java.io.IOException;

@@ -17,6 +17,8 @@
  */
 package uk.ac.ebi.ega.ingestion.file.discovery.models;
 
+import uk.ac.ebi.ega.ingestion.commons.models.StagingFile;
+
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;

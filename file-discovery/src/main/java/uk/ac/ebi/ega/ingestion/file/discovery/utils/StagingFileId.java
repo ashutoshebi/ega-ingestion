@@ -15,20 +15,15 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.ingestion.file.discovery.models;
+package uk.ac.ebi.ega.ingestion.file.discovery.utils;
 
-import java.time.LocalDateTime;
+import javax.xml.bind.DatatypeConverter;
 
-public interface StagingFile {
+public class StagingFileId {
 
-    String getId();
-
-    String getRelativePath();
-
-    String getStagingAreaId();
-
-    Long getFileSize();
-
-    LocalDateTime getUpdateDate();
+    public static String calculateId(String stagingAreaId, String relativePath) {
+        return stagingAreaId + "-" +
+                DatatypeConverter.printHexBinary(Hash.getMd5().digest(relativePath.getBytes())).toLowerCase();
+    }
 
 }

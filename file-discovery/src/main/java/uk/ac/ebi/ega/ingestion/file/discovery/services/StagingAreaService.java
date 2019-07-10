@@ -21,12 +21,12 @@ import com.querydsl.core.types.Predicate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import uk.ac.ebi.ega.ingestion.file.discovery.controller.exceptions.StagingAreaNotFoundException;
-import uk.ac.ebi.ega.ingestion.file.discovery.message.FileEvent;
-import uk.ac.ebi.ega.ingestion.file.discovery.models.FileSystemNode;
-import uk.ac.ebi.ega.ingestion.file.discovery.models.StagingArea;
-import uk.ac.ebi.ega.ingestion.file.discovery.models.StagingFile;
 import uk.ac.ebi.ega.ingestion.file.discovery.persistence.exceptions.StagingAreaAlreadyExistsException;
 import uk.ac.ebi.ega.ingestion.file.discovery.persistence.repositories.StagingAreaImpl;
+import uk.ac.ebi.ega.ingestion.file.discovery.models.FileSystemNode;
+import uk.ac.ebi.ega.ingestion.file.discovery.models.StagingArea;
+import uk.ac.ebi.ega.ingestion.commons.messages.FileEvent;
+import uk.ac.ebi.ega.ingestion.commons.models.StagingFile;
 
 import java.io.FileNotFoundException;
 import java.time.LocalDateTime;

@@ -18,8 +18,8 @@
 package uk.ac.ebi.ega.ingestion.file.discovery.services;
 
 import uk.ac.ebi.ega.ingestion.file.discovery.controller.exceptions.StagingAreaNotFoundException;
-import uk.ac.ebi.ega.ingestion.file.discovery.models.StagingArea;
 import uk.ac.ebi.ega.ingestion.file.discovery.persistence.exceptions.StagingAreaAlreadyExistsException;
+import uk.ac.ebi.ega.ingestion.file.discovery.models.StagingArea;
 
 import java.io.FileNotFoundException;
 

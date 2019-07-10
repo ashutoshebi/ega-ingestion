@@ -33,15 +33,19 @@ import org.springframework.integration.kafka.dsl.Kafka;
 import org.springframework.integration.kafka.dsl.KafkaProducerMessageHandlerSpec;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.DefaultKafkaHeaderMapper;
+import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-import uk.ac.ebi.ega.ingestion.file.discovery.message.FileEvent;
-import uk.ac.ebi.ega.ingestion.file.discovery.message.IngestionEvent;
+import uk.ac.ebi.ega.ingestion.commons.messages.FileEvent;
+import uk.ac.ebi.ega.ingestion.commons.messages.IngestionEvent;
 import uk.ac.ebi.ega.ingestion.file.discovery.message.handlers.PersistStagingFileChangesHandler;
 import uk.ac.ebi.ega.ingestion.file.discovery.message.handlers.PersistStagingFileChangesHandlerImpl;
 import uk.ac.ebi.ega.ingestion.file.discovery.services.FilePollingService;
 import uk.ac.ebi.ega.ingestion.file.discovery.services.FilePollingServiceImpl;
 import uk.ac.ebi.ega.ingestion.file.discovery.services.StagingAreaService;
+import uk.ac.ebi.ega.ingestion.file.discovery.utils.StagingFileId;
+
+import java.util.function.Function;
 
 @Configuration
 @EnableIntegration
@@ -128,7 +132,10 @@ public class FileDiscoveryConfiguration {
     @Bean
     public KafkaProducerMessageHandlerSpec<Integer, IngestionEvent, ?> ingestionMessageHandler() {
         return Kafka.outboundChannelAdapter(fileIngestionKafkaTemplate)
-                .messageKey(m -> m.getHeaders().get(IntegrationMessageHeaderAccessor.SEQUENCE_NUMBER))
+                .messageKey((Function<Message<IngestionEvent>, String>) m -> {
+                    IngestionEvent event = m.getPayload();
+                    return StagingFileId.calculateId(event.getLocationId(), event.getEncryptedFile().getAbsolutePath());
+                })
                 .headerMapper(mapper())
                 .topicExpression(new LiteralExpression(fileIngestionQueueName));
     }

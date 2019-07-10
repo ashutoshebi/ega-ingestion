@@ -26,17 +26,17 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.core.namedparam.SqlParameterSourceUtils;
-import uk.ac.ebi.ega.ingestion.file.discovery.controller.exceptions.StagingAreaNotFoundException;
-import uk.ac.ebi.ega.ingestion.file.discovery.message.FileEvent;
 import uk.ac.ebi.ega.ingestion.file.discovery.models.FileSystemNode;
 import uk.ac.ebi.ega.ingestion.file.discovery.models.StagingArea;
-import uk.ac.ebi.ega.ingestion.file.discovery.models.StagingFile;
 import uk.ac.ebi.ega.ingestion.file.discovery.persistence.exceptions.StagingAreaAlreadyExistsException;
 import uk.ac.ebi.ega.ingestion.file.discovery.persistence.repositories.StagingAreaImpl;
 import uk.ac.ebi.ega.ingestion.file.discovery.persistence.repositories.StagingAreaRepository;
 import uk.ac.ebi.ega.ingestion.file.discovery.persistence.repositories.StagingFileImpl;
 import uk.ac.ebi.ega.ingestion.file.discovery.persistence.repositories.StagingFileRepository;
 import uk.ac.ebi.ega.ingestion.file.discovery.services.StagingAreaService;
+import uk.ac.ebi.ega.ingestion.file.discovery.controller.exceptions.StagingAreaNotFoundException;
+import uk.ac.ebi.ega.ingestion.commons.messages.FileEvent;
+import uk.ac.ebi.ega.ingestion.commons.models.StagingFile;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -117,7 +117,7 @@ public class StagingAreaServiceImpl implements StagingAreaService {
             stagingArea.setDiscoveryEnabled(discoveryEnabled);
         }
         if (ingestionEnabled != null) {
-            stagingArea.setIngestionEnabled(discoveryEnabled);
+            stagingArea.setIngestionEnabled(ingestionEnabled);
         }
         if (discoveryPollingPeriod != null) {
             stagingArea.setDiscoveryPollingPeriod(discoveryPollingPeriod);

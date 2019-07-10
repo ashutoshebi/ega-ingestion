@@ -20,7 +20,8 @@ package uk.ac.ebi.ega.ingestion.file.discovery.message.sources.file.event;
 import org.springframework.integration.file.filters.AbstractFileListFilter;
 import org.springframework.integration.file.filters.IgnoreHiddenFileListFilter;
 import org.springframework.util.Assert;
-import uk.ac.ebi.ega.ingestion.file.discovery.message.FileEvent;
+import uk.ac.ebi.ega.ingestion.commons.messages.FileEvent;
+import uk.ac.ebi.ega.ingestion.commons.models.FileStatic;
 
 import java.io.File;
 import java.io.IOException;
