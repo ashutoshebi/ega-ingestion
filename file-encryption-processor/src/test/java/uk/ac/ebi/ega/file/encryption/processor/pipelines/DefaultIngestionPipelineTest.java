@@ -71,16 +71,15 @@ public class DefaultIngestionPipelineTest {
         File fileInStaging = copyToTemporaryFolder("/keyPairTest/test_file.txt.gpg");
         File outputFileInStaging = temporaryFolder.newFile("doesNotMatter");
         new DefaultIngestionPipeline(fileInStaging,
-                getPrivateKeyRing(), getPrivateKeyRingPassword(), outputFileInStaging,
+                getPrivateKeyRing(), getWrongPrivateKeyRingPassword(), outputFileInStaging,
                 getEncryptKey()).process();
     }
 
     @Test(expected = SystemErrorException.class)
     public void testMissingFile() throws URISyntaxException, IOException, UserErrorException, SystemErrorException {
         File fileInStaging = copyToTemporaryFolder("/keyPairTest/test_file.txt.gpg");
-        File outputFileInStaging = temporaryFolder.newFile("doesNotMatter");
         new DefaultIngestionPipeline(fileInStaging,
-                getPrivateKeyRing(), getPrivateKeyRingPassword(), outputFileInStaging,
+                getPrivateKeyRing(), getPrivateKeyRingPassword(), new File("/nope"),
                 getEncryptKey()).process();
     }
 
