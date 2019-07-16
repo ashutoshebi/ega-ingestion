@@ -1,39 +1,42 @@
-drop table if exists FILE_ENCRYPTION_JOB;
-drop table if exists FILE_ENCRYPTION_LOG_SUCCESSFUL;
-drop table if exists FILE_ENCRYPTION_LOG_FAILED;
+drop table if exists JOB_EXECUTION;
+drop table if exists JOB_RUN;
+drop table if exists ENCRYPT_PARAMETERS;
 
-create table FILE_ENCRYPTION_JOB
+create table JOB_EXECUTION
 (
-  ID              bigserial primary key,
-  INSTANCE_ID     varchar(255) not null,
-  ACCOUNT         varchar(255) not null,
-  STAGING_AREA_ID varchar(255) not null,
-  FILE_PATH       text         not null,
-  CREATE_DATE     timestamp    not null,
-  UNIQUE (INSTANCE_ID, ACCOUNT, STAGING_AREA_ID, FILE_PATH)
+    JOB_ID      varchar(255) primary key,
+    JOB_NAME    varchar(255)        not null,
+    INSTANCE_ID varchar(255) unique not null,
+    START_TIME  timestamp           not null
 );
 
-create table FILE_ENCRYPTION_LOG_SUCCESSFUL
+create table JOB_RUN
 (
-  ID              bigint primary key,
-  INSTANCE_ID     varchar(255) not null,
-  ACCOUNT         varchar(255) not null,
-  STAGING_AREA_ID varchar(255) not null,
-  FILE_PATH       text         not null,
-  MD5             varchar(255) not null,
-  ENCRYPTED_MD5   varchar(255) not null,
-  PROCESS_START   timestamp    not null,
-  PROCESS_END     timestamp    not null
+    ID          bigserial primary key,
+    JOB_ID      varchar(255) not null,
+    INSTANCE_ID varchar(255) not null,
+    MESSAGE     text,
+    START_TIME  timestamp    not null,
+    END_TIME    timestamp    not null
 );
 
-create table FILE_ENCRYPTION_LOG_FAILED
+create table ENCRYPT_PARAMETERS
 (
-  ID              bigint primary key,
-  INSTANCE_ID     varchar(255) not null,
-  ACCOUNT         varchar(255) not null,
-  STAGING_AREA_ID varchar(255) not null,
-  FILE_PATH       text         not null,
-  PROCESS_START   timestamp    not null,
-  PROCESS_END     timestamp    not null,
-  ERROR_MESSAGE   text
+    JOB_ID                varchar(255) not null,
+    ACCOUNT_ID            varchar(255) not null,
+    STAGING_ID            varchar(255) not null,
+    GPG_PATH              text         not null,
+    GPG_STAGING_PATH      text         not null,
+    GPG_SIZE              bigint       not null,
+    GPG_LAST_MODIFIED     bigint       not null,
+    MD5_PATH              text         not null,
+    MD5_STAGING_PATH      text         not null,
+    MD5_SIZE              bigint       not null,
+    MD5_LAST_MODIFIED     bigint       not null,
+    GPG_MD5_PATH          text         not null,
+    GPG_MD5_STAGING_PATH  text         not null,
+    GPG_MD5_SIZE          bigint       not null,
+    GPG_MD5_LAST_MODIFIED bigint       not null,
+    RESULT_PATH           text         not null,
+    CREATE_DATE           timestamp    not null
 );

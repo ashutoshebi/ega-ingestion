@@ -22,11 +22,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import uk.ac.ebi.ega.jobs.core.exceptions.JobNotRegistered;
 import uk.ac.ebi.ega.jobs.core.exceptions.JobRetryException;
-import uk.ac.ebi.ega.jobs.core.services.JobDefinition;
 import uk.ac.ebi.ega.jobs.core.services.ExecutorPersistenceService;
+import uk.ac.ebi.ega.jobs.core.services.JobDefinition;
 import uk.ac.ebi.ega.jobs.core.utils.DelayConfiguration;
 import uk.ac.ebi.ega.jobs.core.utils.Delayer;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -48,13 +49,13 @@ public class JobExecutor {
         this.jobMap = new ConcurrentHashMap<>();
     }
 
-    public <T extends JobParameters> void registerJob(String jobName, Class<T> parameterClass, Job<T> job) {
+    public <T> void registerJob(String jobName, Class<T> parameterClass, Job<T> job) {
         jobMap.put(new JobDefinition(jobName, parameterClass), job);
     }
 
-    public <T extends JobParameters> Optional<JobExecution<T>> assignExecution(String jobId, String jobName,
-                                                                               T jobParameters) throws JobNotRegistered {
-        final Class<? extends JobParameters> parameterClass = jobParameters.getClass();
+    public <T> Optional<JobExecution<T>> assignExecution(String jobId, String jobName, T jobParameters)
+            throws JobNotRegistered {
+        final Class<?> parameterClass = jobParameters.getClass();
 
         if (isJobNotYetRegistered(jobName, parameterClass)) {
             logger.error("Fatal error: Job with name {} and parameterClass {} is not yet registered.",
@@ -72,16 +73,16 @@ public class JobExecutor {
             persistenceService.assignExecution(jobId, jobName, jobParameters);
             return Optional.of(new JobExecution<>(jobId, jobName, jobParameters));
         } catch (DataIntegrityViolationException e) {
+            logger.error(e.getMessage(), e);
             return Optional.empty();
         }
     }
 
-    public <T extends JobParameters> Optional<JobExecution<T>> getAssignedExecution(String jobName,
-                                                                                    Class<T> parameterClass) {
+    public <T> Optional<JobExecution<T>> getAssignedExecution(String jobName, Class<T> parameterClass) {
         return persistenceService.getAssignedExecution(jobName, parameterClass);
     }
 
-    public <T extends JobParameters> Result execute(JobExecution<T> jobExecution) throws JobNotRegistered {
+    public <T> Result execute(JobExecution<T> jobExecution) throws JobNotRegistered {
         final Job<T> job = getJob(jobExecution.getJobName(), (Class<T>) jobExecution.getJobParameters().getClass());
 
         if (job == null) {
@@ -104,23 +105,27 @@ public class JobExecutor {
         return result;
     }
 
-    private <T extends JobParameters> Job<T> getJob(String jobName, Class<T> parameterClass) {
+    private <T> Job<T> getJob(String jobName, Class<T> parameterClass) {
         return (Job<T>) jobMap.get(new JobDefinition(jobName, parameterClass));
     }
 
-    private <T extends JobParameters> Result doExecute(Job<T> job, JobExecution<T> jobExecution) {
+    private <T> Result doExecute(Job<T> job, JobExecution<T> jobExecution) {
         final Result result = job.execute(jobExecution.getJobParameters());
         persistenceService.saveResult(jobExecution.getJobId(), result);
         return result;
     }
 
-    private <T extends JobParameters> boolean isJobNotYetRegistered(final String jobName, final Class<T> parameterClass) {
+    private <T> boolean isJobNotYetRegistered(final String jobName, final Class<T> parameterClass) {
         final Job<T> job = getJob(jobName, parameterClass);
         return job == null;
     }
 
-    private <T extends JobParameters> boolean isExecutionAlreadyAssigned(final String jobName, final T jobParameters) {
+    private <T> boolean isExecutionAlreadyAssigned(final String jobName, final T jobParameters) {
         return getAssignedExecution(jobName, jobParameters.getClass()).isPresent();
+    }
+
+    public void cancelJobExecution(String jobId, Exception e) {
+        persistenceService.saveResult(jobId, Result.cancelled("Job execution cancelled", e, LocalDateTime.now()));
     }
 
 }

@@ -20,7 +20,6 @@ package uk.ac.ebi.ega.jobs.core.services;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import uk.ac.ebi.ega.jobs.core.JobExecution;
-import uk.ac.ebi.ega.jobs.core.JobParameters;
 import uk.ac.ebi.ega.jobs.core.Result;
 import uk.ac.ebi.ega.jobs.core.persistence.entity.JobExecutionEntity;
 import uk.ac.ebi.ega.jobs.core.persistence.entity.JobRun;
@@ -50,20 +49,20 @@ public class BasicExecutorPersistenceService implements ExecutorPersistenceServi
         this.parameterServices = new ConcurrentHashMap<>();
     }
 
-    public <T extends JobParameters> void registerJobParameterServices(String jobName, Class<T> parameterClass,
-                                                                       JobParameterService<T> parameterService) {
+    public <T> void registerJobParameterServices(String jobName, Class<T> parameterClass,
+                                                 JobParameterService<T> parameterService) {
         parameterServices.put(new JobDefinition(jobName, parameterClass), parameterService);
     }
 
     @Override
     @Transactional(isolation = Isolation.SERIALIZABLE)
-    public <T extends JobParameters> void assignExecution(String jobId, String jobName, T jobParameters) {
+    public <T> void assignExecution(String jobId, String jobName, T jobParameters) {
         jobExecutionRepository.save(new JobExecutionEntity(jobId, jobName, instanceId));
         getJobParameterService(jobName, (Class<T>) jobParameters.getClass()).persist(jobId, jobParameters);
     }
 
-    private <T extends JobParameters> JobParameterService<T> getJobParameterService(String jobName,
-                                                                                    Class<T> parameterClass) {
+    private <T> JobParameterService<T> getJobParameterService(String jobName,
+                                                              Class<T> parameterClass) {
         return (JobParameterService<T>) parameterServices.get(new JobDefinition(jobName, parameterClass));
     }
 
@@ -78,8 +77,8 @@ public class BasicExecutorPersistenceService implements ExecutorPersistenceServi
     }
 
     @Override
-    public <T extends JobParameters> Optional<JobExecution<T>> getAssignedExecution(String jobName,
-                                                                                    Class<T> parameterClass) {
+    public <T> Optional<JobExecution<T>> getAssignedExecution(String jobName,
+                                                              Class<T> parameterClass) {
         final Optional<JobExecutionEntity> optional = jobExecutionRepository.findByInstanceId(instanceId);
         if (optional.isPresent()) {
             final JobExecutionEntity jobExecutionEntity = optional.get();

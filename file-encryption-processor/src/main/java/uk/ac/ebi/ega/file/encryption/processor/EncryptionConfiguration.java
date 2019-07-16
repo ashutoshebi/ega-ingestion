@@ -20,17 +20,16 @@ package uk.ac.ebi.ega.file.encryption.processor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.DependsOn;
 import org.springframework.kafka.core.KafkaTemplate;
 import uk.ac.ebi.ega.file.encryption.processor.jobs.EncryptJob;
-import uk.ac.ebi.ega.file.encryption.processor.messages.EncryptComplete;
-import uk.ac.ebi.ega.file.encryption.processor.models.EncryptJobParameters;
+import uk.ac.ebi.ega.ingestion.commons.messages.EncryptComplete;
+import uk.ac.ebi.ega.file.encryption.processor.models.IngestionProcess;
 import uk.ac.ebi.ega.file.encryption.processor.persistence.repository.EncryptParametersRepository;
 import uk.ac.ebi.ega.file.encryption.processor.persistence.services.EncryptJobParameterService;
-import uk.ac.ebi.ega.file.encryption.processor.pipelines.PipelineBuilder;
-import uk.ac.ebi.ega.file.encryption.processor.services.EncryptPersistenceService;
+import uk.ac.ebi.ega.file.encryption.processor.persistence.services.EncryptPersistenceService;
 import uk.ac.ebi.ega.file.encryption.processor.services.EncryptService;
-import uk.ac.ebi.ega.file.encryption.processor.services.PipelineService;
+import uk.ac.ebi.ega.file.encryption.processor.services.IPasswordGeneratorService;
+import uk.ac.ebi.ega.file.encryption.processor.services.PasswordGeneratorService;
 import uk.ac.ebi.ega.jobs.core.Job;
 import uk.ac.ebi.ega.jobs.core.persistence.repository.JobExecutionRepository;
 import uk.ac.ebi.ega.jobs.core.persistence.repository.JobRunRepository;
@@ -49,10 +48,7 @@ public class EncryptionConfiguration {
     @Value("${spring.kafka.client-id}")
     private String instanceId;
 
-    @Value("${file.re.encryption.mail.alert}")
-    private String reportTo;
-
-    @Value("${spring.kafka.file.encryption.completed.queue.name}")
+    @Value("${spring.kafka.file.archive.queue.name}")
     private String completedTopic;
 
     /**
@@ -76,27 +72,6 @@ public class EncryptionConfiguration {
     @Value("${file.re.encryption.job.execution.retry.max.delay:30}")
     private long jobExecutionRetryMaxDelay;
 
-    @Bean("pipelineService")
-    public PipelineService ingestionPipelineService(
-            @Value("${file.encryption.keyring.private}") String privateKeyRing,
-            @Value("${file.encryption.keyring.private.key}") String privateKeyRingPassword,
-            @Value("${file.output.encryption.key}") String encryptionKeyPath)
-            throws FileNotFoundException {
-        final File privateKeyRingFile = new File(privateKeyRing);
-        if (!privateKeyRingFile.exists()) {
-            throw new FileNotFoundException("Private key ring file could not be found");
-        }
-        final File privateKeyRingPasswordFile = new File(privateKeyRingPassword);
-        if (!privateKeyRingPasswordFile.exists()) {
-            throw new FileNotFoundException("Password file for private key ring could not be found");
-        }
-        final File encryptPasswordFile = new File(encryptionKeyPath);
-        if (!encryptPasswordFile.exists()) {
-            throw new FileNotFoundException("Password file to encrypt output file could not be found");
-        }
-        return new PipelineBuilder(privateKeyRingFile, privateKeyRingPasswordFile, encryptPasswordFile);
-    }
-
     @Bean
     public EncryptJobParameterService reEncryptJobParameterService(EncryptParametersRepository repository) {
         return new EncryptJobParameterService(repository);
@@ -110,16 +85,31 @@ public class EncryptionConfiguration {
                 encryptJobParameterService);
     }
 
-    @DependsOn("pipelineService")
     @Bean
-    public Job<EncryptJobParameters> encryptJob(PipelineService pipelineService, @Value("${spring.kafka.client-id}") String clientId, @Value("${file.encryption.staging.root}") String staging) throws IOException {
-
-        final File stagingRoot = new File(staging);
-
-        if (!stagingRoot.exists()) {
-            throw new FileNotFoundException("Staging path for encryption is not found");
+    public Job<IngestionProcess> encryptJob(@Value("${file.encryption.keyring.private}") String privateKeyRing,
+                                            @Value("${file.encryption.keyring.private.key}") String privateKeyRingPassword,
+                                            IPasswordGeneratorService passwordGeneratorService) throws IOException {
+        final File privateKeyRingFile = new File(privateKeyRing);
+        if (!privateKeyRingFile.exists()) {
+            throw new FileNotFoundException("Private key ring file could not be found");
         }
-        return new EncryptJob(pipelineService, clientId, stagingRoot.toPath());
+        final File privateKeyRingPasswordFile = new File(privateKeyRingPassword);
+        if (!privateKeyRingPasswordFile.exists()) {
+            throw new FileNotFoundException("Password file for private key ring could not be found");
+        }
+
+        return new EncryptJob(privateKeyRingFile, privateKeyRingPasswordFile,
+                passwordGeneratorService);
+    }
+
+    @Bean
+    public IPasswordGeneratorService passwordGeneratorService(@Value("${file.encryption.static.key}") String encryptionKeyPath)
+            throws IOException {
+        final File encryptPasswordFile = new File(encryptionKeyPath);
+        if (!encryptPasswordFile.exists()) {
+            throw new FileNotFoundException("Password file to encrypt output file could not be found");
+        }
+        return new PasswordGeneratorService(encryptPasswordFile);
     }
 
     @Bean
@@ -129,11 +119,18 @@ public class EncryptionConfiguration {
     }
 
     @Bean
-    public EncryptService encryptService(ExecutorPersistenceService executorPersistenceService,
-                                         Job<EncryptJobParameters> job,
+    public EncryptService encryptService(@Value("${file.encryption.staging.root}") String staging,
+                                         ExecutorPersistenceService executorPersistenceService,
+                                         Job<IngestionProcess> job,
                                          KafkaTemplate<String, EncryptComplete> kafkaTemplate,
-                                         final DelayConfiguration delayConfiguration) {
-        return new EncryptService(executorPersistenceService, reportTo, job,
+                                         final DelayConfiguration delayConfiguration) throws FileNotFoundException {
+        final File stagingRoot = new File(staging);
+
+        if (!stagingRoot.exists()) {
+            throw new FileNotFoundException("Staging path for encryption is not found");
+        }
+
+        return new EncryptService(stagingRoot.toPath(), executorPersistenceService, job,
                 kafkaTemplate, completedTopic, delayConfiguration);
     }
 }

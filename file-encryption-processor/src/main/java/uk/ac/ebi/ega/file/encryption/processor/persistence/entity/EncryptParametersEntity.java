@@ -17,18 +17,20 @@
  */
 package uk.ac.ebi.ega.file.encryption.processor.persistence.entity;
 
-import org.springframework.data.domain.Persistable;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import uk.ac.ebi.ega.file.encryption.processor.models.IngestionProcess;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
+import javax.persistence.Id;
+import javax.persistence.Table;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "ENCRYPT_PARAMETERS")
 @EntityListeners(AuditingEntityListener.class)
-public class EncryptParametersEntity implements Persistable<String> {
-
-    private transient boolean persist = true;
+public class EncryptParametersEntity {
 
     @Id
     private String jobId;
@@ -40,41 +42,95 @@ public class EncryptParametersEntity implements Persistable<String> {
     private String stagingId;
 
     @Column(nullable = false)
-    private String filePath;
+    private String gpgPath;
 
     @Column(nullable = false)
-    private Long size;
+    private String gpgStagingPath;
+
+    private long gpgSize;
+
+    private long gpgLastModified;
+
+    @Column(name = "md5_path", nullable = false)
+    private String md5Path;
+
+    @Column(name = "md5_staging_path", nullable = false)
+    private String md5StagingPath;
+
+    @Column(name = "md5_size")
+    private long md5Size;
+
+    @Column(name = "md5_last_modified")
+    private long md5LastModified;
+
+    @Column(name = "gpg_md5_path", nullable = false)
+    private String gpgMd5Path;
+
+    @Column(name = "gpg_md5_staging_path", nullable = false)
+    private String gpgMd5StagingPath;
+
+    @Column(name = "gpg_md5_size")
+    private long gpgMd5Size;
+
+    @Column(name = "gpg_md5_last_modified")
+    private long gpgMd5LastModified;
 
     @Column(nullable = false)
-    private LocalDateTime lastUpdate;
+    private String resultPath;
 
-    @Column(nullable = false)
-    private String md5FilePath;
+    private LocalDateTime createDate;
 
-    EncryptParametersEntity() {
+    public EncryptParametersEntity() {
     }
 
-    public EncryptParametersEntity(String jobId, String accountId, String stagingId, String filePath, LocalDateTime lastUpdate, String md5FilePath) {
+    public EncryptParametersEntity(String jobId, String accountId, String stagingId,
+                                   String gpgPath, String gpgStagingPath, long gpgSize, long gpgLastModified,
+                                   String md5Path, String md5StagingPath, long md5Size, long md5LastModified,
+                                   String gpgMd5Path, String gpgMd5StagingPath, long gpgMd5Size,
+                                   long gpgMd5LastModified,
+                                   String resultPath) {
         this.jobId = jobId;
         this.accountId = accountId;
         this.stagingId = stagingId;
-        this.filePath = filePath;
-        this.lastUpdate = lastUpdate;
-        this.md5FilePath = md5FilePath;
+        this.gpgPath = gpgPath;
+        this.gpgStagingPath = gpgStagingPath;
+        this.gpgSize = gpgSize;
+        this.gpgLastModified = gpgLastModified;
+        this.md5Path = md5Path;
+        this.md5StagingPath = md5StagingPath;
+        this.md5Size = md5Size;
+        this.md5LastModified = md5LastModified;
+        this.gpgMd5Path = gpgMd5Path;
+        this.gpgMd5StagingPath = gpgMd5StagingPath;
+        this.gpgMd5Size = gpgMd5Size;
+        this.gpgMd5LastModified = gpgMd5LastModified;
+        this.resultPath = resultPath;
+        this.createDate = LocalDateTime.now();
     }
 
-    @Override
-    public String getId() {
+    public EncryptParametersEntity(String jobId, IngestionProcess jobParameters) {
+        this(
+                jobId,
+                jobParameters.getAccountId(),
+                jobParameters.getLocationId(),
+                jobParameters.getEncryptedFile().getFile().getAbsolutePath(),
+                jobParameters.getEncryptedFile().getStagingFile().getAbsolutePath(),
+                jobParameters.getEncryptedFile().getSize(),
+                jobParameters.getEncryptedFile().getLastModified(),
+                jobParameters.getPlainMd5File().getFile().getAbsolutePath(),
+                jobParameters.getPlainMd5File().getStagingFile().getAbsolutePath(),
+                jobParameters.getPlainMd5File().getSize(),
+                jobParameters.getPlainMd5File().getLastModified(),
+                jobParameters.getEncryptedMd5File().getFile().getAbsolutePath(),
+                jobParameters.getEncryptedMd5File().getStagingFile().getAbsolutePath(),
+                jobParameters.getEncryptedMd5File().getSize(),
+                jobParameters.getEncryptedMd5File().getLastModified(),
+                jobParameters.getOutputFile().getAbsolutePath()
+        );
+    }
+
+    public String getJobId() {
         return jobId;
-    }
-
-    @Override
-    public boolean isNew() {
-        return persist;
-    }
-
-    public void setPersist(boolean persist) {
-        this.persist = persist;
     }
 
     public String getAccountId() {
@@ -85,19 +141,56 @@ public class EncryptParametersEntity implements Persistable<String> {
         return stagingId;
     }
 
-    public String getFilePath() {
-        return filePath;
+    public String getGpgPath() {
+        return gpgPath;
     }
 
-    public Long getSize() {
-        return size;
+    public String getGpgStagingPath() {
+        return gpgStagingPath;
     }
 
-    public LocalDateTime getLastUpdate() {
-        return lastUpdate;
+    public long getGpgSize() {
+        return gpgSize;
     }
 
-    public String getMd5FilePath() {
-        return md5FilePath;
+    public long getGpgLastModified() {
+        return gpgLastModified;
     }
+
+    public String getMd5Path() {
+        return md5Path;
+    }
+
+    public String getMd5StagingPath() {
+        return md5StagingPath;
+    }
+
+    public long getMd5Size() {
+        return md5Size;
+    }
+
+    public long getMd5LastModified() {
+        return md5LastModified;
+    }
+
+    public String getGpgMd5Path() {
+        return gpgMd5Path;
+    }
+
+    public String getGpgMd5StagingPath() {
+        return gpgMd5StagingPath;
+    }
+
+    public long getGpgMd5Size() {
+        return gpgMd5Size;
+    }
+
+    public long getGpgMd5LastModified() {
+        return gpgMd5LastModified;
+    }
+
+    public String getResultPath() {
+        return resultPath;
+    }
+
 }

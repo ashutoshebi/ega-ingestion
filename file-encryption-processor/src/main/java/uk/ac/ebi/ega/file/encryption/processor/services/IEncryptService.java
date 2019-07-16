@@ -17,20 +17,22 @@
  */
 package uk.ac.ebi.ega.file.encryption.processor.services;
 
-import uk.ac.ebi.ega.file.encryption.processor.models.EncryptJobParameters;
+import uk.ac.ebi.ega.file.encryption.processor.models.IngestionProcess;
+import uk.ac.ebi.ega.ingestion.commons.messages.IngestionEvent;
 import uk.ac.ebi.ega.jobs.core.JobExecution;
 import uk.ac.ebi.ega.jobs.core.Result;
 import uk.ac.ebi.ega.jobs.core.exceptions.JobNotRegistered;
 
-import java.nio.file.Path;
-import java.time.LocalDateTime;
 import java.util.Optional;
 
 public interface IEncryptService {
-    Optional<JobExecution<EncryptJobParameters>> createJob(String key, String accountId, String stagingId, Path filePath, long size, LocalDateTime lastUpdate,
-                                                           Path md5FilePath) throws JobNotRegistered;
 
-    Result encrypt(JobExecution<EncryptJobParameters> jobExecution);
+    Optional<JobExecution<IngestionProcess>> createJob(String key, IngestionEvent data) throws JobNotRegistered;
 
-    Optional<JobExecution<EncryptJobParameters>> getUnfinishedJob();
+    Result encrypt(JobExecution<IngestionProcess> jobExecution);
+
+    Optional<JobExecution<IngestionProcess>> getUnfinishedJob();
+
+    void cancelJobExecution(Optional<JobExecution<IngestionProcess>> jobExecution, Exception e);
+
 }

@@ -31,6 +31,9 @@ public class FileStatic implements Comparable<FileStatic> {
     @JsonProperty
     private long lastModified;
 
+    public FileStatic() {
+    }
+
     public FileStatic(File file) {
         this(file.getAbsolutePath(), file.length(), file.lastModified());
     }
@@ -51,6 +54,18 @@ public class FileStatic implements Comparable<FileStatic> {
 
     public long lastModified() {
         return lastModified;
+    }
+
+    public void setAbsolutePath(String absolutePath) {
+        this.absolutePath = absolutePath;
+    }
+
+    public void setLength(long length) {
+        this.length = length;
+    }
+
+    public void setLastModified(long lastModified) {
+        this.lastModified = lastModified;
     }
 
     @Override

@@ -17,11 +17,9 @@
  */
 package uk.ac.ebi.ega.jobs.core.services;
 
-import uk.ac.ebi.ega.jobs.core.JobParameters;
-
 import java.util.Optional;
 
-public interface JobParameterService<T extends JobParameters> {
+public interface JobParameterService<T> {
 
     void persist(String jobId, T jobParameters);
 

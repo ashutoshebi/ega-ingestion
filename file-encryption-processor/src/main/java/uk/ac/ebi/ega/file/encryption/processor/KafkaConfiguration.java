@@ -32,12 +32,17 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.config.KafkaListenerContainerFactory;
-import org.springframework.kafka.core.*;
+import org.springframework.kafka.core.ConsumerFactory;
+import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
+import org.springframework.kafka.core.DefaultKafkaProducerFactory;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
+import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.support.converter.StringJsonMessageConverter;
 import org.springframework.kafka.support.serializer.JsonSerializer;
-import uk.ac.ebi.ega.file.encryption.processor.messages.EncryptComplete;
-import uk.ac.ebi.ega.file.encryption.processor.messages.IngestionEvent;
+import uk.ac.ebi.ega.ingestion.commons.messages.EncryptComplete;
+import uk.ac.ebi.ega.ingestion.commons.messages.IngestionEvent;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -58,6 +63,7 @@ public class KafkaConfiguration {
         factory.setConsumerFactory(consumerFactory());
         factory.setConcurrency(1);
         factory.getContainerProperties().setPollTimeout(600000);
+        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
         factory.setMessageConverter(new StringJsonMessageConverter(getObjectMapper()));
         return factory;
     }

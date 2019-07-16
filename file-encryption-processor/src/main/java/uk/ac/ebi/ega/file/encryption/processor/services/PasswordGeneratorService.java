@@ -15,14 +15,24 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.encryption.core.stream;
+package uk.ac.ebi.ega.file.encryption.processor.services;
 
-import java.io.Closeable;
+import uk.ac.ebi.ega.encryption.core.utils.io.FileUtils;
+
+import java.io.File;
 import java.io.IOException;
 
-public interface PipelineStream extends Closeable {
+public class PasswordGeneratorService implements IPasswordGeneratorService {
 
-    long execute() throws IOException;
+    private char[] password;
 
-    void flush() throws IOException;
+    public PasswordGeneratorService(File encryptPasswordFile) throws IOException {
+        this.password = FileUtils.readPasswordFile(encryptPasswordFile.toPath());
+    }
+
+    @Override
+    public char[] generate() {
+        return password;
+    }
+
 }

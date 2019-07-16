@@ -17,7 +17,7 @@
  */
 package uk.ac.ebi.ega.jobs.core;
 
-public interface Job<T extends JobParameters> {
+public interface Job<T> {
 
     Result execute(T jobParameters);
 

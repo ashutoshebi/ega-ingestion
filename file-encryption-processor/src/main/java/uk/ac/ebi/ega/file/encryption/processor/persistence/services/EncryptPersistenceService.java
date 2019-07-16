@@ -15,9 +15,9 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.file.encryption.processor.services;
+package uk.ac.ebi.ega.file.encryption.processor.persistence.services;
 
-import uk.ac.ebi.ega.file.encryption.processor.models.EncryptJobParameters;
+import uk.ac.ebi.ega.file.encryption.processor.models.IngestionProcess;
 import uk.ac.ebi.ega.file.encryption.processor.persistence.services.EncryptJobParameterService;
 import uk.ac.ebi.ega.jobs.core.persistence.repository.JobExecutionRepository;
 import uk.ac.ebi.ega.jobs.core.persistence.repository.JobRunRepository;
@@ -31,6 +31,6 @@ public class EncryptPersistenceService extends BasicExecutorPersistenceService {
                                      JobRunRepository jobRunRepository, String instanceId,
                                      EncryptJobParameterService encryptJobParameterService) {
         super(jobExecutionRepository, jobRunRepository, instanceId);
-        registerJobParameterServices(ENCRYPT_JOB, EncryptJobParameters.class, encryptJobParameterService);
+        registerJobParameterServices(ENCRYPT_JOB, IngestionProcess.class, encryptJobParameterService);
     }
 }

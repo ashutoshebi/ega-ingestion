@@ -17,12 +17,17 @@
  */
 package uk.ac.ebi.ega.file.encryption.processor;
 
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @Configuration
-@EnableJpaRepositories
 @EnableJpaAuditing
+@EntityScan({"uk.ac.ebi.ega.jobs.core.persistence.entity",
+        "uk.ac.ebi.ega.file.encryption.processor.persistence.entity"})
+@EnableJpaRepositories(basePackages = {"uk.ac.ebi.ega.jobs.core.persistence.repository",
+        "uk.ac.ebi.ega.file.encryption.processor.persistence.repository"})
 public class DatabaseConfiguration {
+
 }

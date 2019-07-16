@@ -38,6 +38,9 @@ public class IngestionEvent implements Comparable<IngestionEvent> {
 
     private LocalDateTime timestamp;
 
+    public IngestionEvent() {
+    }
+
     public IngestionEvent(String accountId, String locationId, Path rootPath, FileStatic encryptedFile,
                           FileStatic plainMd5File, FileStatic encryptedMd5File) {
         this.accountId = accountId;
@@ -75,6 +78,34 @@ public class IngestionEvent implements Comparable<IngestionEvent> {
 
     public LocalDateTime getTimestamp() {
         return timestamp;
+    }
+
+    public void setAccountId(String accountId) {
+        this.accountId = accountId;
+    }
+
+    public void setLocationId(String locationId) {
+        this.locationId = locationId;
+    }
+
+    public void setRootPath(Path rootPath) {
+        this.rootPath = rootPath;
+    }
+
+    public void setEncryptedFile(FileStatic encryptedFile) {
+        this.encryptedFile = encryptedFile;
+    }
+
+    public void setPlainMd5File(FileStatic plainMd5File) {
+        this.plainMd5File = plainMd5File;
+    }
+
+    public void setEncryptedMd5File(FileStatic encryptedMd5File) {
+        this.encryptedMd5File = encryptedMd5File;
+    }
+
+    public void setTimestamp(LocalDateTime timestamp) {
+        this.timestamp = timestamp;
     }
 
     @Override

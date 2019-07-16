@@ -24,6 +24,6 @@ import java.io.IOException;
 
 public interface PipelineService {
 
-    IngestionPipeline getPipeline(File fileOrigin) throws IOException;
+    IngestionPipeline getNew(File fileOrigin) throws IOException;
 
 }

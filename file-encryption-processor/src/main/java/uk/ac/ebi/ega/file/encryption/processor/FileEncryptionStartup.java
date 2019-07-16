@@ -27,7 +27,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
 import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
 import org.springframework.stereotype.Component;
-import uk.ac.ebi.ega.file.encryption.processor.models.EncryptJobParameters;
+import uk.ac.ebi.ega.file.encryption.processor.models.IngestionProcess;
 import uk.ac.ebi.ega.file.encryption.processor.services.IEncryptService;
 import uk.ac.ebi.ega.jobs.core.JobExecution;
 import uk.ac.ebi.ega.jobs.core.Result;
@@ -64,7 +64,7 @@ public class FileEncryptionStartup implements ApplicationListener<ApplicationRea
     }
 
     private void restartLastAssignedJob() {
-        final Optional<JobExecution<EncryptJobParameters>> job = encryptService.getUnfinishedJob();
+        final Optional<JobExecution<IngestionProcess>> job = encryptService.getUnfinishedJob();
         if (job.isPresent()) {
             final Result result = encryptService.encrypt(job.get());
             if (result.getStatus() == Result.Status.ABORTED) {

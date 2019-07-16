@@ -31,14 +31,11 @@ public class ParallelSplitStream implements PipelineStream {
 
     private final int bufferSize;
 
-    private long totalRead;
-
     private final List<OutputStream> outputStreams;
 
     public ParallelSplitStream(InputStream source, int bufferSize, List<OutputStream> outputStreams) {
         this.source = source;
         this.bufferSize = bufferSize;
-        this.totalRead = 0;
         this.outputStreams = outputStreams;
     }
 
@@ -52,7 +49,8 @@ public class ParallelSplitStream implements PipelineStream {
     }
 
     @Override
-    public void execute() throws IOException {
+    public long execute() throws IOException {
+        long totalRead = 0;
         byte[] buffer = new byte[bufferSize];
         int bytesRead = source.read(buffer);
         while (bytesRead != -1) {
@@ -61,6 +59,7 @@ public class ParallelSplitStream implements PipelineStream {
             bytesRead = source.read(buffer);
         }
         flush();
+        return totalRead;
     }
 
     private void write(byte[] buffer, int i, int bytesRead) throws IOException {

@@ -15,8 +15,25 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.jobs.core;
+package uk.ac.ebi.ega.file.encryption.processor.jobs.exceptions;
 
-public interface JobParameters {
+public class Md5Mismatch extends Exception {
 
+    private String expected;
+
+    private String actual;
+
+    public Md5Mismatch(String text, String expected, String actual) {
+        super(text + " expected:" + expected + " actual:" + actual);
+        this.expected = expected;
+        this.actual = actual;
+    }
+
+    public String getExpected() {
+        return expected;
+    }
+
+    public String getActual() {
+        return actual;
+    }
 }
