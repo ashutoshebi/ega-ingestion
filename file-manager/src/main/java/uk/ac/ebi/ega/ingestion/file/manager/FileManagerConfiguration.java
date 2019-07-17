@@ -53,15 +53,6 @@ import uk.ac.ebi.ega.ingestion.file.manager.services.key.RandomKeyGenerator;
 @Configuration
 public class FileManagerConfiguration {
 
-    @Value("${spring.kafka.file.events.queue.name}")
-    private String fileEventQueueName;
-
-    @Value("${spring.kafka.file.ingestion.queue.name}")
-    private String fileIngestionQueueName;
-
-    @Value("${spring.kafka.file.re-encryption.queue.name}")
-    private String fileReEncryptionQueueName;
-
     @Value("${spring.kafka.download-box.queue.name}")
     private String downloadBoxQueueName;
 

@@ -26,13 +26,13 @@ import org.springframework.messaging.handler.annotation.Header;
 import uk.ac.ebi.ega.ingestion.commons.messages.EncryptComplete;
 import uk.ac.ebi.ega.ingestion.file.manager.services.IEncryptJobService;
 
-public class FileEncryptListener {
+public class FileArchiveListener {
 
-    private final Logger log = LoggerFactory.getLogger(FileEncryptListener.class);
+    private final Logger log = LoggerFactory.getLogger(FileArchiveListener.class);
 
     private final IEncryptJobService encryptJobService;
 
-    public FileEncryptListener(final IEncryptJobService encryptJobService) {
+    public FileArchiveListener(final IEncryptJobService encryptJobService) {
         this.encryptJobService = encryptJobService;
     }
 
