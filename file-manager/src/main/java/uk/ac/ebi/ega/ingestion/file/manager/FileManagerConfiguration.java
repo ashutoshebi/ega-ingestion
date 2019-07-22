@@ -34,15 +34,18 @@ import uk.ac.ebi.ega.ingestion.file.manager.kafka.message.DownloadBoxFileProcess
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.DownloadBoxFileJobRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.DownloadBoxJobRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.EncryptJobRepository;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.FileHierarchyRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.HistoricDownloadBoxFileJobRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.HistoricDownloadBoxJobRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.services.DatasetService;
 import uk.ac.ebi.ega.ingestion.file.manager.services.DownloadBoxJobService;
 import uk.ac.ebi.ega.ingestion.file.manager.services.EncryptJobService;
+import uk.ac.ebi.ega.ingestion.file.manager.services.FileManagerService;
 import uk.ac.ebi.ega.ingestion.file.manager.services.FireIngestionModelMapper;
 import uk.ac.ebi.ega.ingestion.file.manager.services.IDatasetService;
 import uk.ac.ebi.ega.ingestion.file.manager.services.IDownloadBoxJobService;
 import uk.ac.ebi.ega.ingestion.file.manager.services.IEncryptJobService;
+import uk.ac.ebi.ega.ingestion.file.manager.services.IFileManagerService;
 import uk.ac.ebi.ega.ingestion.file.manager.services.IKeyGenerator;
 import uk.ac.ebi.ega.ingestion.file.manager.services.IMailingService;
 import uk.ac.ebi.ega.ingestion.file.manager.services.MailingService;
@@ -115,6 +118,11 @@ public class FileManagerConfiguration {
     public IEncryptJobService encryptJobService(EncryptJobRepository encryptJobRepository,
                                                 IFireIngestion fireIngestion, IFireIngestionModelMapper fireIngestionModelMapper) {
         return new EncryptJobService(encryptJobRepository, fireIngestion, fireIngestionModelMapper);
+    }
+
+    @Bean
+    public IFileManagerService fileManagerService(FileHierarchyRepository fileHierarchyRepository) {
+        return new FileManagerService(fileHierarchyRepository);
     }
 
     @Bean

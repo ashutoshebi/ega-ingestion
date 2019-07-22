@@ -25,7 +25,7 @@ import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
-@Table(name = "ENCRYPT_JOB")
+@Table(name = "ENCRYPT_JOB", schema = "file-ingestion")
 @Entity
 @EntityListeners(AuditingEntityListener.class)
 public class EncryptJob {

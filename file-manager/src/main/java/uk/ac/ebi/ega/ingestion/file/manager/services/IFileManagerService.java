@@ -18,9 +18,13 @@
 package uk.ac.ebi.ega.ingestion.file.manager.services;
 
 import uk.ac.ebi.ega.ingestion.file.manager.kafka.message.EncryptComplete;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileHierarchy;
 
-public interface IEncryptJobService {
+import java.util.List;
 
-    void notify(String jobId, EncryptComplete encryptComplete);
+public interface IFileManagerService {
 
+    List<FileHierarchy> findAll(String originalFilePath);
+
+    void createFileDirectoryStructure(EncryptComplete encryptComplete);
 }

@@ -15,12 +15,12 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.ingestion.file.manager.services;
+package uk.ac.ebi.ega.ingestion.file.manager.persistence.repository;
 
-import uk.ac.ebi.ega.ingestion.file.manager.kafka.message.EncryptComplete;
+import org.springframework.data.repository.CrudRepository;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileHierarchy;
 
-public interface IEncryptJobService {
+public interface FileHierarchyRepository extends CrudRepository<FileHierarchy, Long> {
 
-    void notify(String jobId, EncryptComplete encryptComplete);
-
+    FileHierarchy findByOriginalPath(String filePath);
 }

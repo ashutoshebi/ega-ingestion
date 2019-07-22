@@ -15,12 +15,9 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.ingestion.file.manager.services;
+package uk.ac.ebi.ega.ingestion.file.manager.utils;
 
-import uk.ac.ebi.ega.ingestion.file.manager.kafka.message.EncryptComplete;
+public enum FileStructureType {
 
-public interface IEncryptJobService {
-
-    void notify(String jobId, EncryptComplete encryptComplete);
-
+    FILE, FOLDER
 }
