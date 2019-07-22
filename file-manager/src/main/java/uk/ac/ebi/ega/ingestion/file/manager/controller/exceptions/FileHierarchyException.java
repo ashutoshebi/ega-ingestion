@@ -15,17 +15,15 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.ingestion.file.manager.services;
+package uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions;
 
-import uk.ac.ebi.ega.ingestion.commons.messages.EncryptComplete;
-import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileHierarchyException;
-import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileHierarchy;
+public class FileHierarchyException extends Exception {
 
-import java.util.List;
+    private FileHierarchyException(final String message) {
+        super(message);
+    }
 
-public interface IFileManagerService {
-
-    List<FileHierarchy> findAll(String originalFilePath);
-
-    void createFileHierarchy(EncryptComplete encryptComplete) throws FileHierarchyException;
+    public static FileHierarchyException newFileHierarchyException(final String message) {
+        return new FileHierarchyException(message);
+    }
 }

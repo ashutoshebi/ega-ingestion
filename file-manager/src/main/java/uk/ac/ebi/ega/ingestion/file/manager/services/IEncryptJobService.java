@@ -17,10 +17,11 @@
  */
 package uk.ac.ebi.ega.ingestion.file.manager.services;
 
-import uk.ac.ebi.ega.ingestion.file.manager.kafka.message.EncryptComplete;
+
+import uk.ac.ebi.ega.ingestion.commons.messages.EncryptComplete;
 
 public interface IEncryptJobService {
 
-    void notify(String jobId, EncryptComplete encryptComplete);
+    void notify(String jobId, EncryptComplete encryptComplete) throws Exception;
 
 }

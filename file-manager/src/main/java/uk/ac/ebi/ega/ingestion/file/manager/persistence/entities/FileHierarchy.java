@@ -43,7 +43,7 @@ import java.util.List;
         indexes = {@Index(name = "FILEPATH_INDEX", columnList = "originalPath")})
 @Entity
 @EntityListeners(AuditingEntityListener.class)
-public class FileHierarchy { //TODO More fields to be added
+public class FileHierarchy {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -89,8 +89,8 @@ public class FileHierarchy { //TODO More fields to be added
     public FileHierarchy() {
     }
 
-    public FileHierarchy(final String filedetails, final FileHierarchy parentPath, final String originalPath,
-                         final FileStructureType fileType, final String accountId, final String stagingAreaId, final String stagingPath,
+    public FileHierarchy(final String accountId, final String stagingAreaId, final String filedetails, final FileHierarchy parentPath,
+                         final String originalPath, final FileStructureType fileType, final String stagingPath,
                          final Long plainSize, final String plainMd5, final Long encryptedSize, final String encryptedMd5,
                          final String keyPath, final LocalDateTime startDateTime, final LocalDateTime endDateTime, final String status) {
         this.filedetails = filedetails;
@@ -129,40 +129,20 @@ public class FileHierarchy { //TODO More fields to be added
         return filedetails;
     }
 
-    /*public void setFiledetails(String filedetails) {
-        this.filedetails = filedetails;
-    }*/
-
     public FileHierarchy getParentPath() {
         return parentPath;
     }
 
-    /*public void setParentPath(FileHierarchy parentPath) {
-        this.parentPath = parentPath;
-    }*/
-
     public List<FileHierarchy> getChildPaths() {
         return childPaths;
-    }
-
-    public void setChildPaths(List<FileHierarchy> childPaths) {
-        this.childPaths = childPaths;
     }
 
     public String getOriginalPath() {
         return originalPath;
     }
 
-    public void setOriginalPath(String originalPath) {
-        this.originalPath = originalPath;
-    }
-
     public FileStructureType getFileType() {
         return fileType;
-    }
-
-    public void setFileType(FileStructureType fileType) {
-        this.fileType = fileType;
     }
 
     public LocalDateTime getCreatedDate() {

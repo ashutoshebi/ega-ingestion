@@ -23,7 +23,7 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
-import uk.ac.ebi.ega.ingestion.file.manager.kafka.message.EncryptComplete;
+import uk.ac.ebi.ega.ingestion.commons.messages.EncryptComplete;
 import uk.ac.ebi.ega.ingestion.file.manager.services.IEncryptJobService;
 
 public class FileEncryptListener {
@@ -36,12 +36,12 @@ public class FileEncryptListener {
         this.encryptJobService = encryptJobService;
     }
 
-    @KafkaListener(id = "${spring.kafka.client-id}", topics = "${spring.kafka.file.encryption.completed.queue.name}",
+    @KafkaListener(id = "${spring.kafka.client-id}", topics = "${spring.kafka.file.archive.queue.name}",
             groupId = "${spring.kafka.consumer.group-id}")
     public void listenEncryptionCompletedQueue(@Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) String key, EncryptComplete encryptComplete,
                                                Acknowledgment acknowledgment) {
 
-        log.info("File encryption id: {} completed with status: {}", key, encryptComplete.getStatus());
+        log.info("File encryption id: {} completed", key);
 
         try {
             encryptJobService.notify(key, encryptComplete);

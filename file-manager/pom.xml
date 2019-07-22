@@ -122,6 +122,12 @@
             <artifactId>fire-core</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>uk.ac.ebi.ega</groupId>
+            <artifactId>ingestion-commons</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+
     </dependencies>
 
     <build>

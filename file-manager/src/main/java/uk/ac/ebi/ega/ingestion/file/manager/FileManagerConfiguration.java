@@ -116,8 +116,9 @@ public class FileManagerConfiguration {
 
     @Bean
     public IEncryptJobService encryptJobService(EncryptJobRepository encryptJobRepository,
-                                                IFireIngestion fireIngestion, IFireIngestionModelMapper fireIngestionModelMapper) {
-        return new EncryptJobService(encryptJobRepository, fireIngestion, fireIngestionModelMapper);
+                                                IFireIngestion fireIngestion, IFireIngestionModelMapper fireIngestionModelMapper,
+                                                IFileManagerService fileManagerService) {
+        return new EncryptJobService(encryptJobRepository, fireIngestion, fireIngestionModelMapper, fileManagerService);
     }
 
     @Bean

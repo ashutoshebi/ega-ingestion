@@ -24,7 +24,6 @@ import org.springframework.util.AntPathMatcher;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.HandlerMapping;
@@ -52,17 +51,9 @@ public class FileIngestionController {
         this.fileManagerService = fileManagerService;
     }
 
-    @PostMapping("/{accountId}/{locationId}/**") //TODO needs to be removed. Should be called from Kafka listner
-    public String createFileTree(@PathVariable String accountId,
-                                 @PathVariable String locationId, HttpServletRequest request) {
-        final String path = extractFilePath(request);
-        fileManagerService.createFileDirectoryStructure(path, accountId, locationId);
-        return "Work Done!!!";
-    }
-
     @GetMapping(value = "/{accountId}/{locationId}/**", produces = MediaTypes.HAL_JSON_VALUE)
-    public Resource<FileIngestionWrapper> getAllFilesOfUser(@PathVariable String accountId,
-                                                            @PathVariable String locationId, HttpServletRequest request) {
+    public Resource<FileIngestionWrapper> getFileHierarchy(@PathVariable String accountId,
+                                                           @PathVariable String locationId, HttpServletRequest request) {
 
         final Link link = linkTo(FileIngestionController.class).withSelfRel();
         final String path = extractFilePath(request);
@@ -80,8 +71,7 @@ public class FileIngestionController {
                     final Link selfLink = new Link(new StringBuilder(baseURI).append(path).append("/")
                             .append(fileHierarchy.getFiledetails()).toString(), REL);
 
-                    if (FileStructureType.FILE.equals(fileHierarchy.getFileType())) {//TODO replace static values with dynamic
-
+                    if (FileStructureType.FILE.equals(fileHierarchy.getFileType())) {
                         final FileIngestionDTO fileIngestionDTO = FileIngestionDTO.newInstance(fileHierarchy.getAccountId(), fileHierarchy.getStagingAreaId(),
                                 fileHierarchy.getPlainSize(), fileHierarchy.getEncryptedSize(), fileHierarchy.getFiledetails(), fileHierarchy.getPlainMd5(),
                                 fileHierarchy.getUpdateDate(), fileHierarchy.getStatus());
