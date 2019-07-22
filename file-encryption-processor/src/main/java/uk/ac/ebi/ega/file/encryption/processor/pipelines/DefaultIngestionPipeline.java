@@ -45,13 +45,13 @@ public class DefaultIngestionPipeline implements IngestionPipeline {
     protected File output;
     protected char[] password;
 
-    public DefaultIngestionPipeline(File origin, File secretRing, File secretRingKey, File output, File password) throws IOException {
+    public DefaultIngestionPipeline(File origin, File secretRing, File secretRingKey, File output, char[] password) throws IOException {
         this.outputFiles = new ArrayList<>();
         this.origin = origin;
         this.secretRing = secretRing;
         this.secretRingKey = secretRingKey;
         this.output = output;
-        this.password = FileUtils.readPasswordFile(password.toPath());
+        this.password = password;
     }
 
     @Override
@@ -81,10 +81,11 @@ public class DefaultIngestionPipeline implements IngestionPipeline {
                         .to(encryptOutputStream)
                         .build()
         ) {
-            stream.execute();
+            long bytesTransferred = stream.execute();
             return new IngestionPipelineResult(
                     new IngestionPipelineFile(origin, decryptInputStream.getMd5(), decryptInputStream.available()),
                     decryptInputStream.getUnencryptedMd5(),
+                    bytesTransferred,
                     password,
                     new IngestionPipelineFile(output, encryptOutputStream.getMd5(), output.length())
             );
@@ -117,7 +118,7 @@ public class DefaultIngestionPipeline implements IngestionPipeline {
 
     protected final void createFile(File file) throws SystemErrorException {
         try {
-            if (!file.createNewFile()) {
+            if (!file.exists() && !file.createNewFile()) {
                 throw new SystemErrorException("File could not be created '" + file + "'");
             }
             outputFiles.add(file);

@@ -19,7 +19,7 @@ package uk.ac.ebi.ega.jobs.core;
 
 import java.util.Objects;
 
-public class JobExecution<T extends JobParameters> {
+public class JobExecution<T> {
 
     private String jobId;
 

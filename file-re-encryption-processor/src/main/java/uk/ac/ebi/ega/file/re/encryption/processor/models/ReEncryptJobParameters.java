@@ -18,10 +18,9 @@
 package uk.ac.ebi.ega.file.re.encryption.processor.models;
 
 import uk.ac.ebi.ega.encryption.core.encryption.exceptions.AlgorithmInitializationException;
-import uk.ac.ebi.ega.jobs.core.JobParameters;
 import uk.ac.ebi.ega.encryption.core.services.IPasswordEncryptionService;
 
-public class ReEncryptJobParameters implements JobParameters {
+public class ReEncryptJobParameters {
 
     private IPasswordEncryptionService passwordService;
 

@@ -17,9 +17,12 @@
  */
 package uk.ac.ebi.ega.file.encryption.processor.services;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
-import uk.ac.ebi.ega.file.encryption.processor.messages.EncryptComplete;
-import uk.ac.ebi.ega.file.encryption.processor.models.EncryptJobParameters;
+import uk.ac.ebi.ega.file.encryption.processor.models.IngestionProcess;
+import uk.ac.ebi.ega.ingestion.commons.messages.EncryptComplete;
+import uk.ac.ebi.ega.ingestion.commons.messages.IngestionEvent;
 import uk.ac.ebi.ega.jobs.core.Job;
 import uk.ac.ebi.ega.jobs.core.JobExecution;
 import uk.ac.ebi.ega.jobs.core.JobExecutor;
@@ -34,61 +37,68 @@ import java.util.Optional;
 
 public class EncryptService extends JobExecutor implements IEncryptService {
 
+    private static final Logger logger = LoggerFactory.getLogger(EncryptService.class);
+
     private static final String ENCRYPT_JOB = "encrypt-job";
 
-    private String reportTo; //TODO variable is not used. Can be used once mailing service will be integrated.
+    private Path stagingRoot;
 
     private KafkaTemplate<String, EncryptComplete> kafkaTemplate;
 
     private String completeJobTopic;
 
-    public EncryptService(final ExecutorPersistenceService persistenceService,
-                          final String reportTo,
-                          final Job<EncryptJobParameters> job,
+    public EncryptService(final Path stagingRoot,
+                          final ExecutorPersistenceService persistenceService,
+                          final Job<IngestionProcess> job,
                           final KafkaTemplate<String, EncryptComplete> kafkaTemplate,
                           final String completeJobTopic,
                           final DelayConfiguration delayConfiguration) {
         super(persistenceService, delayConfiguration);
-        this.reportTo = reportTo;
+        this.stagingRoot = stagingRoot;
         this.kafkaTemplate = kafkaTemplate;
         this.completeJobTopic = completeJobTopic;
-        registerJob(ENCRYPT_JOB, EncryptJobParameters.class, job);
+        registerJob(ENCRYPT_JOB, IngestionProcess.class, job);
     }
 
     @Override
-    public Optional<JobExecution<EncryptJobParameters>> createJob(final String id, final String accountId, final String stagingId, final Path filePath, final long size, final LocalDateTime lastUpdate,
-                                                                  final Path md5FilePath) throws JobNotRegistered {
-        return assignExecution(id, ENCRYPT_JOB,
-                new EncryptJobParameters(accountId, stagingId, filePath, size, lastUpdate, md5FilePath));
+    public Optional<JobExecution<IngestionProcess>> createJob(String jobId, IngestionEvent data)
+            throws JobNotRegistered {
+        return assignExecution(jobId, ENCRYPT_JOB, new IngestionProcess(jobId, data, stagingRoot));
     }
 
     @Override
-    public Result encrypt(JobExecution<EncryptJobParameters> jobExecution) {
+    public Result encrypt(JobExecution<IngestionProcess> jobExecution) {
         Result result;
-        final LocalDateTime startExecution = LocalDateTime.now();
         try {
             result = execute(jobExecution);
         } catch (JobNotRegistered jobNotRegistered) {
             result = Result.abort("Unexpected exception - JobParameters not registered", jobNotRegistered,
                     LocalDateTime.now());
         }
-        if (!Result.Status.SUCCESS.equals(result.getStatus())) {
-            //TODO Needs to be implemented
-            // mailingService.sendSimpleMessage(reportTo, result.getMessage(), result.getException());
+        if (Result.Status.SUCCESS.equals(result.getStatus())) {
+            reportToFileManager(jobExecution.getJobId(), result);
         }
-        if (!Result.Status.ABORTED.equals(result.getStatus())) {
-            // report to file manager if it has finished.
-            reportToFileManager(jobExecution.getJobId(), startExecution, result);
+        if (Result.Status.FAILURE.equals(result.getStatus())) {
+            logger.info("File or md5 values where not supplied properly");
+            // TODO handle failures
         }
+
         return result;
     }
 
     @Override
-    public Optional<JobExecution<EncryptJobParameters>> getUnfinishedJob() {
-        return getAssignedExecution(ENCRYPT_JOB, EncryptJobParameters.class);
+    public Optional<JobExecution<IngestionProcess>> getUnfinishedJob() {
+        return getAssignedExecution(ENCRYPT_JOB, IngestionProcess.class);
     }
 
-    private void reportToFileManager(String jobId, LocalDateTime startTime, Result<EncryptComplete> result) {
+    private void reportToFileManager(String jobId, Result<EncryptComplete> result) {
         kafkaTemplate.send(completeJobTopic, jobId, result.getData());
+    }
+
+    @Override
+    public void cancelJobExecution(Optional<JobExecution<IngestionProcess>> optionalJobExecution, Exception e) {
+        optionalJobExecution.ifPresent(jobExecution -> {
+            cancelJobExecution(jobExecution.getJobId(), e);
+        });
     }
 }

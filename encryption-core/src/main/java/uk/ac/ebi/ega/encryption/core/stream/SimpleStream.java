@@ -27,14 +27,11 @@ public class SimpleStream implements PipelineStream {
 
     private final int bufferSize;
 
-    private long totalRead;
-
     private final OutputStream outputStream;
 
     public SimpleStream(InputStream source, int bufferSize, OutputStream outputStream) {
         this.source = source;
         this.bufferSize = bufferSize;
-        this.totalRead = 0;
         this.outputStream = outputStream;
     }
 
@@ -46,7 +43,8 @@ public class SimpleStream implements PipelineStream {
     }
 
     @Override
-    public void execute() throws IOException {
+    public long execute() throws IOException {
+        long totalRead = 0;
         byte[] buffer = new byte[bufferSize];
         int bytesRead = source.read(buffer);
         while (bytesRead != -1) {
@@ -55,6 +53,7 @@ public class SimpleStream implements PipelineStream {
             bytesRead = source.read(buffer);
         }
         outputStream.flush();
+        return totalRead;
     }
 
     @Override

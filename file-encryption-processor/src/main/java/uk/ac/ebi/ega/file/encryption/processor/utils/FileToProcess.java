@@ -21,69 +21,88 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.ac.ebi.ega.file.encryption.processor.exceptions.SkipIngestionException;
 import uk.ac.ebi.ega.file.encryption.processor.pipelines.exceptions.SystemErrorException;
+import uk.ac.ebi.ega.ingestion.commons.models.FileStatic;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.time.LocalDateTime;
 
 public class FileToProcess {
 
     private final static Logger logger = LoggerFactory.getLogger(FileToProcess.class);
 
-    private File path;
+    private File file;
 
-    private File stagingPath;
+    private File stagingFile;
 
     private final long size;
 
-    private final long lastUpdate;
+    private final long lastModified;
 
-    public FileToProcess(Path path, long size, LocalDateTime lastUpdate, Path stagingRoot, String filename) {
-        this.path = path.toFile();
+    public FileToProcess(File file, File stagingFile, long size, long lastModified) {
+        this.file = file;
+        this.stagingFile = stagingFile;
         this.size = size;
-        this.lastUpdate = DateUtils.toEpochMilliseconds(lastUpdate);
-        this.stagingPath = stagingRoot.resolve(filename).toFile();
+        this.lastModified = lastModified;
+    }
+
+    public FileToProcess(Path rootPath, FileStatic file, Path stagingFilePath) {
+        this(rootPath.resolve(file.getAbsolutePath()).toFile(),
+                stagingFilePath.toFile(),
+                file.length(),
+                file.lastModified());
     }
 
     public void moveFileToStaging() throws SkipIngestionException, SystemErrorException {
-        if (!stagingPath.exists() && path.exists()) {
+        if (!stagingFile.exists() && file.exists()) {
             assertFileHasNotChangedOrMoved();
             try {
-                Files.move(path.toPath(), stagingPath.toPath(), StandardCopyOption.ATOMIC_MOVE);
+                Files.move(file.toPath(), stagingFile.toPath(), StandardCopyOption.ATOMIC_MOVE);
             } catch (IOException e) {
                 throw new SystemErrorException(e);
             }
-            logger.info("File {} moved to {}", path.getAbsolutePath(), stagingPath.getAbsolutePath());
+            logger.info("File {} moved to {}", file.getAbsolutePath(), stagingFile.getAbsolutePath());
         }
     }
 
-    private void assertFileHasNotChangedOrMoved() throws SkipIngestionException {
-        if (!path.exists()) {
-            throw SkipIngestionException.fileNotFound(path);
+    public void assertFileHasNotChangedOrMoved() throws SkipIngestionException {
+        if (!file.exists()) {
+            throw SkipIngestionException.fileNotFound(file);
         }
-        if ((path.lastModified() != lastUpdate) || (path.length() != size)) {
-            throw SkipIngestionException.fileModified(path);
+        if ((file.lastModified() != lastModified) || (file.length() != size)) {
+            throw SkipIngestionException.fileModified(file);
         }
     }
 
     public void rollbackFileToStaging() {
-        if (stagingPath.exists()) {
+        if (stagingFile.exists()) {
             try {
-                Files.move(stagingPath.toPath(), path.toPath(), StandardCopyOption.ATOMIC_MOVE);
+                Files.move(stagingFile.toPath(), file.toPath(), StandardCopyOption.ATOMIC_MOVE);
             } catch (IOException e) {
-                logger.error("Error while rollback of file '{}'", stagingPath.getAbsolutePath());
+                logger.error("Error while rollback of file '{}'", stagingFile.getAbsolutePath());
             }
         }
     }
 
+    public File getFile() {
+        return file;
+    }
+
     public File getStagingFile() {
-        return stagingPath;
+        return stagingFile;
+    }
+
+    public long getSize() {
+        return size;
+    }
+
+    public long getLastModified() {
+        return lastModified;
     }
 
     public void deleteStagingFile() {
-        stagingPath.delete();
+        stagingFile.delete();
     }
 }

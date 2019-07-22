@@ -17,6 +17,7 @@
  */
 package uk.ac.ebi.ega.file.encryption.processor.listeners;
 
+import org.apache.kafka.common.KafkaException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,9 +28,9 @@ import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
-import uk.ac.ebi.ega.file.encryption.processor.messages.IngestionEvent;
-import uk.ac.ebi.ega.file.encryption.processor.models.EncryptJobParameters;
+import uk.ac.ebi.ega.file.encryption.processor.models.IngestionProcess;
 import uk.ac.ebi.ega.file.encryption.processor.services.IEncryptService;
+import uk.ac.ebi.ega.ingestion.commons.messages.IngestionEvent;
 import uk.ac.ebi.ega.jobs.core.JobExecution;
 import uk.ac.ebi.ega.jobs.core.Result;
 import uk.ac.ebi.ega.jobs.core.exceptions.JobNotRegistered;
@@ -47,22 +48,23 @@ public class IngestionEventListener {
     @Autowired
     private IEncryptService encryptService;
 
-    @KafkaListener(id = "${spring.kafka.client-id}", topics = "${spring.kafka.file.ingestion.queue.name}", groupId = "encryption",
-            clientIdPrefix = "executor", autoStartup = "false")
-    public void listen(@Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) String key, IngestionEvent data, Acknowledgment acknowledgment) {
+    @KafkaListener(id = "${spring.kafka.client-id}", topics = "${spring.kafka.file.ingestion.queue.name}",
+            groupId = "file-ingestion", clientIdPrefix = "executor", autoStartup = "false")
+    public void listen(@Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) String key, IngestionEvent data,
+                       Acknowledgment acknowledgment) {
+        logger.info("Process - key: {} data {}", key, data);
 
-        logger.info("Received {}", data);
-
-        Optional<JobExecution<EncryptJobParameters>> optionalJob = Optional.empty();
+        Optional<JobExecution<IngestionProcess>> optionalJob = Optional.empty();
 
         try {
-            optionalJob = encryptService.createJob(key, data.getAccountId(), data.getLocationId(),
-                    data.getAbsolutePathFile(), data.getSize(), data.getLastModified(), data.getAbsolutePathMd5File());
+            optionalJob = encryptService.createJob(key, data);
+            acknowledgment.acknowledge();
         } catch (JobNotRegistered exception) {
             exitApplication("Critical error: Job is not registered: " + exception.getMessage());
+        } catch (KafkaException e) {
+            encryptService.cancelJobExecution(optionalJob, e);
+            optionalJob = Optional.empty();
         }
-
-        acknowledgment.acknowledge();
 
         if (optionalJob.isPresent()) {
             final Result result = encryptService.encrypt(optionalJob.get());

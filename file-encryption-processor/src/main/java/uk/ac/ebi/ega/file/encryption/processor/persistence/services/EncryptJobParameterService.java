@@ -17,15 +17,16 @@
  */
 package uk.ac.ebi.ega.file.encryption.processor.persistence.services;
 
-import uk.ac.ebi.ega.file.encryption.processor.models.EncryptJobParameters;
+import uk.ac.ebi.ega.file.encryption.processor.models.IngestionProcess;
 import uk.ac.ebi.ega.file.encryption.processor.persistence.entity.EncryptParametersEntity;
 import uk.ac.ebi.ega.file.encryption.processor.persistence.repository.EncryptParametersRepository;
+import uk.ac.ebi.ega.file.encryption.processor.utils.FileToProcess;
 import uk.ac.ebi.ega.jobs.core.services.JobParameterService;
 
 import java.io.File;
 import java.util.Optional;
 
-public class EncryptJobParameterService implements JobParameterService<EncryptJobParameters> {
+public class EncryptJobParameterService implements JobParameterService<IngestionProcess> {
 
     private EncryptParametersRepository repository;
 
@@ -34,24 +35,35 @@ public class EncryptJobParameterService implements JobParameterService<EncryptJo
     }
 
     @Override
-    public void persist(String jobId, EncryptJobParameters jobParameters) {
-
-        repository.save(new EncryptParametersEntity(jobId, jobParameters.getAccountId(),
-                jobParameters.getStagingId(), jobParameters.getFilePath().toString(), jobParameters.getLastUpdate(), jobParameters.getMd5FilePath().toString()));
+    public void persist(String jobId, IngestionProcess jobParameters) {
+        repository.save(new EncryptParametersEntity(jobId, jobParameters));
     }
 
     @Override
-    public Optional<EncryptJobParameters> getParameters(String jobId) {
-
+    public Optional<IngestionProcess> getParameters(String jobId) {
         final Optional<EncryptParametersEntity> optional = repository.findById(jobId);
-
         if (optional.isPresent()) {
             final EncryptParametersEntity jobParameters = optional.get();
-            final File filePath = new File(jobParameters.getFilePath());
-            final File md5FilePath = new File(jobParameters.getMd5FilePath());
-
-            return Optional.of(new EncryptJobParameters(jobParameters.getAccountId(), jobParameters.getStagingId(),
-                    filePath.toPath(), jobParameters.getSize(), jobParameters.getLastUpdate(), md5FilePath.toPath()));
+            return Optional.of(new IngestionProcess(
+                    jobParameters.getAccountId(),
+                    jobParameters.getStagingId(),
+                    new FileToProcess(
+                            new File(jobParameters.getGpgPath()),
+                            new File(jobParameters.getGpgStagingPath()),
+                            jobParameters.getGpgSize(),
+                            jobParameters.getGpgLastModified()),
+                    new FileToProcess(
+                            new File(jobParameters.getMd5Path()),
+                            new File(jobParameters.getMd5StagingPath()),
+                            jobParameters.getMd5Size(),
+                            jobParameters.getMd5LastModified()),
+                    new FileToProcess(
+                            new File(jobParameters.getGpgMd5Path()),
+                            new File(jobParameters.getGpgMd5StagingPath()),
+                            jobParameters.getGpgMd5Size(),
+                            jobParameters.getGpgMd5LastModified()),
+                    new File(jobParameters.getResultPath())
+            ));
         }
         return Optional.empty();
     }

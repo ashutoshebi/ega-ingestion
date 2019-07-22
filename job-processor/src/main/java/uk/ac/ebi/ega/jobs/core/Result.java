@@ -27,7 +27,8 @@ public class Result<T> {
 
         SUCCESS(1),
         FAILURE(2),
-        ABORTED(3);
+        ABORTED(3),
+        CANCELLED(4);
 
         private int enumValue;
 
@@ -73,11 +74,11 @@ public class Result<T> {
         this.endTime = endTime;
     }
 
-    public Result(final Status status, final T data, final LocalDateTime startTime, final LocalDateTime endTime) {
+    public Result(final Status status, final T data, final LocalDateTime startTime) {
         this.status = status;
         this.data = data;
         this.startTime = startTime;
-        this.endTime = endTime;
+        this.endTime = LocalDateTime.now();
     }
 
     public Status getStatus() {
@@ -116,9 +117,13 @@ public class Result<T> {
         return new Result(Status.ABORTED, msg, e, startTime);
     }
 
+    public static Result cancelled(String msg, Exception e, LocalDateTime startTime) {
+        return new Result(Status.CANCELLED, msg, e, startTime);
+    }
+
     @SuppressWarnings("unchecked")
-    public static <T> Result success(final T data, final LocalDateTime startTime, final LocalDateTime endTime) {
-        return new Result(Status.SUCCESS, data, startTime, endTime);
+    public static <T> Result success(final T data, final LocalDateTime startTime) {
+        return new Result(Status.SUCCESS, data, startTime);
     }
 
     public String getMessageAndException() {

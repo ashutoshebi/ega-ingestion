@@ -18,16 +18,15 @@
 package uk.ac.ebi.ega.jobs.core.services;
 
 import uk.ac.ebi.ega.jobs.core.JobExecution;
-import uk.ac.ebi.ega.jobs.core.JobParameters;
 import uk.ac.ebi.ega.jobs.core.Result;
 
 import java.util.Optional;
 
 public interface ExecutorPersistenceService {
 
-    <T extends JobParameters> void assignExecution(String jobId, String jobName, T jobParameters);
+    <T> void assignExecution(String jobId, String jobName, T jobParameters);
 
     void saveResult(String jobId, Result execute);
 
-    <T extends JobParameters> Optional<JobExecution<T>> getAssignedExecution(String jobName, Class<T> parameterClass);
+    <T> Optional<JobExecution<T>> getAssignedExecution(String jobName, Class<T> parameterClass);
 }

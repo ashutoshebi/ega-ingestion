@@ -23,21 +23,24 @@ public class IngestionPipelineResult {
 
     private String md5;
 
+    private long bytesTransferred;
+
     private char[] key;
 
     private IngestionPipelineFile encryptedFile;
 
     private IngestionPipelineFile encryptedIndexFile;
 
-    public IngestionPipelineResult(IngestionPipelineFile originalFile, String md5, char[] key,
+    public IngestionPipelineResult(IngestionPipelineFile originalFile, String md5, long bytesTransferred, char[] key,
                                    IngestionPipelineFile encryptedFile) {
-        this(originalFile, md5, key, encryptedFile, null);
+        this(originalFile, md5, bytesTransferred, key, encryptedFile, null);
     }
 
-    public IngestionPipelineResult(IngestionPipelineFile originalFile, String md5, char[] key,
+    public IngestionPipelineResult(IngestionPipelineFile originalFile, String md5, long bytesTransferred, char[] key,
                                    IngestionPipelineFile encryptedFile, IngestionPipelineFile encryptedIndexFile) {
         this.originalFile = originalFile;
         this.md5 = md5;
+        this.bytesTransferred = bytesTransferred;
         this.key = key;
         this.encryptedFile = encryptedFile;
         this.encryptedIndexFile = encryptedIndexFile;
@@ -49,6 +52,10 @@ public class IngestionPipelineResult {
 
     public String getMd5() {
         return md5;
+    }
+
+    public long getBytesTransferred() {
+        return bytesTransferred;
     }
 
     public char[] getKey() {

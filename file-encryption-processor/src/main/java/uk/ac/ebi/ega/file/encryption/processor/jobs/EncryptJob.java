@@ -20,87 +20,121 @@ package uk.ac.ebi.ega.file.encryption.processor.jobs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.ac.ebi.ega.file.encryption.processor.exceptions.SkipIngestionException;
-import uk.ac.ebi.ega.file.encryption.processor.messages.EncryptComplete;
-import uk.ac.ebi.ega.file.encryption.processor.models.EncryptJobParameters;
-import uk.ac.ebi.ega.file.encryption.processor.pipelines.IngestionPipelineFile;
+import uk.ac.ebi.ega.file.encryption.processor.jobs.exceptions.Md5Mismatch;
+import uk.ac.ebi.ega.ingestion.commons.messages.EncryptComplete;
+import uk.ac.ebi.ega.file.encryption.processor.models.IngestionProcess;
+import uk.ac.ebi.ega.file.encryption.processor.pipelines.DefaultIngestionPipeline;
 import uk.ac.ebi.ega.file.encryption.processor.pipelines.IngestionPipelineResult;
 import uk.ac.ebi.ega.file.encryption.processor.pipelines.exceptions.SystemErrorException;
 import uk.ac.ebi.ega.file.encryption.processor.pipelines.exceptions.UserErrorException;
-import uk.ac.ebi.ega.file.encryption.processor.services.PipelineService;
-import uk.ac.ebi.ega.file.encryption.processor.utils.FileToProcess;
+import uk.ac.ebi.ega.file.encryption.processor.services.IPasswordGeneratorService;
 import uk.ac.ebi.ega.jobs.core.Job;
 import uk.ac.ebi.ega.jobs.core.Result;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
-public class EncryptJob implements Job<EncryptJobParameters> {
+public class EncryptJob implements Job<IngestionProcess> {
 
     private final static Logger logger = LoggerFactory.getLogger(EncryptJob.class);
 
-    private PipelineService pipelineService;
-    private String clientId;
-    private Path stagingRoot;
-    //  private EncryptionAlgorithm encryptionAlgorithm; //TODO Not sure about purpose for sending encrypted password to kafka
+    private File secretRing;
+    private File secretRingPassphrase;
+    private IPasswordGeneratorService encryptPasswordService;
 
-    public EncryptJob(PipelineService pipelineService, String clientId, Path stagingRoot/*,
-                      EncryptionAlgorithm encryptionAlgorithm*/) {
-        this.pipelineService = pipelineService;
-        this.clientId = clientId;
-        this.stagingRoot = stagingRoot;
-        //   this.encryptionAlgorithm = encryptionAlgorithm;
+    public EncryptJob(File secretRing, File secretRingPassphrase, IPasswordGeneratorService encryptPasswordService) {
+        this.secretRing = secretRing;
+        this.secretRingPassphrase = secretRingPassphrase;
+        this.encryptPasswordService = encryptPasswordService;
     }
 
     @Override
-    public Result execute(EncryptJobParameters jobParameters) {
-
+    public Result execute(IngestionProcess event) {
         final LocalDateTime start = LocalDateTime.now();
-
-        final Path filePath = jobParameters.getFilePath();
-        final long size = jobParameters.getSize();
-        final LocalDateTime lastUpdate = jobParameters.getLastUpdate();
-        final Path md5FilePath = jobParameters.getMd5FilePath();
-
-        String generatedName = generateName();
-        logger.info("Starting process for file {} - id {}", filePath.toString(), generatedName);
-        FileToProcess file = new FileToProcess(filePath, size, lastUpdate, stagingRoot, generatedName + ".gpg");
-        FileToProcess fileMd5 = new FileToProcess(md5FilePath, size, lastUpdate, stagingRoot, generatedName + ".md5");
+        logger.info("Starting process for file {}:/{}", event.getLocationId(),
+                event.getEncryptedFile().getFile().getAbsolutePath());
 
         try {
-            file.moveFileToStaging();
-            fileMd5.moveFileToStaging();
-            final IngestionPipelineResult ingestionPipelineResult = pipelineService.getPipeline(file.getStagingFile())
-                    .process();
+            event.moveFilesToStaging();
 
-            final LocalDateTime end = LocalDateTime.now();
+            File keyFile = new File(event.getOutputFile().getAbsolutePath() + ".key");
+            char[] key = generateKeyAndStore(keyFile);
 
-            final IngestionPipelineFile originalIngestionPipelineFile = ingestionPipelineResult.getOriginalFile();
-            final IngestionPipelineFile encryptedIngestionPipelineFile = ingestionPipelineResult.getEncryptedFile();
+            final IngestionPipelineResult result =
+                    new DefaultIngestionPipeline(event.getEncryptedFile().getStagingFile(),
+                            secretRing, secretRingPassphrase, event.getOutputFile(), key).process();
 
-            final EncryptComplete encryptComplete = new EncryptComplete(generatedName, originalIngestionPipelineFile.getFileSize(),
-                    originalIngestionPipelineFile.getMd5(), encryptedIngestionPipelineFile.getFileSize(), encryptedIngestionPipelineFile.getMd5(),
-                    "", Result.Status.SUCCESS, "Encryption process has been completed successfully", start, end);//TODO Need to Encrypt the password & pass here. Currently not sure about the purpose.
+            assertChecksum(event, result);
 
-            return Result.success(encryptComplete, start, end);
+            final EncryptComplete encryptComplete = buildCompleteMessage(event, result, keyFile, start);
+            logger.info("Process for file {}:/{} finished successfully", event.getLocationId(),
+                    event.getEncryptedFile().getFile().getAbsolutePath());
+            return Result.success(encryptComplete, start);
         } catch (SystemErrorException | IOException e) {
-            file.rollbackFileToStaging();
-            fileMd5.rollbackFileToStaging();
+            event.rollback();
             return Result.abort("System is unable to execute the task at the moment", e, start);
+        } catch (Md5Mismatch e) {
+            event.rollbackEncryptedFileDeleteMd5s();
+            return Result.failure(e.getMessage(), e, start);
         } catch (UserErrorException e) {
-            file.rollbackFileToStaging();
-            fileMd5.deleteStagingFile();
-            return Result.abort("User has provided invalid input", e, start);
+            event.rollbackEncryptedFileDeleteMd5s();
+            return Result.failure(e.getMessage(), e, start);
         } catch (SkipIngestionException e) {
-            logger.error("Skipping process for file {} - id {}", filePath.toString(), generatedName);
-            file.rollbackFileToStaging();
-            fileMd5.rollbackFileToStaging();
-            return Result.abort("File not found", e, start);
+            logger.info("Skipping process for file {}:/{}", event.getLocationId(),
+                    event.getEncryptedFile().getFile().getAbsolutePath());
+            event.rollback();
+            return Result.failure("Process skipped, files not found or modified", e, start);
         }
     }
 
-    private String generateName() {
-        return clientId + "-" + UUID.randomUUID();
+    private EncryptComplete buildCompleteMessage(IngestionProcess event, IngestionPipelineResult result, File keyFile,
+                                                 LocalDateTime start) {
+        String encryptedOriginalPath = event.getEncryptedFile().getFile().getAbsolutePath();
+        String plainOriginalPath = encryptedOriginalPath.substring(0,encryptedOriginalPath.length()-4);
+        return new EncryptComplete(
+                event.getAccountId(),
+                event.getLocationId(),
+                plainOriginalPath,
+                result.getEncryptedFile().getFile().getAbsolutePath(),
+                result.getBytesTransferred(),
+                result.getMd5(),
+                result.getEncryptedFile().getFileSize(),
+                result.getEncryptedFile().getMd5(),
+                keyFile.getAbsolutePath(),
+                start,
+                LocalDateTime.now()
+        );
     }
+
+    private char[] generateKeyAndStore(File keyFile) throws IOException {
+        final char[] key = encryptPasswordService.generate();
+        try (FileWriter fw = new FileWriter(keyFile)) {
+            fw.write(key);
+        }
+        return key;
+    }
+
+    private void assertChecksum(IngestionProcess event, IngestionPipelineResult result) throws IOException, Md5Mismatch {
+        String userEncryptedMd5 = event.getEncryptedMd5();
+        String calculatedEncryptedMd5 = result.getOriginalFile().getMd5();
+        assertChecksum(event, "Encrypted file md5 mismatch", userEncryptedMd5, calculatedEncryptedMd5);
+        String userPlainMd5 = event.getPlainMd5();
+        String calculatedPlainMd5 = result.getMd5();
+        assertChecksum(event, "Decrypted file md5 mismatch", userPlainMd5, calculatedPlainMd5);
+        logger.info("File {}://{} gpgMd5:{} plainMd5:{} cipMd5:{}", event.getLocationId(),
+                event.getEncryptedFile().getFile().getAbsolutePath(),
+                userEncryptedMd5, userPlainMd5, result.getEncryptedFile().getMd5());
+    }
+
+    private void assertChecksum(IngestionProcess event, String text, String expected, String actual)
+            throws Md5Mismatch {
+        if (expected == null || !expected.equalsIgnoreCase(actual)) {
+            logger.info("File {}://{} {} expected:{} actual:{}", event.getLocationId(),
+                    event.getEncryptedFile().getFile().getAbsolutePath(), expected, actual);
+            throw new Md5Mismatch(text, expected, actual);
+        }
+    }
+
 }

@@ -48,8 +48,7 @@ public class ReEncryptionEventListener {
     private IReEncryptService reEncryptService;
 
     @KafkaListener(id = "${spring.kafka.client-id}", topics = "${spring.kafka.file.re.encryption.queue.name}",
-            groupId =
-                    "${spring.kafka.consumer.group-id}", clientIdPrefix = "executor", autoStartup = "false")
+            groupId = "${spring.kafka.consumer.group-id}", clientIdPrefix = "executor", autoStartup = "false")
     public void listen(@Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) String key, ReEncryptFile data,
                        Acknowledgment acknowledgment) {
         logger.info("Process - key: {} data {}", key, data);
