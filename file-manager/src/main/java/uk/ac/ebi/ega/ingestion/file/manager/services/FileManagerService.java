@@ -64,7 +64,6 @@ public class FileManagerService implements IFileManagerService {
                 FileHierarchy fileHierarchy = fileHierarchyRepository.findByOriginalPath(filePathBuilder.toString());
 
                 if (fileHierarchy == null) {
-
                     if (i == (filePathSubString.length - 1)) {
                         fileHierarchy = newFileHierarchyForFile(encryptComplete, subPathString, parentFileHierarchy, filePathBuilder.toString());
                     } else {

@@ -23,20 +23,16 @@ import uk.ac.ebi.ega.fire.ingestion.service.IFireIngestion;
 import uk.ac.ebi.ega.fire.ingestion.service.IFireIngestionModelMapper;
 import uk.ac.ebi.ega.ingestion.commons.messages.EncryptComplete;
 import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileHierarchyException;
-import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.EncryptJobRepository;
 
 public class EncryptJobService implements IEncryptJobService {
 
-    private final EncryptJobRepository encryptJobRepository;
     private final IFireIngestion fireIngestion;
     private final IFireIngestionModelMapper<EncryptComplete> fireIngestionModelMapper;
     private final IFileManagerService fileManagerService;
 
-    public EncryptJobService(final EncryptJobRepository encryptJobRepository,
-                             final IFireIngestion fireIngestion,
+    public EncryptJobService(final IFireIngestion fireIngestion,
                              final IFireIngestionModelMapper<EncryptComplete> fireIngestionModelMapper,
                              final IFileManagerService fileManagerService) {
-        this.encryptJobRepository = encryptJobRepository;
         this.fireIngestion = fireIngestion;
         this.fireIngestionModelMapper = fireIngestionModelMapper;
         this.fileManagerService = fileManagerService;

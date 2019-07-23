@@ -33,7 +33,6 @@ import uk.ac.ebi.ega.fire.ingestion.service.IFireIngestionModelMapper;
 import uk.ac.ebi.ega.ingestion.file.manager.kafka.message.DownloadBoxFileProcess;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.DownloadBoxFileJobRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.DownloadBoxJobRepository;
-import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.EncryptJobRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.FileHierarchyRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.HistoricDownloadBoxFileJobRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.HistoricDownloadBoxJobRepository;
@@ -115,10 +114,9 @@ public class FileManagerConfiguration {
     }
 
     @Bean
-    public IEncryptJobService encryptJobService(EncryptJobRepository encryptJobRepository,
-                                                IFireIngestion fireIngestion, IFireIngestionModelMapper fireIngestionModelMapper,
+    public IEncryptJobService encryptJobService(IFireIngestion fireIngestion, IFireIngestionModelMapper fireIngestionModelMapper,
                                                 IFileManagerService fileManagerService) {
-        return new EncryptJobService(encryptJobRepository, fireIngestion, fireIngestionModelMapper, fileManagerService);
+        return new EncryptJobService(fireIngestion, fireIngestionModelMapper, fileManagerService);
     }
 
     @Bean
