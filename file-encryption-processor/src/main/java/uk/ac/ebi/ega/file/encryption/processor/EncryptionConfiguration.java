@@ -22,7 +22,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.core.KafkaTemplate;
 import uk.ac.ebi.ega.file.encryption.processor.jobs.EncryptJob;
-import uk.ac.ebi.ega.ingestion.commons.messages.EncryptComplete;
+import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEvent;
 import uk.ac.ebi.ega.file.encryption.processor.models.IngestionProcess;
 import uk.ac.ebi.ega.file.encryption.processor.persistence.repository.EncryptParametersRepository;
 import uk.ac.ebi.ega.file.encryption.processor.persistence.services.EncryptJobParameterService;
@@ -122,7 +122,7 @@ public class EncryptionConfiguration {
     public EncryptService encryptService(@Value("${file.encryption.staging.root}") String staging,
                                          ExecutorPersistenceService executorPersistenceService,
                                          Job<IngestionProcess> job,
-                                         KafkaTemplate<String, EncryptComplete> kafkaTemplate,
+                                         KafkaTemplate<String, ArchiveEvent> kafkaTemplate,
                                          final DelayConfiguration delayConfiguration) throws FileNotFoundException {
         final File stagingRoot = new File(staging);
 

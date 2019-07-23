@@ -15,10 +15,17 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.fire.ingestion.service;
+package uk.ac.ebi.ega.ingestion.file.manager.services;
 
-import uk.ac.ebi.ega.fire.ingestion.model.FireIngestionModel;
+import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEvent;
+import uk.ac.ebi.ega.ingestion.file.manager.kafka.message.EncryptComplete;
 
-public interface IFireIngestion {
-    void ingest(FireIngestionModel fireIngestionModel);
+import java.io.IOException;
+
+public interface IArchiveService {
+
+    void archive(ArchiveEvent archiveEvent) throws IOException;
+
+    void notify(String jobId, EncryptComplete encryptComplete) throws Exception;
+
 }

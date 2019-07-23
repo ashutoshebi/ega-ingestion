@@ -21,7 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.ac.ebi.ega.file.encryption.processor.exceptions.SkipIngestionException;
 import uk.ac.ebi.ega.file.encryption.processor.jobs.exceptions.Md5Mismatch;
-import uk.ac.ebi.ega.ingestion.commons.messages.EncryptComplete;
+import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEvent;
 import uk.ac.ebi.ega.file.encryption.processor.models.IngestionProcess;
 import uk.ac.ebi.ega.file.encryption.processor.pipelines.DefaultIngestionPipeline;
 import uk.ac.ebi.ega.file.encryption.processor.pipelines.IngestionPipelineResult;
@@ -68,10 +68,10 @@ public class EncryptJob implements Job<IngestionProcess> {
 
             assertChecksum(event, result);
 
-            final EncryptComplete encryptComplete = buildCompleteMessage(event, result, keyFile, start);
+            final ArchiveEvent archiveEvent = buildCompleteMessage(event, result, keyFile, start);
             logger.info("Process for file {}:/{} finished successfully", event.getLocationId(),
                     event.getEncryptedFile().getFile().getAbsolutePath());
-            return Result.success(encryptComplete, start);
+            return Result.success(archiveEvent, start);
         } catch (SystemErrorException | IOException e) {
             event.rollback();
             return Result.abort("System is unable to execute the task at the moment", e, start);
@@ -89,11 +89,11 @@ public class EncryptJob implements Job<IngestionProcess> {
         }
     }
 
-    private EncryptComplete buildCompleteMessage(IngestionProcess event, IngestionPipelineResult result, File keyFile,
-                                                 LocalDateTime start) {
+    private ArchiveEvent buildCompleteMessage(IngestionProcess event, IngestionPipelineResult result, File keyFile,
+                                              LocalDateTime start) {
         String encryptedOriginalPath = event.getEncryptedFile().getFile().getAbsolutePath();
         String plainOriginalPath = encryptedOriginalPath.substring(0,encryptedOriginalPath.length()-4);
-        return new EncryptComplete(
+        return new ArchiveEvent(
                 event.getAccountId(),
                 event.getLocationId(),
                 plainOriginalPath,

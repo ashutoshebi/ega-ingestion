@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
-public class EncryptComplete {
+public class ArchiveEvent {
 
     private final String accountId;
 
@@ -48,10 +48,10 @@ public class EncryptComplete {
 
     private final LocalDateTime endDateTime;
 
-    public EncryptComplete(final String accountId, final String stagingAreaId, final String originalPath,
-                           final String stagingPath, final long plainSize, final String plainMd5,
-                           final long encryptedSize, final String encryptedMd5, String keyPath,
-                           final LocalDateTime startDateTime, final LocalDateTime endDateTime) {
+    public ArchiveEvent(final String accountId, final String stagingAreaId, final String originalPath,
+                        final String stagingPath, final long plainSize, final String plainMd5,
+                        final long encryptedSize, final String encryptedMd5, String keyPath,
+                        final LocalDateTime startDateTime, final LocalDateTime endDateTime) {
         this.accountId = Objects.requireNonNull(accountId);
         this.stagingAreaId = Objects.requireNonNull(stagingAreaId);
         this.originalPath = Objects.requireNonNull(originalPath);

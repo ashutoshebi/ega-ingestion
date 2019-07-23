@@ -17,8 +17,11 @@
  */
 package uk.ac.ebi.ega.fire.ingestion.service;
 
-import uk.ac.ebi.ega.fire.ingestion.model.FireIngestionModel;
+import javax.transaction.Transactional;
+import java.io.File;
 
-public interface IFireIngestionModelMapper<T> {
-    FireIngestionModel map(T source);
+public interface IProFilerDatabaseService {
+
+    long archiveFile(String egaFileId, File file, String md5, String pathOnFire);
+
 }

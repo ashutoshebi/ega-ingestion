@@ -41,7 +41,7 @@ import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
 import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.support.converter.StringJsonMessageConverter;
 import org.springframework.kafka.support.serializer.JsonSerializer;
-import uk.ac.ebi.ega.ingestion.commons.messages.EncryptComplete;
+import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEvent;
 import uk.ac.ebi.ega.ingestion.commons.messages.IngestionEvent;
 
 import java.util.HashMap;
@@ -112,15 +112,15 @@ public class KafkaConfiguration {
     }
 
     @Bean
-    public ProducerFactory<String, EncryptComplete> producerFactory() {
-        DefaultKafkaProducerFactory<String, EncryptComplete> factory =
+    public ProducerFactory<String, ArchiveEvent> producerFactory() {
+        DefaultKafkaProducerFactory<String, ArchiveEvent> factory =
                 new DefaultKafkaProducerFactory<>(producerConfigs());
         factory.setValueSerializer(new JsonSerializer<>(getObjectMapper()));
         return factory;
     }
 
     @Bean
-    public KafkaTemplate<String, EncryptComplete> kafkaTemplate() {
+    public KafkaTemplate<String, ArchiveEvent> kafkaTemplate() {
         return new KafkaTemplate<>(producerFactory());
     }
 }

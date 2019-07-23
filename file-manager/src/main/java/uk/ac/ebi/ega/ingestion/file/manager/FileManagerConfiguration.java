@@ -27,24 +27,18 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.mail.javamail.JavaMailSender;
 import uk.ac.ebi.ega.encryption.core.services.IPasswordEncryptionService;
 import uk.ac.ebi.ega.encryption.core.services.PasswordEncryptionService;
-import uk.ac.ebi.ega.fire.ingestion.service.FireIngestion;
-import uk.ac.ebi.ega.fire.ingestion.service.IFireIngestion;
-import uk.ac.ebi.ega.fire.ingestion.service.IFireIngestionModelMapper;
 import uk.ac.ebi.ega.ingestion.file.manager.kafka.message.DownloadBoxFileProcess;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.DownloadBoxFileJobRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.DownloadBoxJobRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.FileHierarchyRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.HistoricDownloadBoxFileJobRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.HistoricDownloadBoxJobRepository;
+import uk.ac.ebi.ega.ingestion.file.manager.services.ArchiveService;
 import uk.ac.ebi.ega.ingestion.file.manager.services.DatasetService;
 import uk.ac.ebi.ega.ingestion.file.manager.services.DownloadBoxJobService;
-import uk.ac.ebi.ega.ingestion.file.manager.services.EncryptJobService;
-import uk.ac.ebi.ega.ingestion.file.manager.services.FileManagerService;
-import uk.ac.ebi.ega.ingestion.file.manager.services.FireIngestionModelMapper;
+import uk.ac.ebi.ega.ingestion.file.manager.services.IArchiveService;
 import uk.ac.ebi.ega.ingestion.file.manager.services.IDatasetService;
 import uk.ac.ebi.ega.ingestion.file.manager.services.IDownloadBoxJobService;
-import uk.ac.ebi.ega.ingestion.file.manager.services.IEncryptJobService;
-import uk.ac.ebi.ega.ingestion.file.manager.services.IFileManagerService;
 import uk.ac.ebi.ega.ingestion.file.manager.services.IKeyGenerator;
 import uk.ac.ebi.ega.ingestion.file.manager.services.IMailingService;
 import uk.ac.ebi.ega.ingestion.file.manager.services.MailingService;
@@ -105,14 +99,9 @@ public class FileManagerConfiguration {
     }
 
     @Bean
-    public IEncryptJobService encryptJobService(IFireIngestion fireIngestion, IFireIngestionModelMapper fireIngestionModelMapper,
-                                                IFileManagerService fileManagerService) {
-        return new EncryptJobService(fireIngestion, fireIngestionModelMapper, fileManagerService);
-    }
-
-    @Bean
-    public IFileManagerService fileManagerService(FileHierarchyRepository fileHierarchyRepository) {
-        return new FileManagerService(fileHierarchyRepository);
+    public IArchiveService encryptJobService(EncryptJobRepository encryptJobRepository,
+                                             IFireIngestion fireIngestion, IFireIngestionModelMapper fireIngestionModelMapper) {
+        return new ArchiveService(encryptJobRepository, fireIngestion, fireIngestionModelMapper);
     }
 
     @Bean

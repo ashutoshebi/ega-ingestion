@@ -21,35 +21,23 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
-import org.springframework.kafka.support.KafkaHeaders;
-import org.springframework.messaging.handler.annotation.Header;
-import uk.ac.ebi.ega.ingestion.commons.messages.EncryptComplete;
-import uk.ac.ebi.ega.ingestion.file.manager.services.IEncryptJobService;
+import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEvent;
+import uk.ac.ebi.ega.ingestion.file.manager.services.IArchiveService;
 
 public class FileArchiveListener {
 
     private final Logger log = LoggerFactory.getLogger(FileArchiveListener.class);
 
-    private final IEncryptJobService encryptJobService;
+    private final IArchiveService encryptJobService;
 
-    public FileArchiveListener(final IEncryptJobService encryptJobService) {
+    public FileArchiveListener(final IArchiveService encryptJobService) {
         this.encryptJobService = encryptJobService;
     }
 
     @KafkaListener(id = "${spring.kafka.client-id}", topics = "${spring.kafka.file.archive.queue.name}",
             groupId = "${spring.kafka.consumer.group-id}")
-    public void listenEncryptionCompletedQueue(@Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) String key, EncryptComplete encryptComplete,
-                                               Acknowledgment acknowledgment) {
-
-        log.info("File encryption id: {} completed", key);
-
-        try {
-            encryptJobService.notify(key, encryptComplete);
-
-            // Acknowledge queue that message has been processed successfully
-            acknowledgment.acknowledge();
-        } catch (Exception e) {
-            //TODO report/log error here. Add error handling.
-        }
+    public void listenEncryptionCompletedQueue(ArchiveEvent archiveEvent, Acknowledgment acknowledgment) {
+        encryptJobService.archive(archiveEvent);
+        acknowledgment.acknowledge();
     }
 }

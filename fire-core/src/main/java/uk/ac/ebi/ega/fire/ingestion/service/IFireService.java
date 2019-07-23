@@ -15,13 +15,11 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.ingestion.file.manager.services;
+package uk.ac.ebi.ega.fire.ingestion.service;
 
+import java.io.File;
+import java.util.Optional;
 
-import uk.ac.ebi.ega.ingestion.commons.messages.EncryptComplete;
-
-public interface IEncryptJobService {
-
-    void notify(String jobId, EncryptComplete encryptComplete) throws Exception;
-
+public interface IFireService {
+    Optional<Long> archiveFile(String egaFileId, File file, String md5, String pathOnFire);
 }
