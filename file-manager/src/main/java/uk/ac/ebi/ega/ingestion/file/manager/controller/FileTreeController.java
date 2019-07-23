@@ -27,9 +27,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.HandlerMapping;
-import uk.ac.ebi.ega.ingestion.file.manager.dto.FileIngestionBoxDTO;
-import uk.ac.ebi.ega.ingestion.file.manager.dto.FileIngestionDTO;
-import uk.ac.ebi.ega.ingestion.file.manager.dto.FileIngestionWrapper;
+import uk.ac.ebi.ega.ingestion.file.manager.dto.FileTreeBoxDTO;
+import uk.ac.ebi.ega.ingestion.file.manager.dto.FileTreeDTO;
+import uk.ac.ebi.ega.ingestion.file.manager.dto.FileTreeWrapper;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileHierarchy;
 import uk.ac.ebi.ega.ingestion.file.manager.services.IFileManagerService;
 import uk.ac.ebi.ega.ingestion.file.manager.utils.FileStructureType;
@@ -40,29 +40,29 @@ import java.util.List;
 
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
 
-@RequestMapping(value = "/file-ingestion")
+@RequestMapping(value = "/file/tree")
 @RestController
-public class FileIngestionController {
+public class FileTreeController {
 
     private static final String REL = "self";
     private final IFileManagerService fileManagerService;
 
-    public FileIngestionController(final IFileManagerService fileManagerService) {
+    public FileTreeController(final IFileManagerService fileManagerService) {
         this.fileManagerService = fileManagerService;
     }
 
     @GetMapping(value = "/{accountId}/{locationId}/**", produces = MediaTypes.HAL_JSON_VALUE)
-    public Resource<FileIngestionWrapper> getFileHierarchy(@PathVariable String accountId,
-                                                           @PathVariable String locationId, HttpServletRequest request) {
+    public Resource<FileTreeWrapper> getFileHierarchy(@PathVariable String accountId,
+                                                      @PathVariable String locationId, HttpServletRequest request) {
 
-        final Link link = linkTo(FileIngestionController.class).withSelfRel();
+        final Link link = linkTo(FileTreeController.class).withSelfRel();
         final String path = extractFilePath(request);
         final String baseURI = new StringBuilder(link.getHref()).append("/").append(accountId).append("/")
                 .append(locationId).toString();
 
-        final FileIngestionBoxDTO fileIngestionBoxDTO = new FileIngestionBoxDTO(FileStructureType.FILE.name(), new ArrayList<>());
-        final FileIngestionBoxDTO folderIngestionBoxDTO = new FileIngestionBoxDTO(FileStructureType.FOLDER.name(), new ArrayList<>());
-        final FileIngestionWrapper fileIngestionWrapper = new FileIngestionWrapper(fileIngestionBoxDTO, folderIngestionBoxDTO);
+        final FileTreeBoxDTO fileTreeBoxDTO = new FileTreeBoxDTO(FileStructureType.FILE.name(), new ArrayList<>());
+        final FileTreeBoxDTO folderIngestionBoxDTO = new FileTreeBoxDTO(FileStructureType.FOLDER.name(), new ArrayList<>());
+        final FileTreeWrapper fileTreeWrapper = new FileTreeWrapper(fileTreeBoxDTO, folderIngestionBoxDTO);
 
         final List<FileHierarchy> fileHierarchies = fileManagerService.findAll(path);
 
@@ -72,20 +72,20 @@ public class FileIngestionController {
                             .append(fileHierarchy.getFileInfo()).toString(), REL);
 
                     if (FileStructureType.FILE.equals(fileHierarchy.getFileType())) {
-                        final FileIngestionDTO fileIngestionDTO = new FileIngestionDTO(fileHierarchy.getAccountId(), fileHierarchy.getStagingAreaId(),
+                        final FileTreeDTO fileTreeDTO = new FileTreeDTO(fileHierarchy.getAccountId(), fileHierarchy.getStagingAreaId(),
                                 fileHierarchy.getFileDetails().getPlainSize(), fileHierarchy.getFileDetails().getEncryptedSize(), fileHierarchy.getFileInfo(),
                                 fileHierarchy.getFileDetails().getPlainMd5(), fileHierarchy.getUpdateDate(), fileHierarchy.getFileDetails().getStatus());
-                        fileIngestionDTO.add(selfLink);
-                        fileIngestionBoxDTO.getFileIngestionDTOS().add(fileIngestionDTO);
+                        fileTreeDTO.add(selfLink);
+                        fileTreeBoxDTO.getFileTreeDTOS().add(fileTreeDTO);
                     } else {
-                        final FileIngestionDTO fileIngestionDTO = new FileIngestionDTO(fileHierarchy.getAccountId(), fileHierarchy.getStagingAreaId(),
+                        final FileTreeDTO fileTreeDTO = new FileTreeDTO(fileHierarchy.getAccountId(), fileHierarchy.getStagingAreaId(),
                                 fileHierarchy.getFileInfo());
-                        fileIngestionDTO.add(selfLink);
-                        folderIngestionBoxDTO.getFileIngestionDTOS().add(fileIngestionDTO);
+                        fileTreeDTO.add(selfLink);
+                        folderIngestionBoxDTO.getFileTreeDTOS().add(fileTreeDTO);
                     }
                 }
         );
-        return new Resource<>(fileIngestionWrapper, new Link(baseURI, REL));
+        return new Resource<>(fileTreeWrapper, new Link(baseURI, REL));
     }
 
     private String extractFilePath(HttpServletRequest request) {

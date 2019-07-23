@@ -20,29 +20,28 @@ package uk.ac.ebi.ega.ingestion.file.manager.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import org.springframework.hateoas.ResourceSupport;
 
-import java.util.Collection;
-
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class FileIngestionBoxDTO extends ResourceSupport {
+public class FileTreeWrapper extends ResourceSupport {
 
-    private String fileType;
-    private Collection<FileIngestionDTO> fileIngestionDTOS;
+    private FileTreeBoxDTO file;
+    private FileTreeBoxDTO folder;
 
-    public FileIngestionBoxDTO() {
+    public FileTreeWrapper() {
         super();
     }
 
-    public FileIngestionBoxDTO(final String fileType, final Collection<FileIngestionDTO> fileIngestionDTOS) {
+    public FileTreeWrapper(final FileTreeBoxDTO file,
+                           final FileTreeBoxDTO folder) {
         super();
-        this.fileType = fileType;
-        this.fileIngestionDTOS = fileIngestionDTOS;
+        this.file = file;
+        this.folder = folder;
     }
 
-    public String getFileType() {
-        return fileType;
+    public FileTreeBoxDTO getFile() {
+        return file;
     }
 
-    public Collection<FileIngestionDTO> getFileIngestionDTOS() {
-        return fileIngestionDTOS;
+    public FileTreeBoxDTO getFolder() {
+        return folder;
     }
 }

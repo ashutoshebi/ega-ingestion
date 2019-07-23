@@ -25,7 +25,7 @@ import org.springframework.hateoas.ResourceSupport;
 import java.time.LocalDateTime;
 
 @JsonInclude(Include.NON_NULL)
-public class FileIngestionDTO extends ResourceSupport {
+public class FileTreeDTO extends ResourceSupport {
 
     private String accountId;
     private String locationId;
@@ -37,13 +37,13 @@ public class FileIngestionDTO extends ResourceSupport {
     private String message;
     private LocalDateTime modifiedDate;
 
-    private FileIngestionDTO() {
+    private FileTreeDTO() {
         super();
     }
 
-    public FileIngestionDTO(final String accountId, final String locationId, final Long plainTextFileSize,
-                            final Long encryptedFileSize, final String fileInfo, final String md5PlainTextFile,
-                            final LocalDateTime modifiedDate, final String status) {
+    public FileTreeDTO(final String accountId, final String locationId, final Long plainTextFileSize,
+                       final Long encryptedFileSize, final String fileInfo, final String md5PlainTextFile,
+                       final LocalDateTime modifiedDate, final String status) {
         super();
         this.accountId = accountId;
         this.locationId = locationId;
@@ -55,7 +55,7 @@ public class FileIngestionDTO extends ResourceSupport {
         this.status = status;
     }
 
-    public FileIngestionDTO(final String accountId, final String locationId, final String fileInfo) {
+    public FileTreeDTO(final String accountId, final String locationId, final String fileInfo) {
         super();
         this.accountId = accountId;
         this.locationId = locationId;
