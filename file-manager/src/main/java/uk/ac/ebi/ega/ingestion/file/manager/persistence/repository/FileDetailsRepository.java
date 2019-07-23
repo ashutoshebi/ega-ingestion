@@ -15,13 +15,10 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.ingestion.file.manager.services;
+package uk.ac.ebi.ega.ingestion.file.manager.persistence.repository;
 
+import org.springframework.data.repository.CrudRepository;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileDetails;
 
-import uk.ac.ebi.ega.ingestion.commons.messages.EncryptComplete;
-
-public interface IEncryptJobService {
-
-    void notify(String jobId, EncryptComplete encryptComplete) throws Exception;
-
+public interface FileDetailsRepository extends CrudRepository<FileDetails, Long> {
 }

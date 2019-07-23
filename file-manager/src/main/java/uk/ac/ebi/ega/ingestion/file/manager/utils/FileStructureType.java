@@ -15,13 +15,9 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.ingestion.file.manager.services;
+package uk.ac.ebi.ega.ingestion.file.manager.utils;
 
+public enum FileStructureType {
 
-import uk.ac.ebi.ega.ingestion.commons.messages.EncryptComplete;
-
-public interface IEncryptJobService {
-
-    void notify(String jobId, EncryptComplete encryptComplete) throws Exception;
-
+    FILE, FOLDER
 }

@@ -15,13 +15,11 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.ingestion.file.manager.services;
+package uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions;
 
+public class FileHierarchyException extends Exception {
 
-import uk.ac.ebi.ega.ingestion.commons.messages.EncryptComplete;
-
-public interface IEncryptJobService {
-
-    void notify(String jobId, EncryptComplete encryptComplete) throws Exception;
-
+    public FileHierarchyException(final String message) {
+        super(message);
+    }
 }

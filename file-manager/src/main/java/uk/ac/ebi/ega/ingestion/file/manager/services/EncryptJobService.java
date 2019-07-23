@@ -21,39 +21,37 @@ import org.springframework.transaction.annotation.Transactional;
 import uk.ac.ebi.ega.fire.ingestion.model.FireIngestionModel;
 import uk.ac.ebi.ega.fire.ingestion.service.IFireIngestion;
 import uk.ac.ebi.ega.fire.ingestion.service.IFireIngestionModelMapper;
-import uk.ac.ebi.ega.ingestion.file.manager.kafka.message.EncryptComplete;
-import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.EncryptJob;
-import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.EncryptJobRepository;
+import uk.ac.ebi.ega.ingestion.commons.messages.EncryptComplete;
+import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileHierarchyException;
 
 public class EncryptJobService implements IEncryptJobService {
 
-    private final EncryptJobRepository encryptJobRepository;
     private final IFireIngestion fireIngestion;
     private final IFireIngestionModelMapper<EncryptComplete> fireIngestionModelMapper;
+    private final IFileManagerService fileManagerService;
 
-    public EncryptJobService(final EncryptJobRepository encryptJobRepository,
-                             final IFireIngestion fireIngestion,
-                             final IFireIngestionModelMapper<EncryptComplete> fireIngestionModelMapper) {
-        this.encryptJobRepository = encryptJobRepository;
+    public EncryptJobService(final IFireIngestion fireIngestion,
+                             final IFireIngestionModelMapper<EncryptComplete> fireIngestionModelMapper,
+                             final IFileManagerService fileManagerService) {
         this.fireIngestion = fireIngestion;
         this.fireIngestionModelMapper = fireIngestionModelMapper;
+        this.fileManagerService = fileManagerService;
     }
 
     @Transactional(transactionManager = "fileManagerFireChainedTransactionManager",
             rollbackFor = Exception.class)
     @Override
-    public void notify(final String jobId, final EncryptComplete encryptComplete) {
+    public void notify(final String jobId, final EncryptComplete encryptComplete) throws Exception {
 
         // Persist data received on message queue in FileManager database
-        final EncryptJob encryptJob = EncryptJob.newInstance(jobId, encryptComplete);
-        persistEncryptJob(encryptJob);
+        persistEncryptionDetails(encryptComplete);
 
         // Add entries into FIRE database
         final FireIngestionModel fireIngestionModel = fireIngestionModelMapper.map(encryptComplete);
         fireIngestion.ingest(fireIngestionModel);
     }
 
-    private void persistEncryptJob(final EncryptJob encryptJob) {
-        encryptJobRepository.save(encryptJob);
+    private void persistEncryptionDetails(final EncryptComplete encryptComplete) throws FileHierarchyException {
+        fileManagerService.createFileHierarchy(encryptComplete);
     }
 }

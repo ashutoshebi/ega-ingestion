@@ -15,10 +15,17 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.ingestion.file.manager.persistence.repository;
+package uk.ac.ebi.ega.ingestion.file.manager.services;
 
-import org.springframework.data.repository.CrudRepository;
-import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.EncryptJob;
+import uk.ac.ebi.ega.ingestion.commons.messages.EncryptComplete;
+import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileHierarchyException;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileHierarchy;
 
-public interface EncryptJobRepository extends CrudRepository<EncryptJob, Long> {
+import java.util.List;
+
+public interface IFileManagerService {
+
+    List<FileHierarchy> findAll(String originalFilePath);
+
+    void createFileHierarchy(EncryptComplete encryptComplete) throws FileHierarchyException;
 }
