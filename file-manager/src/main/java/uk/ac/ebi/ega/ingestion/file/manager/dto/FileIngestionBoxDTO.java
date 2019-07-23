@@ -28,11 +28,11 @@ public class FileIngestionBoxDTO extends ResourceSupport {
     private String fileType;
     private Collection<FileIngestionDTO> fileIngestionDTOS;
 
-    private FileIngestionBoxDTO() {
+    public FileIngestionBoxDTO() {
         super();
     }
 
-    private FileIngestionBoxDTO(final String fileType, final Collection<FileIngestionDTO> fileIngestionDTOS) {
+    public FileIngestionBoxDTO(final String fileType, final Collection<FileIngestionDTO> fileIngestionDTOS) {
         super();
         this.fileType = fileType;
         this.fileIngestionDTOS = fileIngestionDTOS;
@@ -44,10 +44,5 @@ public class FileIngestionBoxDTO extends ResourceSupport {
 
     public Collection<FileIngestionDTO> getFileIngestionDTOS() {
         return fileIngestionDTOS;
-    }
-
-    public static FileIngestionBoxDTO newInstance(final String fileType,
-                                                  final Collection<FileIngestionDTO> fileIngestionDTOS) {
-        return new FileIngestionBoxDTO(fileType, fileIngestionDTOS);
     }
 }

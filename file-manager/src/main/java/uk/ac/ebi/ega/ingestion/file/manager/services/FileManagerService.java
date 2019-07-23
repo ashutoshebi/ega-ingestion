@@ -58,7 +58,7 @@ public class FileManagerService implements IFileManagerService {
             FileHierarchy parentFileHierarchy = null;
 
             for (int i = 0; i < filePathSubString.length; i++) {
-                String subPathString = filePathSubString[i];
+                final String subPathString = filePathSubString[i];
                 filePathBuilder.append("/").append(subPathString);
 
                 FileHierarchy fileHierarchy = fileHierarchyRepository.findByOriginalPath(filePathBuilder.toString());
@@ -74,7 +74,7 @@ public class FileManagerService implements IFileManagerService {
                 parentFileHierarchy = fileHierarchy;
             }
         } catch (Exception e) {
-            throw FileHierarchyException.newFileHierarchyException("Exception while creating file structure => " +
+            throw new FileHierarchyException("Exception while creating file structure => " +
                     "FileManagerService::createFileHierarchy(EncryptComplete) " + e.getMessage());
         }
     }

@@ -19,11 +19,7 @@ package uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions;
 
 public class FileHierarchyException extends Exception {
 
-    private FileHierarchyException(final String message) {
+    public FileHierarchyException(final String message) {
         super(message);
-    }
-
-    public static FileHierarchyException newFileHierarchyException(final String message) {
-        return new FileHierarchyException(message);
     }
 }

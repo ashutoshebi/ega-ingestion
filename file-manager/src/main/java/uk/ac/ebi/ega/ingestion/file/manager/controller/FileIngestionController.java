@@ -60,9 +60,9 @@ public class FileIngestionController {
         final String baseURI = new StringBuilder(link.getHref()).append("/").append(accountId).append("/")
                 .append(locationId).toString();
 
-        final FileIngestionBoxDTO fileIngestionBoxDTO = FileIngestionBoxDTO.newInstance(FileStructureType.FILE.name(), new ArrayList<>());
-        final FileIngestionBoxDTO folderIngestionBoxDTO = FileIngestionBoxDTO.newInstance(FileStructureType.FOLDER.name(), new ArrayList<>());
-        final FileIngestionWrapper fileIngestionWrapper = FileIngestionWrapper.newInstance(fileIngestionBoxDTO, folderIngestionBoxDTO);
+        final FileIngestionBoxDTO fileIngestionBoxDTO = new FileIngestionBoxDTO(FileStructureType.FILE.name(), new ArrayList<>());
+        final FileIngestionBoxDTO folderIngestionBoxDTO = new FileIngestionBoxDTO(FileStructureType.FOLDER.name(), new ArrayList<>());
+        final FileIngestionWrapper fileIngestionWrapper = new FileIngestionWrapper(fileIngestionBoxDTO, folderIngestionBoxDTO);
 
         final List<FileHierarchy> fileHierarchies = fileManagerService.findAll(path);
 
@@ -72,13 +72,13 @@ public class FileIngestionController {
                             .append(fileHierarchy.getFiledetails()).toString(), REL);
 
                     if (FileStructureType.FILE.equals(fileHierarchy.getFileType())) {
-                        final FileIngestionDTO fileIngestionDTO = FileIngestionDTO.newInstance(fileHierarchy.getAccountId(), fileHierarchy.getStagingAreaId(),
+                        final FileIngestionDTO fileIngestionDTO = new FileIngestionDTO(fileHierarchy.getAccountId(), fileHierarchy.getStagingAreaId(),
                                 fileHierarchy.getPlainSize(), fileHierarchy.getEncryptedSize(), fileHierarchy.getFiledetails(), fileHierarchy.getPlainMd5(),
                                 fileHierarchy.getUpdateDate(), fileHierarchy.getStatus());
                         fileIngestionDTO.add(selfLink);
                         fileIngestionBoxDTO.getFileIngestionDTOS().add(fileIngestionDTO);
                     } else {
-                        final FileIngestionDTO fileIngestionDTO = FileIngestionDTO.newInstance(fileHierarchy.getAccountId(), fileHierarchy.getStagingAreaId(),
+                        final FileIngestionDTO fileIngestionDTO = new FileIngestionDTO(fileHierarchy.getAccountId(), fileHierarchy.getStagingAreaId(),
                                 fileHierarchy.getFiledetails());
                         fileIngestionDTO.add(selfLink);
                         folderIngestionBoxDTO.getFileIngestionDTOS().add(fileIngestionDTO);

@@ -26,12 +26,12 @@ public class FileIngestionWrapper extends ResourceSupport {
     private FileIngestionBoxDTO file;
     private FileIngestionBoxDTO folder;
 
-    private FileIngestionWrapper() {
+    public FileIngestionWrapper() {
         super();
     }
 
-    private FileIngestionWrapper(final FileIngestionBoxDTO file,
-                                 final FileIngestionBoxDTO folder) {
+    public FileIngestionWrapper(final FileIngestionBoxDTO file,
+                                final FileIngestionBoxDTO folder) {
         super();
         this.file = file;
         this.folder = folder;
@@ -43,9 +43,5 @@ public class FileIngestionWrapper extends ResourceSupport {
 
     public FileIngestionBoxDTO getFolder() {
         return folder;
-    }
-
-    public static FileIngestionWrapper newInstance(final FileIngestionBoxDTO file, final FileIngestionBoxDTO folder) {
-        return new FileIngestionWrapper(file, folder);
     }
 }

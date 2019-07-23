@@ -41,9 +41,9 @@ public class FileIngestionDTO extends ResourceSupport {
         super();
     }
 
-    private FileIngestionDTO(final String accountId, final String locationId, final Long plainTextFileSize,
-                             final Long encryptedFileSize, final String filedetails, final String md5PlainTextFile,
-                             final LocalDateTime modifiedDate, final String status) {
+    public FileIngestionDTO(final String accountId, final String locationId, final Long plainTextFileSize,
+                            final Long encryptedFileSize, final String filedetails, final String md5PlainTextFile,
+                            final LocalDateTime modifiedDate, final String status) {
         super();
         this.accountId = accountId;
         this.locationId = locationId;
@@ -55,7 +55,7 @@ public class FileIngestionDTO extends ResourceSupport {
         this.status = status;
     }
 
-    private FileIngestionDTO(final String accountId, final String locationId, final String filedetails) {
+    public FileIngestionDTO(final String accountId, final String locationId, final String filedetails) {
         super();
         this.accountId = accountId;
         this.locationId = locationId;
@@ -103,15 +103,4 @@ public class FileIngestionDTO extends ResourceSupport {
         return encryptedFileSize;
     }
 
-    public static FileIngestionDTO newInstance(final String accountId, final String locationId, final Long plainTextFileSize,
-                                               final Long encryptedFileSize, final String filedetails, final String md5PlainTextFile,
-                                               final LocalDateTime modifiedDate, final String status) {
-        return new FileIngestionDTO(accountId, locationId, plainTextFileSize,
-                encryptedFileSize, filedetails, md5PlainTextFile,
-                modifiedDate, status);
-    }
-
-    public static FileIngestionDTO newInstance(final String accountId, final String locationId, final String filedetails) {
-        return new FileIngestionDTO(accountId, locationId, filedetails);
-    }
 }
