@@ -21,5 +21,7 @@ import java.io.File;
 import java.util.Optional;
 
 public interface IFireService {
+
     Optional<Long> archiveFile(String egaFileId, File file, String md5, String pathOnFire);
+
 }

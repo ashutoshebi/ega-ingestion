@@ -8,6 +8,8 @@ drop table if exists DOWNLOAD_BOX_JOB cascade;
 drop table if exists HISTORIC_DOWNLOAD_BOX_ASSIGNATION cascade;
 drop table if exists DOWNLOAD_BOX_ASSIGNATION cascade;
 drop table if exists DOWNLOAD_BOX cascade;
+drop table if exists FILE_HIERARCHY cascade;
+drop table if exists FILE_DETAILS cascade;
 
 drop type if exists JOB_STATUS;
 end transaction;
@@ -125,41 +127,37 @@ create table HISTORIC_DOWNLOAD_BOX_FILE_JOB
         REFERENCES HISTORIC_DOWNLOAD_BOX_JOB (ID)
 );
 
--- Schema name has been appended. Keep/change/remove it as per requirement --
-
-create schema FILE_INGESTION;
-
-create table FILE_INGESTION.FILE_DETAILS (
-    ID                       bigserial    primary key,
-    CREATED_DATE             timestamp    not null,
-    ENCRYPTED_MD5            varchar(255) not null,
-    ENCRYPTED_SIZE           bigint       not null,
-    END_DATE_TIME            timestamp    not null,
-    KEY_PATH                 varchar(255) not null,
-    PLAIN_MD5                varchar(255) not null,
-    PLAIN_SIZE               bigint       not null,
-    STAGING_PATH             varchar(255) not null,
-    START_DATE_TIME          timestamp    not null,
-    STATUS                   varchar(255) not null,
-    UPDATE_DATE              timestamp    not null
+create table FILE_DETAILS
+(
+    ID              bigserial primary key,
+    CREATED_DATE    timestamp    not null,
+    ENCRYPTED_MD5   varchar(255) not null,
+    ENCRYPTED_SIZE  bigint       not null,
+    END_DATE_TIME   timestamp    not null,
+    KEY_PATH        varchar(255) not null,
+    PLAIN_MD5       varchar(255) not null,
+    PLAIN_SIZE      bigint       not null,
+    STAGING_PATH    varchar(255) not null,
+    START_DATE_TIME timestamp    not null,
+    STATUS          varchar(255) not null,
+    UPDATE_DATE     timestamp    not null
 );
 
-create table FILE_INGESTION.FILE_HIERARCHY (
-    ID              bigserial       primary key,
-    ACCOUNT_ID      varchar(255)    not null,
-    CREATED_DATE    timestamp       not null,
-    FILE_TYPE       varchar(255)    not null,
-    NAME            varchar(255)    not null,
-    ORIGINAL_PATH   varchar(4096)   not null,
-    STAGING_AREA_ID varchar(255)    not null,
-    UPDATE_DATE     timestamp       not null,
+create table FILE_HIERARCHY
+(
+    ID              bigserial primary key,
+    ACCOUNT_ID      varchar(255)  not null,
+    CREATED_DATE    timestamp     not null,
+    FILE_TYPE       varchar(255)  not null,
+    NAME            varchar(255)  not null,
+    ORIGINAL_PATH   varchar(4096) not null,
+    STAGING_AREA_ID varchar(255)  not null,
+    UPDATE_DATE     timestamp     not null,
     FILE_DETAILS_ID bigint,
     PARENT_ID       bigint,
     CONSTRAINT UK_ORIGINAL_PATH unique (ORIGINAL_PATH),
-    CONSTRAINT FK_FILE_DETAILS FOREIGN KEY (FILE_DETAILS_ID)
-        REFERENCES FILE_INGESTION.FILE_DETAILS (ID),
-    CONSTRAINT FK_PARENT_ID FOREIGN KEY (PARENT_ID)
-        REFERENCES FILE_INGESTION.FILE_HIERARCHY (ID)
+    CONSTRAINT FK_FILE_DETAILS FOREIGN KEY (FILE_DETAILS_ID) REFERENCES FILE_DETAILS (ID),
+    CONSTRAINT FK_PARENT_ID FOREIGN KEY (PARENT_ID) REFERENCES FILE_HIERARCHY (ID)
 );
 
-create index FILEPATH_INDEX on FILE_INGESTION.FILE_HIERARCHY (ORIGINAL_PATH);
+create index FILEPATH_INDEX on FILE_HIERARCHY (ORIGINAL_PATH);

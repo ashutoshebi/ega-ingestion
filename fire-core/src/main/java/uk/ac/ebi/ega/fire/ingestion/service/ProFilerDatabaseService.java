@@ -20,11 +20,10 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.transaction.annotation.Transactional;
 import uk.ac.ebi.ega.fire.utils.FileUtils;
 
-import javax.transaction.Transactional;
 import java.io.File;
-import java.nio.file.Path;
 import java.sql.Timestamp;
 import java.util.Calendar;
 
@@ -33,12 +32,11 @@ public class ProFilerDatabaseService implements IProFilerDatabaseService {
     private final NamedParameterJdbcTemplate proFilerTemplate;
 
     @Autowired
-    public ProFilerDatabaseService(NamedParameterJdbcTemplate proFilerTemplate, Path fireStaging) {
+    public ProFilerDatabaseService(NamedParameterJdbcTemplate proFilerTemplate) {
         this.proFilerTemplate = proFilerTemplate;
     }
 
     @Override
-    @Transactional
     public long archiveFile(String egaFileId, File file, String md5, String pathOnFire) {
         long profilerFileId = insertFile(egaFileId, file, md5);
         return insertArchive(profilerFileId, pathOnFire, file, md5);

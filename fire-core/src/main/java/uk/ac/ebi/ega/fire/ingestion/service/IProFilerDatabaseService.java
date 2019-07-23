@@ -17,7 +17,6 @@
  */
 package uk.ac.ebi.ega.fire.ingestion.service;
 
-import javax.transaction.Transactional;
 import java.io.File;
 
 public interface IProFilerDatabaseService {

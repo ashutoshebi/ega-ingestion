@@ -22,4 +22,9 @@ public class FileHierarchyException extends Exception {
     public FileHierarchyException(final String message) {
         super(message);
     }
+
+    public FileHierarchyException(String s, Throwable throwable) {
+        super(s, throwable);
+    }
+
 }

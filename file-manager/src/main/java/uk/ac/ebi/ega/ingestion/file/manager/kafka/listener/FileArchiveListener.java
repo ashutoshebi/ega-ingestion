@@ -22,22 +22,30 @@ import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEvent;
-import uk.ac.ebi.ega.ingestion.file.manager.services.IArchiveService;
+import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileHierarchyException;
+import uk.ac.ebi.ega.ingestion.file.manager.services.IFileManagerService;
+
+import java.io.IOException;
 
 public class FileArchiveListener {
 
-    private final Logger log = LoggerFactory.getLogger(FileArchiveListener.class);
+    private final Logger logger = LoggerFactory.getLogger(FileArchiveListener.class);
 
-    private final IArchiveService encryptJobService;
+    private final IFileManagerService encryptJobService;
 
-    public FileArchiveListener(final IArchiveService encryptJobService) {
+    public FileArchiveListener(final IFileManagerService encryptJobService) {
         this.encryptJobService = encryptJobService;
     }
 
     @KafkaListener(id = "${spring.kafka.client-id}", topics = "${spring.kafka.file.archive.queue.name}",
             groupId = "${spring.kafka.consumer.group-id}")
     public void listenEncryptionCompletedQueue(ArchiveEvent archiveEvent, Acknowledgment acknowledgment) {
-        encryptJobService.archive(archiveEvent);
+        try {
+            encryptJobService.archive(archiveEvent);
+        } catch (FileHierarchyException | IOException e) {
+            // TODO send a message to dead letter queue
+            logger.error(e.getMessage(), e);
+        }
         acknowledgment.acknowledge();
     }
 }

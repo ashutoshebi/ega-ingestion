@@ -127,8 +127,6 @@ public class DatabaseConfiguration {
         return new DataSourceTransactionManager(fireDataSource());
     }
 
-    // FIRE Database configuration - End
-
     /**
      * Combines both transaction manager & allows to rollback or commit both transactions
      * together based on outcome. If either of the fails then both will be rollBacked
