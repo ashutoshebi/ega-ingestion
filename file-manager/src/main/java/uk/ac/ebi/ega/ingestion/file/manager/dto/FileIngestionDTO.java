@@ -29,7 +29,7 @@ public class FileIngestionDTO extends ResourceSupport {
 
     private String accountId;
     private String locationId;
-    private String filedetails;
+    private String fileInfo;
     private String md5PlainTextFile;
     private Long plainTextFileSize;
     private Long encryptedFileSize;
@@ -42,32 +42,32 @@ public class FileIngestionDTO extends ResourceSupport {
     }
 
     public FileIngestionDTO(final String accountId, final String locationId, final Long plainTextFileSize,
-                            final Long encryptedFileSize, final String filedetails, final String md5PlainTextFile,
+                            final Long encryptedFileSize, final String fileInfo, final String md5PlainTextFile,
                             final LocalDateTime modifiedDate, final String status) {
         super();
         this.accountId = accountId;
         this.locationId = locationId;
         this.plainTextFileSize = plainTextFileSize;
         this.encryptedFileSize = encryptedFileSize;
-        this.filedetails = filedetails;
+        this.fileInfo = fileInfo;
         this.md5PlainTextFile = md5PlainTextFile;
         this.modifiedDate = modifiedDate;
         this.status = status;
     }
 
-    public FileIngestionDTO(final String accountId, final String locationId, final String filedetails) {
+    public FileIngestionDTO(final String accountId, final String locationId, final String fileInfo) {
         super();
         this.accountId = accountId;
         this.locationId = locationId;
-        this.filedetails = filedetails;
+        this.fileInfo = fileInfo;
     }
 
     public String getAccountId() {
         return accountId;
     }
 
-    public String getFiledetails() {
-        return filedetails;
+    public String getFileInfo() {
+        return fileInfo;
     }
 
     @JsonProperty("md5")

@@ -22,6 +22,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import uk.ac.ebi.ega.ingestion.file.manager.utils.FileStructureType;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EntityListeners;
@@ -50,7 +51,7 @@ public class FileHierarchy {
     private Long id;
 
     @Column(nullable = false)
-    private String filedetails;
+    private String fileInfo;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
@@ -69,16 +70,12 @@ public class FileHierarchy {
     @Column(nullable = false)
     private String accountId;
 
+    @Column(nullable = false)
     private String stagingAreaId;
-    private String stagingPath;
-    private Long plainSize;
-    private String plainMd5;
-    private Long encryptedSize;
-    private String encryptedMd5;
-    private String keyPath;
-    private LocalDateTime startDateTime;
-    private LocalDateTime endDateTime;
-    private String status;
+
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "file_details_id")
+    private FileDetails fileDetails;
 
     @CreatedDate
     private LocalDateTime createdDate;
@@ -86,47 +83,32 @@ public class FileHierarchy {
     @LastModifiedDate
     private LocalDateTime updateDate;
 
-    public FileHierarchy() {
+    protected FileHierarchy() {
     }
 
-    public FileHierarchy(final String accountId, final String stagingAreaId, final String filedetails, final FileHierarchy parentPath,
-                         final String originalPath, final FileStructureType fileType, final String stagingPath,
-                         final Long plainSize, final String plainMd5, final Long encryptedSize, final String encryptedMd5,
-                         final String keyPath, final LocalDateTime startDateTime, final LocalDateTime endDateTime, final String status) {
-        this.filedetails = filedetails;
+    public FileHierarchy(final String accountId, final String stagingAreaId, final String fileInfo,
+                         final String originalPath, final FileHierarchy parentPath, final FileStructureType fileType,
+                         final FileDetails fileDetails) {
+        this.accountId = accountId;
+        this.stagingAreaId = stagingAreaId;
+        this.fileInfo = fileInfo;
         this.parentPath = parentPath;
         this.originalPath = originalPath;
         this.fileType = fileType;
-        this.accountId = accountId;
-        this.stagingAreaId = stagingAreaId;
-        this.stagingPath = stagingPath;
-        this.plainSize = plainSize;
-        this.plainMd5 = plainMd5;
-        this.encryptedSize = encryptedSize;
-        this.encryptedMd5 = encryptedMd5;
-        this.keyPath = keyPath;
-        this.startDateTime = startDateTime;
-        this.endDateTime = endDateTime;
-        this.status = status;
+        this.fileDetails = fileDetails;
     }
 
-    public FileHierarchy(final String accountId, final String stagingAreaId, final String filedetails,
-                         final String originalPath, final FileHierarchy parentPath,
-                         final FileStructureType fileType) {
-        this.accountId = accountId;
-        this.stagingAreaId = stagingAreaId;
-        this.filedetails = filedetails;
-        this.originalPath = originalPath;
-        this.parentPath = parentPath;
-        this.fileType = fileType;
+    public FileHierarchy(final String accountId, final String stagingAreaId, final String fileInfo,
+                         final String originalPath, final FileHierarchy parentPath, final FileStructureType fileType) {
+        this(accountId, stagingAreaId, fileInfo, originalPath, parentPath, fileType, null);
     }
 
     public Long getId() {
         return id;
     }
 
-    public String getFiledetails() {
-        return filedetails;
+    public String getFileInfo() {
+        return fileInfo;
     }
 
     public FileHierarchy getParentPath() {
@@ -161,40 +143,8 @@ public class FileHierarchy {
         return stagingAreaId;
     }
 
-    public String getStagingPath() {
-        return stagingPath;
-    }
-
-    public Long getPlainSize() {
-        return plainSize;
-    }
-
-    public String getPlainMd5() {
-        return plainMd5;
-    }
-
-    public Long getEncryptedSize() {
-        return encryptedSize;
-    }
-
-    public String getEncryptedMd5() {
-        return encryptedMd5;
-    }
-
-    public String getKeyPath() {
-        return keyPath;
-    }
-
-    public LocalDateTime getStartDateTime() {
-        return startDateTime;
-    }
-
-    public LocalDateTime getEndDateTime() {
-        return endDateTime;
-    }
-
-    public String getStatus() {
-        return status;
+    public FileDetails getFileDetails() {
+        return fileDetails;
     }
 }
 

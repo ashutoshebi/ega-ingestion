@@ -20,6 +20,7 @@ package uk.ac.ebi.ega.ingestion.file.manager.services;
 import org.springframework.transaction.annotation.Transactional;
 import uk.ac.ebi.ega.ingestion.commons.messages.EncryptComplete;
 import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileHierarchyException;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileDetails;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileHierarchy;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.FileHierarchyRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.utils.FileStructureType;
@@ -81,11 +82,15 @@ public class FileManagerService implements IFileManagerService {
 
     private FileHierarchy newFileHierarchyForFile(final EncryptComplete encryptComplete, final String subPathString,
                                                   final FileHierarchy parentFileHierarchy, final String originalPath) {
-        return new FileHierarchy(encryptComplete.getAccountId(), encryptComplete.getStagingAreaId(),
-                subPathString, parentFileHierarchy, originalPath, FileStructureType.FILE,
-                encryptComplete.getStagingPath(), encryptComplete.getPlainSize(), encryptComplete.getPlainMd5(),
+
+        final FileDetails fileDetails = new FileDetails(encryptComplete.getStagingPath(), encryptComplete.getPlainSize(), encryptComplete.getPlainMd5(),
                 encryptComplete.getEncryptedSize(), encryptComplete.getEncryptedMd5(), encryptComplete.getKeyPath(),
                 encryptComplete.getStartDateTime(), encryptComplete.getEndDateTime(), "Completed");
+
+        return new FileHierarchy(encryptComplete.getAccountId(), encryptComplete.getStagingAreaId(),
+                subPathString, originalPath, parentFileHierarchy, FileStructureType.FILE, fileDetails);
+
+
     }
 
     private FileHierarchy newFileHierarchyForFolder(final EncryptComplete encryptComplete, final String subPathString,

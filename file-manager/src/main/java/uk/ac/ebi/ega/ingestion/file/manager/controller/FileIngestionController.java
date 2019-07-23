@@ -69,17 +69,17 @@ public class FileIngestionController {
         fileHierarchies.forEach(fileHierarchy -> {
 
                     final Link selfLink = new Link(new StringBuilder(baseURI).append(path).append("/")
-                            .append(fileHierarchy.getFiledetails()).toString(), REL);
+                            .append(fileHierarchy.getFileInfo()).toString(), REL);
 
                     if (FileStructureType.FILE.equals(fileHierarchy.getFileType())) {
                         final FileIngestionDTO fileIngestionDTO = new FileIngestionDTO(fileHierarchy.getAccountId(), fileHierarchy.getStagingAreaId(),
-                                fileHierarchy.getPlainSize(), fileHierarchy.getEncryptedSize(), fileHierarchy.getFiledetails(), fileHierarchy.getPlainMd5(),
-                                fileHierarchy.getUpdateDate(), fileHierarchy.getStatus());
+                                fileHierarchy.getFileDetails().getPlainSize(), fileHierarchy.getFileDetails().getEncryptedSize(), fileHierarchy.getFileInfo(),
+                                fileHierarchy.getFileDetails().getPlainMd5(), fileHierarchy.getUpdateDate(), fileHierarchy.getFileDetails().getStatus());
                         fileIngestionDTO.add(selfLink);
                         fileIngestionBoxDTO.getFileIngestionDTOS().add(fileIngestionDTO);
                     } else {
                         final FileIngestionDTO fileIngestionDTO = new FileIngestionDTO(fileHierarchy.getAccountId(), fileHierarchy.getStagingAreaId(),
-                                fileHierarchy.getFiledetails());
+                                fileHierarchy.getFileInfo());
                         fileIngestionDTO.add(selfLink);
                         folderIngestionBoxDTO.getFileIngestionDTOS().add(fileIngestionDTO);
                     }
