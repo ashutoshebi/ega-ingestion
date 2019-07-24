@@ -89,8 +89,6 @@ public class FileManagerService implements IFileManagerService {
 
         return new FileHierarchy(encryptComplete.getAccountId(), encryptComplete.getStagingAreaId(),
                 subPathString, originalPath, parentFileHierarchy, FileStructureType.FILE, fileDetails);
-
-
     }
 
     private FileHierarchy newFileHierarchyForFolder(final EncryptComplete encryptComplete, final String subPathString,
