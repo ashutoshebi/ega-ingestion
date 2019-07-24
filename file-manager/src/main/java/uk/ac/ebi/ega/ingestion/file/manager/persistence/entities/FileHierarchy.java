@@ -51,7 +51,7 @@ public class FileHierarchy {
     private Long id;
 
     @Column(nullable = false)
-    private String fileInfo;
+    private String name;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
@@ -86,29 +86,29 @@ public class FileHierarchy {
     protected FileHierarchy() {
     }
 
-    public FileHierarchy(final String accountId, final String stagingAreaId, final String fileInfo,
+    public FileHierarchy(final String accountId, final String stagingAreaId, final String name,
                          final String originalPath, final FileHierarchy parentPath, final FileStructureType fileType,
                          final FileDetails fileDetails) {
         this.accountId = accountId;
         this.stagingAreaId = stagingAreaId;
-        this.fileInfo = fileInfo;
+        this.name = name;
         this.parentPath = parentPath;
         this.originalPath = originalPath;
         this.fileType = fileType;
         this.fileDetails = fileDetails;
     }
 
-    public FileHierarchy(final String accountId, final String stagingAreaId, final String fileInfo,
+    public FileHierarchy(final String accountId, final String stagingAreaId, final String name,
                          final String originalPath, final FileHierarchy parentPath, final FileStructureType fileType) {
-        this(accountId, stagingAreaId, fileInfo, originalPath, parentPath, fileType, null);
+        this(accountId, stagingAreaId, name, originalPath, parentPath, fileType, null);
     }
 
     public Long getId() {
         return id;
     }
 
-    public String getFileInfo() {
-        return fileInfo;
+    public String getName() {
+        return name;
     }
 
     public FileHierarchy getParentPath() {

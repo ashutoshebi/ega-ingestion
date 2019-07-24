@@ -69,17 +69,17 @@ public class FileTreeController {
         fileHierarchies.forEach(fileHierarchy -> {
 
                     final Link selfLink = new Link(new StringBuilder(baseURI).append(path).append("/")
-                            .append(fileHierarchy.getFileInfo()).toString(), REL);
+                            .append(fileHierarchy.getName()).toString(), REL);
 
                     if (FileStructureType.FILE.equals(fileHierarchy.getFileType())) {
                         final FileTreeDTO fileTreeDTO = new FileTreeDTO(fileHierarchy.getAccountId(), fileHierarchy.getStagingAreaId(),
-                                fileHierarchy.getFileDetails().getPlainSize(), fileHierarchy.getFileDetails().getEncryptedSize(), fileHierarchy.getFileInfo(),
+                                fileHierarchy.getFileDetails().getPlainSize(), fileHierarchy.getFileDetails().getEncryptedSize(), fileHierarchy.getName(),
                                 fileHierarchy.getFileDetails().getPlainMd5(), fileHierarchy.getUpdateDate(), fileHierarchy.getFileDetails().getStatus());
                         fileTreeDTO.add(selfLink);
                         fileTreeBoxDTO.getFileTreeDTOS().add(fileTreeDTO);
                     } else {
                         final FileTreeDTO fileTreeDTO = new FileTreeDTO(fileHierarchy.getAccountId(), fileHierarchy.getStagingAreaId(),
-                                fileHierarchy.getFileInfo());
+                                fileHierarchy.getName());
                         fileTreeDTO.add(selfLink);
                         folderIngestionBoxDTO.getFileTreeDTOS().add(fileTreeDTO);
                     }

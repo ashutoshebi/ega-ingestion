@@ -29,7 +29,7 @@ public class FileTreeDTO extends ResourceSupport {
 
     private String accountId;
     private String locationId;
-    private String fileInfo;
+    private String name;
     private String md5PlainTextFile;
     private Long plainTextFileSize;
     private Long encryptedFileSize;
@@ -42,32 +42,32 @@ public class FileTreeDTO extends ResourceSupport {
     }
 
     public FileTreeDTO(final String accountId, final String locationId, final Long plainTextFileSize,
-                       final Long encryptedFileSize, final String fileInfo, final String md5PlainTextFile,
+                       final Long encryptedFileSize, final String name, final String md5PlainTextFile,
                        final LocalDateTime modifiedDate, final String status) {
         super();
         this.accountId = accountId;
         this.locationId = locationId;
         this.plainTextFileSize = plainTextFileSize;
         this.encryptedFileSize = encryptedFileSize;
-        this.fileInfo = fileInfo;
+        this.name = name;
         this.md5PlainTextFile = md5PlainTextFile;
         this.modifiedDate = modifiedDate;
         this.status = status;
     }
 
-    public FileTreeDTO(final String accountId, final String locationId, final String fileInfo) {
+    public FileTreeDTO(final String accountId, final String locationId, final String name) {
         super();
         this.accountId = accountId;
         this.locationId = locationId;
-        this.fileInfo = fileInfo;
+        this.name = name;
     }
 
     public String getAccountId() {
         return accountId;
     }
 
-    public String getFileInfo() {
-        return fileInfo;
+    public String getName() {
+        return name;
     }
 
     @JsonProperty("md5")
