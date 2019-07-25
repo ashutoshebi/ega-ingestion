@@ -21,35 +21,31 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
-import org.springframework.kafka.support.KafkaHeaders;
-import org.springframework.messaging.handler.annotation.Header;
-import uk.ac.ebi.ega.ingestion.commons.messages.EncryptComplete;
-import uk.ac.ebi.ega.ingestion.file.manager.services.IEncryptJobService;
+import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEvent;
+import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileHierarchyException;
+import uk.ac.ebi.ega.ingestion.file.manager.services.IFileManagerService;
 
-public class FileEncryptListener {
+import java.io.IOException;
 
-    private final Logger log = LoggerFactory.getLogger(FileEncryptListener.class);
+public class FileArchiveListener {
 
-    private final IEncryptJobService encryptJobService;
+    private final Logger logger = LoggerFactory.getLogger(FileArchiveListener.class);
 
-    public FileEncryptListener(final IEncryptJobService encryptJobService) {
+    private final IFileManagerService encryptJobService;
+
+    public FileArchiveListener(final IFileManagerService encryptJobService) {
         this.encryptJobService = encryptJobService;
     }
 
     @KafkaListener(id = "${spring.kafka.client-id}", topics = "${spring.kafka.file.archive.queue.name}",
             groupId = "${spring.kafka.consumer.group-id}")
-    public void listenEncryptionCompletedQueue(@Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) String key, EncryptComplete encryptComplete,
-                                               Acknowledgment acknowledgment) {
-
-        log.info("File encryption id: {} completed", key);
-
+    public void listenEncryptionCompletedQueue(ArchiveEvent archiveEvent, Acknowledgment acknowledgment) {
         try {
-            encryptJobService.notify(key, encryptComplete);
-
-            // Acknowledge queue that message has been processed successfully
-            acknowledgment.acknowledge();
-        } catch (Exception e) {
-            //TODO report/log error here. Add error handling.
+            encryptJobService.archive(archiveEvent);
+        } catch (FileHierarchyException | IOException e) {
+            // TODO send a message to dead letter queue
+            logger.error(e.getMessage(), e);
         }
+        acknowledgment.acknowledge();
     }
 }

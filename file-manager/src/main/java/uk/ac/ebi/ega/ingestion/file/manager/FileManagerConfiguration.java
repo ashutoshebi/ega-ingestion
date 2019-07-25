@@ -27,9 +27,10 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.mail.javamail.JavaMailSender;
 import uk.ac.ebi.ega.encryption.core.services.IPasswordEncryptionService;
 import uk.ac.ebi.ega.encryption.core.services.PasswordEncryptionService;
-import uk.ac.ebi.ega.fire.ingestion.service.FireIngestion;
-import uk.ac.ebi.ega.fire.ingestion.service.IFireIngestion;
-import uk.ac.ebi.ega.fire.ingestion.service.IFireIngestionModelMapper;
+import uk.ac.ebi.ega.fire.ingestion.service.IFireService;
+import uk.ac.ebi.ega.fire.ingestion.service.IProFilerDatabaseService;
+import uk.ac.ebi.ega.fire.ingestion.service.OldFireService;
+import uk.ac.ebi.ega.fire.ingestion.service.ProFilerDatabaseService;
 import uk.ac.ebi.ega.ingestion.file.manager.kafka.message.DownloadBoxFileProcess;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.DownloadBoxFileJobRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.DownloadBoxJobRepository;
@@ -38,29 +39,21 @@ import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.HistoricDownl
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.HistoricDownloadBoxJobRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.services.DatasetService;
 import uk.ac.ebi.ega.ingestion.file.manager.services.DownloadBoxJobService;
-import uk.ac.ebi.ega.ingestion.file.manager.services.EncryptJobService;
 import uk.ac.ebi.ega.ingestion.file.manager.services.FileManagerService;
-import uk.ac.ebi.ega.ingestion.file.manager.services.FireIngestionModelMapper;
 import uk.ac.ebi.ega.ingestion.file.manager.services.IDatasetService;
 import uk.ac.ebi.ega.ingestion.file.manager.services.IDownloadBoxJobService;
-import uk.ac.ebi.ega.ingestion.file.manager.services.IEncryptJobService;
 import uk.ac.ebi.ega.ingestion.file.manager.services.IFileManagerService;
 import uk.ac.ebi.ega.ingestion.file.manager.services.IKeyGenerator;
 import uk.ac.ebi.ega.ingestion.file.manager.services.IMailingService;
 import uk.ac.ebi.ega.ingestion.file.manager.services.MailingService;
 import uk.ac.ebi.ega.ingestion.file.manager.services.key.RandomKeyGenerator;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.nio.file.Paths;
+
 @Configuration
 public class FileManagerConfiguration {
-
-    @Value("${spring.kafka.file.events.queue.name}")
-    private String fileEventQueueName;
-
-    @Value("${spring.kafka.file.ingestion.queue.name}")
-    private String fileIngestionQueueName;
-
-    @Value("${spring.kafka.file.re-encryption.queue.name}")
-    private String fileReEncryptionQueueName;
 
     @Value("${spring.kafka.download-box.queue.name}")
     private String downloadBoxQueueName;
@@ -103,25 +96,25 @@ public class FileManagerConfiguration {
     }
 
     @Bean
-    @DependsOn("fire_jdbc_template")
-    public IFireIngestion fireIngestion(@Qualifier("fire_jdbc_template") NamedParameterJdbcTemplate jdbcTemplate) {
-        return new FireIngestion(jdbcTemplate);
+    public IProFilerDatabaseService proFilerDatabaseService(@Qualifier("fire_jdbc_template")
+                                                                    NamedParameterJdbcTemplate jdbcTemplate) {
+        return new ProFilerDatabaseService(jdbcTemplate);
     }
 
     @Bean
-    public IFireIngestionModelMapper fireIngestionModelMapper() {
-        return new FireIngestionModelMapper();
+    public IFireService fireIngestion(@Value("fire.staging.path") String fireStagingPath,
+                                      IProFilerDatabaseService proFilerDatabaseService) throws FileNotFoundException {
+        final File file = new File(fireStagingPath);
+        if (!file.exists()) {
+            throw new FileNotFoundException(file.getAbsolutePath());
+        }
+        return new OldFireService(file.toPath(), proFilerDatabaseService);
     }
 
     @Bean
-    public IEncryptJobService encryptJobService(IFireIngestion fireIngestion, IFireIngestionModelMapper fireIngestionModelMapper,
-                                                IFileManagerService fileManagerService) {
-        return new EncryptJobService(fireIngestion, fireIngestionModelMapper, fileManagerService);
-    }
-
-    @Bean
-    public IFileManagerService fileManagerService(FileHierarchyRepository fileHierarchyRepository) {
-        return new FileManagerService(fileHierarchyRepository);
+    public IFileManagerService fileManagerService(IFireService fireIngestion,
+                                                  FileHierarchyRepository fileHierarchyRepository) {
+        return new FileManagerService(fireIngestion, Paths.get("/"), fileHierarchyRepository);
     }
 
     @Bean

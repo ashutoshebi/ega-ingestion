@@ -18,82 +18,84 @@
 package uk.ac.ebi.ega.ingestion.file.manager.services;
 
 import org.springframework.transaction.annotation.Transactional;
-import uk.ac.ebi.ega.ingestion.commons.messages.EncryptComplete;
+import uk.ac.ebi.ega.encryption.core.utils.io.FileUtils;
+import uk.ac.ebi.ega.fire.ingestion.service.IFireService;
+import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEvent;
 import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileHierarchyException;
+import uk.ac.ebi.ega.ingestion.file.manager.models.ArchivedFile;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileDetails;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileHierarchy;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.FileHierarchyRepository;
-import uk.ac.ebi.ega.ingestion.file.manager.utils.FileStructureType;
 
-import java.util.Collections;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class FileManagerService implements IFileManagerService {
 
+    private final IFireService fireService;
+
+    private final Path fireBoxRelativePath;
+
     private final FileHierarchyRepository fileHierarchyRepository;
 
-    public FileManagerService(final FileHierarchyRepository fileHierarchyRepository) {
+    public FileManagerService(final IFireService fireService,
+                              final Path fireBoxRelativePath,
+                              final FileHierarchyRepository fileHierarchyRepository) {
+        this.fireService = fireService;
+        this.fireBoxRelativePath = fireBoxRelativePath;
         this.fileHierarchyRepository = fileHierarchyRepository;
     }
 
     @Override
     public List<FileHierarchy> findAll(final String filePath) {
-
-        final FileHierarchy fileHierarchy = fileHierarchyRepository.findByOriginalPath(filePath);
-        final List<FileHierarchy> fileHierarchies = fileHierarchy.getChildPaths();
-
-        if (fileHierarchies.isEmpty()) {
-            return Collections.singletonList(fileHierarchy);
-        }
+        List<FileHierarchy> fileHierarchies = new ArrayList<>();
+        Optional<FileHierarchy> optionalFileHierarchy = fileHierarchyRepository.findByOriginalPath(filePath);
+        optionalFileHierarchy.ifPresent(fileHierarchy -> fileHierarchies.addAll(fileHierarchy.getChildPaths()));
         return fileHierarchies;
     }
 
-    @Transactional(transactionManager = "fileManager_transactionManager")
     @Override
-    public void createFileHierarchy(final EncryptComplete encryptComplete) throws FileHierarchyException {
+    @Transactional(transactionManager = "fileManagerFireChainedTransactionManager", rollbackFor = Exception.class)
+    public void archive(final ArchiveEvent archiveEvent) throws IOException, FileHierarchyException {
+        final char[] password = FileUtils.readPasswordFile(Paths.get(archiveEvent.getKeyPath()));
 
+        Path relativePathInFire = fireBoxRelativePath.resolve(archiveEvent.getStagingAreaId());
+        final Optional<Long> fireId = fireService.archiveFile(null, new File(archiveEvent.getStagingPath()),
+                archiveEvent.getEncryptedMd5(), relativePathInFire.toString());
+        Path completePathInFire = relativePathInFire.resolve(new File(archiveEvent.getStagingPath()).getName());
+
+        ArchivedFile archivedFile = new ArchivedFile(
+                archiveEvent.getAccountId(),
+                archiveEvent.getStagingAreaId(),
+                fireId.get(),
+                completePathInFire.toString(),
+                archiveEvent.getOriginalPath(),
+                archiveEvent.getPlainSize(),
+                archiveEvent.getPlainMd5(),
+                archiveEvent.getEncryptedSize(),
+                archiveEvent.getEncryptedMd5(),
+                password
+        );
+
+        addFile(archivedFile);
+    }
+
+    private void addFile(ArchivedFile archivedFile) throws FileHierarchyException {
         try {
-            final String[] filePathSubString = encryptComplete.getOriginalPath().substring(1).split("/");
-            final StringBuilder filePathBuilder = new StringBuilder();
-
-            FileHierarchy parentFileHierarchy = null;
-
-            for (int i = 0; i < filePathSubString.length; i++) {
-                final String subPathString = filePathSubString[i];
-                filePathBuilder.append("/").append(subPathString);
-
-                FileHierarchy fileHierarchy = fileHierarchyRepository.findByOriginalPath(filePathBuilder.toString());
-
-                if (fileHierarchy == null) {
-                    if (i == (filePathSubString.length - 1)) {
-                        fileHierarchy = newFileHierarchyForFile(encryptComplete, subPathString, parentFileHierarchy, filePathBuilder.toString());
-                    } else {
-                        fileHierarchy = newFileHierarchyForFolder(encryptComplete, subPathString, parentFileHierarchy, filePathBuilder.toString());
-                    }
-                    fileHierarchy = fileHierarchyRepository.save(fileHierarchy);
-                }
-                parentFileHierarchy = fileHierarchy;
-            }
+            final FileDetails fileDetails = new FileDetails(archivedFile.getDosPath(),
+                    archivedFile.getPlainSize(), archivedFile.getPlainMd5(),
+                    archivedFile.getEncryptedSize(), archivedFile.getEncryptedMd5(),
+                    new String(archivedFile.getKey()), "Completed");
+            fileHierarchyRepository.saveNewFile(archivedFile.getAccountId(), archivedFile.getStagingAreaId(),
+                    archivedFile.getPath(), fileDetails);
         } catch (Exception e) {
             throw new FileHierarchyException("Exception while creating file structure => " +
-                    "FileManagerService::createFileHierarchy(EncryptComplete) " + e.getMessage());
+                    "FileManagerService::createFileHierarchy(EncryptComplete) " + e.getMessage(), e);
         }
-    }
-
-    private FileHierarchy newFileHierarchyForFile(final EncryptComplete encryptComplete, final String subPathString,
-                                                  final FileHierarchy parentFileHierarchy, final String originalPath) {
-
-        final FileDetails fileDetails = new FileDetails(encryptComplete.getStagingPath(), encryptComplete.getPlainSize(), encryptComplete.getPlainMd5(),
-                encryptComplete.getEncryptedSize(), encryptComplete.getEncryptedMd5(), encryptComplete.getKeyPath(),
-                encryptComplete.getStartDateTime(), encryptComplete.getEndDateTime(), "Completed");
-
-        return new FileHierarchy(encryptComplete.getAccountId(), encryptComplete.getStagingAreaId(),
-                subPathString, originalPath, parentFileHierarchy, FileStructureType.FILE, fileDetails);
-    }
-
-    private FileHierarchy newFileHierarchyForFolder(final EncryptComplete encryptComplete, final String subPathString,
-                                                    final FileHierarchy parentFileHierarchy, final String originalPath) {
-        return new FileHierarchy(encryptComplete.getAccountId(), encryptComplete.getStagingAreaId(),
-                subPathString, originalPath, parentFileHierarchy, FileStructureType.FOLDER);
     }
 }

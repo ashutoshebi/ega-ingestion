@@ -18,9 +18,43 @@
 package uk.ac.ebi.ega.ingestion.file.manager.persistence.repository;
 
 import org.springframework.data.repository.CrudRepository;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileDetails;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileHierarchy;
+
+import java.util.Optional;
 
 public interface FileHierarchyRepository extends CrudRepository<FileHierarchy, Long> {
 
-    FileHierarchy findByOriginalPath(String filePath);
+    Optional<FileHierarchy> findByOriginalPath(String filePath);
+
+    default FileHierarchy saveNewFolder(final String accountId, final String stagingAreaId, final String name,
+                                        final String path, final FileHierarchy parent) {
+        return save(FileHierarchy.folder(accountId, stagingAreaId, name, path, parent));
+    }
+
+    default FileHierarchy saveNewFile(String accountId, String stagingAreaId, String path, FileDetails fileDetails) {
+        FileHierarchy parentFileHierarchy = createHierarchy(accountId, stagingAreaId, path);
+        final String[] filePath = path.substring(1).split("/");
+        return save(FileHierarchy.file(accountId, stagingAreaId, filePath[filePath.length - 1], path, parentFileHierarchy,
+                fileDetails));
+    }
+
+    default FileHierarchy createHierarchy(String accountId, String stagingAreaId, String path) {
+        final String[] filePathSubString = path.substring(1).split("/");
+        final StringBuilder filePathBuilder = new StringBuilder();
+
+        FileHierarchy parentFileHierarchy = null;
+
+        int pathLevels = filePathSubString.length - 1;
+        for (int i = 0; i < pathLevels; i++) {
+            final String name = filePathSubString[i];
+            final FileHierarchy finalParentFileHierarchy = parentFileHierarchy;
+            filePathBuilder.append("/").append(filePathSubString[i]);
+
+            Optional<FileHierarchy> entry = findByOriginalPath(filePathBuilder.toString());
+            parentFileHierarchy = entry.orElseGet(() -> saveNewFolder(accountId, stagingAreaId, name,
+                    filePathBuilder.toString(), finalParentFileHierarchy));
+        }
+        return parentFileHierarchy;
+    }
 }

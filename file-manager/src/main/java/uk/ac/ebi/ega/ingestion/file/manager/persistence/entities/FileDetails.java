@@ -30,7 +30,6 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import java.time.LocalDateTime;
 
-@Table(name = "FILE_DETAILS", schema = "file_ingestion")
 @Entity
 @EntityListeners(AuditingEntityListener.class)
 public class FileDetails {
@@ -40,7 +39,7 @@ public class FileDetails {
     private Long id;
 
     @Column(nullable = false)
-    private String stagingPath;
+    private String dosPath;
 
     @Column(nullable = false)
     private Long plainSize;
@@ -55,13 +54,7 @@ public class FileDetails {
     private String encryptedMd5;
 
     @Column(nullable = false)
-    private String keyPath;
-
-    @Column(nullable = false)
-    private LocalDateTime startDateTime;
-
-    @Column(nullable = false)
-    private LocalDateTime endDateTime;
+    private String key;
 
     @Column(nullable = false)
     private String status;
@@ -75,18 +68,15 @@ public class FileDetails {
     protected FileDetails() {
     }
 
-    public FileDetails(final String stagingPath,
-                       final Long plainSize, final String plainMd5, final Long encryptedSize, final String encryptedMd5,
-                       final String keyPath, final LocalDateTime startDateTime, final LocalDateTime endDateTime,
-                       final String status) {
-        this.stagingPath = stagingPath;
+    public FileDetails(final String dosPath, final Long plainSize, final String plainMd5,
+                       final Long encryptedSize, final String encryptedMd5,
+                       final String key, final String status) {
+        this.dosPath = dosPath;
         this.plainSize = plainSize;
         this.plainMd5 = plainMd5;
         this.encryptedSize = encryptedSize;
         this.encryptedMd5 = encryptedMd5;
-        this.keyPath = keyPath;
-        this.startDateTime = startDateTime;
-        this.endDateTime = endDateTime;
+        this.key = key;
         this.status = status;
     }
 
@@ -94,8 +84,8 @@ public class FileDetails {
         return id;
     }
 
-    public String getStagingPath() {
-        return stagingPath;
+    public String getDosPath() {
+        return dosPath;
     }
 
     public Long getPlainSize() {
@@ -114,16 +104,8 @@ public class FileDetails {
         return encryptedMd5;
     }
 
-    public String getKeyPath() {
-        return keyPath;
-    }
-
-    public LocalDateTime getStartDateTime() {
-        return startDateTime;
-    }
-
-    public LocalDateTime getEndDateTime() {
-        return endDateTime;
+    public String getKey() {
+        return key;
     }
 
     public String getStatus() {

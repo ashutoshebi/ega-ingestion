@@ -21,7 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import uk.ac.ebi.ega.file.encryption.processor.models.IngestionProcess;
-import uk.ac.ebi.ega.ingestion.commons.messages.EncryptComplete;
+import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEvent;
 import uk.ac.ebi.ega.ingestion.commons.messages.IngestionEvent;
 import uk.ac.ebi.ega.jobs.core.Job;
 import uk.ac.ebi.ega.jobs.core.JobExecution;
@@ -43,14 +43,14 @@ public class EncryptService extends JobExecutor implements IEncryptService {
 
     private Path stagingRoot;
 
-    private KafkaTemplate<String, EncryptComplete> kafkaTemplate;
+    private KafkaTemplate<String, ArchiveEvent> kafkaTemplate;
 
     private String completeJobTopic;
 
     public EncryptService(final Path stagingRoot,
                           final ExecutorPersistenceService persistenceService,
                           final Job<IngestionProcess> job,
-                          final KafkaTemplate<String, EncryptComplete> kafkaTemplate,
+                          final KafkaTemplate<String, ArchiveEvent> kafkaTemplate,
                           final String completeJobTopic,
                           final DelayConfiguration delayConfiguration) {
         super(persistenceService, delayConfiguration);
@@ -91,7 +91,7 @@ public class EncryptService extends JobExecutor implements IEncryptService {
         return getAssignedExecution(ENCRYPT_JOB, IngestionProcess.class);
     }
 
-    private void reportToFileManager(String jobId, Result<EncryptComplete> result) {
+    private void reportToFileManager(String jobId, Result<ArchiveEvent> result) {
         kafkaTemplate.send(completeJobTopic, jobId, result.getData());
     }
 

@@ -17,15 +17,17 @@
  */
 package uk.ac.ebi.ega.ingestion.file.manager.services;
 
-import uk.ac.ebi.ega.ingestion.commons.messages.EncryptComplete;
+import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEvent;
 import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileHierarchyException;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileHierarchy;
 
+import java.io.IOException;
 import java.util.List;
 
 public interface IFileManagerService {
 
     List<FileHierarchy> findAll(String originalFilePath);
 
-    void createFileHierarchy(EncryptComplete encryptComplete) throws FileHierarchyException;
+    void archive(ArchiveEvent archiveEvent) throws IOException, FileHierarchyException;
+
 }

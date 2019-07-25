@@ -40,8 +40,7 @@ import javax.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Table(name = "FILE_HIERARCHY", schema = "file_ingestion",
-        indexes = {@Index(name = "FILEPATH_INDEX", columnList = "originalPath")})
+@Table(indexes = {@Index(name = "FILEPATH_INDEX", columnList = "originalPath")})
 @Entity
 @EntityListeners(AuditingEntityListener.class)
 public class FileHierarchy {
@@ -86,9 +85,9 @@ public class FileHierarchy {
     protected FileHierarchy() {
     }
 
-    public FileHierarchy(final String accountId, final String stagingAreaId, final String name,
-                         final String originalPath, final FileHierarchy parentPath, final FileStructureType fileType,
-                         final FileDetails fileDetails) {
+    protected FileHierarchy(final String accountId, final String stagingAreaId, final String name,
+                            final String originalPath, final FileHierarchy parentPath, final FileStructureType fileType,
+                            final FileDetails fileDetails) {
         this.accountId = accountId;
         this.stagingAreaId = stagingAreaId;
         this.name = name;
@@ -96,11 +95,6 @@ public class FileHierarchy {
         this.originalPath = originalPath;
         this.fileType = fileType;
         this.fileDetails = fileDetails;
-    }
-
-    public FileHierarchy(final String accountId, final String stagingAreaId, final String name,
-                         final String originalPath, final FileHierarchy parentPath, final FileStructureType fileType) {
-        this(accountId, stagingAreaId, name, originalPath, parentPath, fileType, null);
     }
 
     public Long getId() {
@@ -146,5 +140,16 @@ public class FileHierarchy {
     public FileDetails getFileDetails() {
         return fileDetails;
     }
+
+    public static FileHierarchy folder(String accountId, String stagingAreaId, String name, String path,
+                                       FileHierarchy parent) {
+        return new FileHierarchy(accountId, stagingAreaId, name, path, parent, FileStructureType.FOLDER, null);
+    }
+
+    public static FileHierarchy file(String accountId, String stagingAreaId, String name, String path,
+                                     FileHierarchy parent, FileDetails fileDetails) {
+        return new FileHierarchy(accountId, stagingAreaId, name, path, parent, FileStructureType.FILE, fileDetails);
+    }
+
 }
 

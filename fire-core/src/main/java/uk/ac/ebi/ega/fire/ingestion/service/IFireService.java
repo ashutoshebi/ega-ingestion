@@ -17,8 +17,11 @@
  */
 package uk.ac.ebi.ega.fire.ingestion.service;
 
-import uk.ac.ebi.ega.fire.ingestion.model.FireIngestionModel;
+import java.io.File;
+import java.util.Optional;
 
-public interface IFireIngestion {
-    void ingest(FireIngestionModel fireIngestionModel);
+public interface IFireService {
+
+    Optional<Long> archiveFile(String egaFileId, File file, String md5, String pathOnFire);
+
 }

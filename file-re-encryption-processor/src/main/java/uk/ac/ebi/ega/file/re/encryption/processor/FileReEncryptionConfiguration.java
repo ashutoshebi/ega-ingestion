@@ -62,7 +62,7 @@ public class FileReEncryptionConfiguration {
     @Value("${file.re.encryption.mail.alert}")
     private String reportTo;
 
-    @Value("${spring.kafka.file.re.encryption.completed.queue.name}")
+    @Value("${spring.kafka.download-box.completed.queue.name}")
     private String completedTopic;
 
     @Value("${file.re.encryption.password.encryption.key}")
