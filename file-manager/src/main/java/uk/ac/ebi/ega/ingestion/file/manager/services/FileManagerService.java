@@ -103,5 +103,4 @@ public class FileManagerService implements IFileManagerService {
                     "FileManagerService::createFileHierarchy(EncryptComplete) " + e.getMessage(), e);
         }
     }
-
 }
