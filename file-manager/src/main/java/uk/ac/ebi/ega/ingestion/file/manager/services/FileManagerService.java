@@ -17,6 +17,8 @@
  */
 package uk.ac.ebi.ega.ingestion.file.manager.services;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 import uk.ac.ebi.ega.encryption.core.utils.io.FileUtils;
 import uk.ac.ebi.ega.fire.ingestion.service.IFireService;
@@ -36,6 +38,8 @@ import java.util.List;
 import java.util.Optional;
 
 public class FileManagerService implements IFileManagerService {
+
+    private final Logger LOGGER = LoggerFactory.getLogger(FileManagerService.class);
 
     private final IFireService fireService;
 
@@ -94,8 +98,10 @@ public class FileManagerService implements IFileManagerService {
             fileHierarchyRepository.saveNewFile(archivedFile.getAccountId(), archivedFile.getStagingAreaId(),
                     archivedFile.getPath(), fileDetails);
         } catch (Exception e) {
+            LOGGER.error(e.getMessage(), e);
             throw new FileHierarchyException("Exception while creating file structure => " +
                     "FileManagerService::createFileHierarchy(EncryptComplete) " + e.getMessage(), e);
         }
     }
+
 }
