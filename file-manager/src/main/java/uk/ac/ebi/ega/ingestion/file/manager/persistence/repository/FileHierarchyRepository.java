@@ -21,6 +21,8 @@ import org.springframework.data.repository.CrudRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileDetails;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileHierarchy;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Optional;
 
 public interface FileHierarchyRepository extends CrudRepository<FileHierarchy, Long> {
@@ -33,28 +35,42 @@ public interface FileHierarchyRepository extends CrudRepository<FileHierarchy, L
     }
 
     default FileHierarchy saveNewFile(String accountId, String stagingAreaId, String path, FileDetails fileDetails) {
-        FileHierarchy parentFileHierarchy = createHierarchy(accountId, stagingAreaId, path);
-        final String[] filePath = path.substring(1).split("/");
-        return save(FileHierarchy.file(accountId, stagingAreaId, filePath[filePath.length - 1], path, parentFileHierarchy,
-                fileDetails));
+        return save(createHierarchy(accountId, stagingAreaId, path, fileDetails));
     }
 
-    default FileHierarchy createHierarchy(String accountId, String stagingAreaId, String path) {
-        final String[] filePathSubString = path.substring(1).split("/");
-        final StringBuilder filePathBuilder = new StringBuilder();
+    default FileHierarchy createHierarchy(final String accountId, final String stagingAreaId, final String originalPath,
+                                          final FileDetails fileDetails) {
+        final Path path = Paths.get(originalPath).normalize();
+        final Optional<FileHierarchy> fileHierarchy = findByOriginalPath(path.toString());
 
-        FileHierarchy parentFileHierarchy = null;
-
-        int pathLevels = filePathSubString.length - 1;
-        for (int i = 0; i < pathLevels; i++) {
-            final String name = filePathSubString[i];
-            final FileHierarchy finalParentFileHierarchy = parentFileHierarchy;
-            filePathBuilder.append("/").append(filePathSubString[i]);
-
-            Optional<FileHierarchy> entry = findByOriginalPath(filePathBuilder.toString());
-            parentFileHierarchy = entry.orElseGet(() -> saveNewFolder(accountId, stagingAreaId, name,
-                    filePathBuilder.toString(), finalParentFileHierarchy));
+        if (!fileHierarchy.isPresent()) {
+            final FileHierarchy parentFileHierarchy = fileHierarchyRecursion(path.getParent(), accountId, stagingAreaId);
+            return FileHierarchy.file(accountId, stagingAreaId, path.getFileName().toString(), path.toString(), parentFileHierarchy,
+                    fileDetails);
         }
-        return parentFileHierarchy;
+        return fileHierarchy.get();
+    }
+
+    /**
+     * @param path          Original file path
+     * @param accountId     account id
+     * @param stagingAreaId staging area id
+     * @return FileHierarchy Parent FileHierarchy object
+     */
+    default FileHierarchy fileHierarchyRecursion(final Path path, final String accountId, final String stagingAreaId) {//TODO Need to make as private method. Supported in java 9
+
+        if (path != null && path.getFileName() != null) {
+
+            final Optional<FileHierarchy> fileHierarchy = findByOriginalPath(path.toString());
+
+            if (!fileHierarchy.isPresent()) {
+                final FileHierarchy parentFileHierarchy = fileHierarchyRecursion(path.getParent(), accountId, stagingAreaId);
+
+                return saveNewFolder(accountId, stagingAreaId, path.getFileName().toString(),
+                        path.toString(), parentFileHierarchy);
+            }
+            return fileHierarchy.get();
+        }
+        return null;
     }
 }
