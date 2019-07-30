@@ -35,8 +35,12 @@ import uk.ac.ebi.ega.ingestion.file.manager.services.IFileManagerService;
 import uk.ac.ebi.ega.ingestion.file.manager.utils.FileStructureType;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.FileNotFoundException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
 
@@ -53,10 +57,10 @@ public class FileTreeController {
 
     @GetMapping(value = "/{accountId}/{locationId}/**", produces = MediaTypes.HAL_JSON_VALUE)
     public Resource<FileTreeWrapper> getFileHierarchy(@PathVariable String accountId,
-                                                      @PathVariable String locationId, HttpServletRequest request) {
+                                                      @PathVariable String locationId, HttpServletRequest request) throws FileNotFoundException {
 
         final Link link = linkTo(FileTreeController.class).withSelfRel();
-        final String path = extractFilePath(request);
+        final Path path = Paths.get(extractFilePath(request));
         final String baseURI = new StringBuilder(link.getHref()).append("/").append(accountId).append("/")
                 .append(locationId).toString();
 
@@ -64,7 +68,8 @@ public class FileTreeController {
         final FileTreeBoxDTO folderIngestionBoxDTO = new FileTreeBoxDTO(FileStructureType.FOLDER.name(), new ArrayList<>());
         final FileTreeWrapper fileTreeWrapper = new FileTreeWrapper(fileTreeBoxDTO, folderIngestionBoxDTO);
 
-        final List<FileHierarchy> fileHierarchies = fileManagerService.findAll(path);
+        final Optional<List<FileHierarchy>> optionalFileHierarchies = fileManagerService.findAllByPath(path);
+        final List<FileHierarchy> fileHierarchies = optionalFileHierarchies.orElseThrow(FileNotFoundException::new);
 
         fileHierarchies.forEach(fileHierarchy -> {
 

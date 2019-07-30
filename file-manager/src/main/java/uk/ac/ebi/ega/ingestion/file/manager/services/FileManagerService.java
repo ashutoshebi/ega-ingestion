@@ -28,12 +28,14 @@ import uk.ac.ebi.ega.ingestion.file.manager.models.ArchivedFile;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileDetails;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileHierarchy;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.FileHierarchyRepository;
+import uk.ac.ebi.ega.ingestion.file.manager.utils.FileStructureType;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -56,11 +58,14 @@ public class FileManagerService implements IFileManagerService {
     }
 
     @Override
-    public List<FileHierarchy> findAll(final String filePath) {
-        List<FileHierarchy> fileHierarchies = new ArrayList<>();
-        Optional<FileHierarchy> optionalFileHierarchy = fileHierarchyRepository.findByOriginalPath(filePath);
-        optionalFileHierarchy.ifPresent(fileHierarchy -> fileHierarchies.addAll(fileHierarchy.getChildPaths()));
-        return fileHierarchies;
+    public Optional<List<FileHierarchy>> findAllByPath(final Path filePath) throws FileNotFoundException {
+        final Optional<FileHierarchy> optionalFileHierarchy = fileHierarchyRepository.findByOriginalPath(filePath.normalize().toString());
+        final FileHierarchy fileHierarchy = optionalFileHierarchy.orElseThrow(FileNotFoundException::new);
+
+        if (FileStructureType.FILE.equals(fileHierarchy.getFileType())) {
+            return Optional.of(Collections.singletonList(fileHierarchy));
+        }
+        return Optional.ofNullable(fileHierarchy.getChildPaths());
     }
 
     @Override

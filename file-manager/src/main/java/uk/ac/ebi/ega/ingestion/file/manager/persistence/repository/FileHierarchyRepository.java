@@ -52,10 +52,14 @@ public interface FileHierarchyRepository extends CrudRepository<FileHierarchy, L
     }
 
     /**
-     * @param path          Original file path
-     * @param accountId     account id
-     * @param stagingAreaId staging area id
-     * @return FileHierarchy Parent FileHierarchy object
+     * @param   path
+     *          Original file path
+     * @param   accountId
+     *          account id
+     * @param   stagingAreaId
+     *          staging area id
+     *
+     * @return  FileHierarchy Parent FileHierarchy object
      */
     default FileHierarchy fileHierarchyRecursion(final Path path, final String accountId, final String stagingAreaId) {//TODO Need to make as private method. Supported in java 9
 
