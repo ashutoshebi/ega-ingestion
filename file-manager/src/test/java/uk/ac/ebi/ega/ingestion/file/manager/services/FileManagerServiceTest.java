@@ -121,7 +121,7 @@ public class FileManagerServiceTest {
 
     @Transactional
     @Test
-    public void findAllByPath_WhenPassValidFilePath_ThenReturnsFiles() throws IOException, FileHierarchyException {
+    public void findAll_WhenPassValidFilePath_ThenReturnsFiles() throws IOException, FileHierarchyException {
 
         when(fireService.archiveFile(nullable(String.class), any(File.class), anyString(), anyString())).thenReturn(Optional.of(1L));
 
@@ -132,7 +132,8 @@ public class FileManagerServiceTest {
 
         TestTransaction.start();
 
-        final Optional<List<FileHierarchy>> fileHierarchies = fileManagerService.findAllByPath(Paths.get("/nfs/ega/public/ega-box-01-012345677890.cip"));
+        final Optional<List<FileHierarchy>> fileHierarchies = fileManagerService.findAll(Paths.get("/nfs/ega/public/ega-box-01-012345677890.cip"),
+                "user-ega-box-1130", "ega-box-1130");
 
         assertNotNull(fileHierarchies);
         assertTrue(fileHierarchies.isPresent());
@@ -149,7 +150,7 @@ public class FileManagerServiceTest {
 
     @Transactional
     @Test
-    public void findAllByPath_WhenPassValidFolderPath_ThenReturnsChildFile() throws IOException, FileHierarchyException {
+    public void findAll_WhenPassValidFolderPath_ThenReturnsChildFile() throws IOException, FileHierarchyException {
 
         when(fireService.archiveFile(nullable(String.class), any(File.class), anyString(), anyString())).thenReturn(Optional.of(1L));
 
@@ -160,7 +161,8 @@ public class FileManagerServiceTest {
 
         TestTransaction.start();
 
-        final Optional<List<FileHierarchy>> fileHierarchies = fileManagerService.findAllByPath(Paths.get("/nfs/ega/public"));
+        final Optional<List<FileHierarchy>> fileHierarchies = fileManagerService.findAll(Paths.get("/nfs/ega/public"),
+                "user-ega-box-1130", "ega-box-1130");
 
         assertNotNull(fileHierarchies);
         assertTrue(fileHierarchies.isPresent());
@@ -177,7 +179,7 @@ public class FileManagerServiceTest {
 
     @Transactional
     @Test
-    public void findAllByPath_WhenPassValidFolderPath_ThenReturnsChildFolder() throws IOException, FileHierarchyException {
+    public void findAll_WhenPassValidFolderPath_ThenReturnsChildFolder() throws IOException, FileHierarchyException {
 
         when(fireService.archiveFile(nullable(String.class), any(File.class), anyString(), anyString())).thenReturn(Optional.of(1L));
 
@@ -188,7 +190,8 @@ public class FileManagerServiceTest {
 
         TestTransaction.start();
 
-        final Optional<List<FileHierarchy>> fileHierarchies = fileManagerService.findAllByPath(Paths.get("/nfs/ega"));
+        final Optional<List<FileHierarchy>> fileHierarchies = fileManagerService.findAll(Paths.get("/nfs/ega"),
+                "user-ega-box-1130", "ega-box-1130");
 
         assertNotNull(fileHierarchies);
         assertTrue(fileHierarchies.isPresent());
@@ -205,7 +208,7 @@ public class FileManagerServiceTest {
 
     @Transactional
     @Test
-    public void findAllByPath_WhenArchivedWithBadFilePath_ThenReturnsFiles() throws IOException, FileHierarchyException {
+    public void findAll_WhenArchivedWithBadFilePath_ThenReturnsFiles() throws IOException, FileHierarchyException {
 
         when(fireService.archiveFile(nullable(String.class), any(File.class), anyString(), anyString())).thenReturn(Optional.of(1L));
 
@@ -216,7 +219,8 @@ public class FileManagerServiceTest {
 
         TestTransaction.start();
 
-        final Optional<List<FileHierarchy>> fileHierarchies = fileManagerService.findAllByPath(Paths.get("/nfs/ega/public/ega-box-01-012345677890.cip"));
+        final Optional<List<FileHierarchy>> fileHierarchies = fileManagerService.findAll(Paths.get("/nfs/ega/public/ega-box-01-012345677890.cip"),
+                "user-ega-box-1130", "ega-box-1130");
 
         assertNotNull(fileHierarchies);
         assertTrue(fileHierarchies.isPresent());
@@ -233,7 +237,7 @@ public class FileManagerServiceTest {
 
     @Transactional
     @Test
-    public void findAllByPath_WhenRetrieveFilesWithBadFilePath_ThenReturnsFiles() throws IOException, FileHierarchyException {
+    public void findAll_WhenRetrieveFilesWithBadFilePath_ThenReturnsFiles() throws IOException, FileHierarchyException {
 
         when(fireService.archiveFile(nullable(String.class), any(File.class), anyString(), anyString())).thenReturn(Optional.of(1L));
 
@@ -244,7 +248,8 @@ public class FileManagerServiceTest {
 
         TestTransaction.start();
 
-        final Optional<List<FileHierarchy>> fileHierarchies = fileManagerService.findAllByPath(Paths.get("/nfs//ega/public///ega-box-01-012345677890.cip/"));
+        final Optional<List<FileHierarchy>> fileHierarchies = fileManagerService.findAll(Paths.get("/nfs//ega/public///ega-box-01-012345677890.cip/"),
+                "user-ega-box-1130", "ega-box-1130");
 
         assertNotNull(fileHierarchies);
         assertTrue(fileHierarchies.isPresent());
@@ -259,10 +264,45 @@ public class FileManagerServiceTest {
         TestTransaction.end();
     }
 
+    @Transactional
     @Test(expected = FileNotFoundException.class)
-    public void findAllByPath_WhenPassInvalidFilePath_ThenThrowsException() throws FileNotFoundException {
+    public void findAll_WhenPassInvalidAccountIdAndLocationId_ThenThrowsException() throws IOException, FileHierarchyException {
 
-        fileManagerService.findAllByPath(Paths.get("/nfs/ega/public/ega-box-01-012345677890.cip"));
+        try {
+
+            when(fireService.archiveFile(nullable(String.class), any(File.class), anyString(), anyString())).thenReturn(Optional.of(1L));
+
+            fileManagerService.archive(createArchiveEvent("/nfs/ega/public/ega-box-01-012345677890.cip"));
+
+            TestTransaction.flagForCommit();
+            TestTransaction.end();
+
+            TestTransaction.start();
+
+            final Optional<List<FileHierarchy>> fileHierarchies = fileManagerService.findAll(Paths.get("/nfs/ega/public/ega-box-01-012345677890.cip"),
+                    "user-ega-box-1130", "ega-box-1130");
+
+            assertNotNull(fileHierarchies);
+            assertTrue(fileHierarchies.isPresent());
+            assertFalse(fileHierarchies.get().isEmpty());
+
+            final FileHierarchy fileHierarchy = fileHierarchies.get().get(0);
+
+            assertEquals(FileStructureType.FILE, fileHierarchy.getFileType());
+            assertEquals("/nfs/ega/public/ega-box-01-012345677890.cip", fileHierarchy.getOriginalPath());
+            assertEquals("ega-box-01-012345677890.cip", fileHierarchy.getName());
+
+            fileManagerService.findAll(Paths.get("/nfs/ega/public/ega-box-01-012345677890.cip"),
+                    "invalid_account_id", "invalid_staging_area_id");
+        } finally {
+            TestTransaction.end();
+        }
+    }
+
+    @Test(expected = FileNotFoundException.class)
+    public void findAll_WhenPassInvalidFilePath_ThenThrowsException() throws FileNotFoundException {
+        fileManagerService.findAll(Paths.get("/nfs/ega/public/ega-box-01-012345677890.cip"),
+                "user-ega-box-1130", "ega-box-1130");
     }
 
     private ArchiveEvent createArchiveEvent(final String path) throws IOException {

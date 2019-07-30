@@ -27,7 +27,7 @@ import java.util.Optional;
 
 public interface FileHierarchyRepository extends CrudRepository<FileHierarchy, Long> {
 
-    Optional<FileHierarchy> findByOriginalPath(String filePath);
+    Optional<FileHierarchy> findByOriginalPathAndAccountIdAndStagingAreaId(String filePath, String accountId, String stagingAreaId);
 
     default FileHierarchy saveNewFolder(final String accountId, final String stagingAreaId, final String name,
                                         final String path, final FileHierarchy parent) {
@@ -41,7 +41,7 @@ public interface FileHierarchyRepository extends CrudRepository<FileHierarchy, L
     default FileHierarchy createHierarchy(final String accountId, final String stagingAreaId, final String originalPath,
                                           final FileDetails fileDetails) {
         final Path path = Paths.get(originalPath).normalize();
-        final Optional<FileHierarchy> fileHierarchy = findByOriginalPath(path.toString());
+        final Optional<FileHierarchy> fileHierarchy = findByOriginalPathAndAccountIdAndStagingAreaId(path.toString(), accountId, stagingAreaId);
 
         if (!fileHierarchy.isPresent()) {
             final FileHierarchy parentFileHierarchy = fileHierarchyRecursion(path.getParent(), accountId, stagingAreaId);
@@ -52,20 +52,16 @@ public interface FileHierarchyRepository extends CrudRepository<FileHierarchy, L
     }
 
     /**
-     * @param   path
-     *          Original file path
-     * @param   accountId
-     *          account id
-     * @param   stagingAreaId
-     *          staging area id
-     *
-     * @return  FileHierarchy Parent FileHierarchy object
+     * @param path          Original file path
+     * @param accountId     account id
+     * @param stagingAreaId staging area id
+     * @return FileHierarchy Parent FileHierarchy object
      */
     default FileHierarchy fileHierarchyRecursion(final Path path, final String accountId, final String stagingAreaId) {//TODO Need to make as private method. Supported in java 9
 
         if (path != null && path.getFileName() != null) {
 
-            final Optional<FileHierarchy> fileHierarchy = findByOriginalPath(path.toString());
+            final Optional<FileHierarchy> fileHierarchy = findByOriginalPathAndAccountIdAndStagingAreaId(path.toString(), accountId, stagingAreaId);
 
             if (!fileHierarchy.isPresent()) {
                 final FileHierarchy parentFileHierarchy = fileHierarchyRecursion(path.getParent(), accountId, stagingAreaId);

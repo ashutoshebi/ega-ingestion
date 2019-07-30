@@ -68,7 +68,7 @@ public class FileTreeController {
         final FileTreeBoxDTO folderIngestionBoxDTO = new FileTreeBoxDTO(FileStructureType.FOLDER.name(), new ArrayList<>());
         final FileTreeWrapper fileTreeWrapper = new FileTreeWrapper(fileTreeBoxDTO, folderIngestionBoxDTO);
 
-        final Optional<List<FileHierarchy>> optionalFileHierarchies = fileManagerService.findAllByPath(path);
+        final Optional<List<FileHierarchy>> optionalFileHierarchies = fileManagerService.findAll(path, accountId, locationId);
         final List<FileHierarchy> fileHierarchies = optionalFileHierarchies.orElseThrow(FileNotFoundException::new);
 
         fileHierarchies.forEach(fileHierarchy -> {
