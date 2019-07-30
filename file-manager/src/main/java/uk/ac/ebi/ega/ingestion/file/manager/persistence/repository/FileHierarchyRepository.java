@@ -18,6 +18,7 @@
 package uk.ac.ebi.ega.ingestion.file.manager.persistence.repository;
 
 import org.springframework.data.repository.CrudRepository;
+import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileHierarchyException;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileDetails;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileHierarchy;
 
@@ -34,27 +35,40 @@ public interface FileHierarchyRepository extends CrudRepository<FileHierarchy, L
         return save(FileHierarchy.folder(accountId, stagingAreaId, name, path, parent));
     }
 
-    default FileHierarchy saveNewFile(String accountId, String stagingAreaId, String path, FileDetails fileDetails) {
+    default FileHierarchy saveNewFile(String accountId, String stagingAreaId, String path, FileDetails fileDetails) throws FileHierarchyException {
         return save(createHierarchy(accountId, stagingAreaId, path, fileDetails));
     }
 
     default FileHierarchy createHierarchy(final String accountId, final String stagingAreaId, final String originalPath,
-                                          final FileDetails fileDetails) {
-        final Path path = Paths.get(originalPath).normalize();
-        final Optional<FileHierarchy> fileHierarchy = findByOriginalPathAndAccountIdAndStagingAreaId(path.toString(), accountId, stagingAreaId);
+                                          final FileDetails fileDetails) throws FileHierarchyException {
+        /* More checks can be added if file/folder name has some restrictions.
+           Regex checks for filenames, paths etc.
+         */
+        if (originalPath.isEmpty()) {
+            throw new FileHierarchyException("Error in FileHierarchyRepository::createHierarchy(String,String,String,FileDetails) => file path is invalid");
+        }
+
+        final String path = originalPath.startsWith("/") ? originalPath : "/" + originalPath;
+        final Path resolvedOriginalPath = Paths.get(path).normalize();
+
+        final Optional<FileHierarchy> fileHierarchy = findByOriginalPathAndAccountIdAndStagingAreaId(resolvedOriginalPath.toString(), accountId, stagingAreaId);
 
         if (!fileHierarchy.isPresent()) {
-            final FileHierarchy parentFileHierarchy = fileHierarchyRecursion(path.getParent(), accountId, stagingAreaId);
-            return FileHierarchy.file(accountId, stagingAreaId, path.getFileName().toString(), path.toString(), parentFileHierarchy,
+            final FileHierarchy parentFileHierarchy = fileHierarchyRecursion(resolvedOriginalPath.getParent(), accountId, stagingAreaId);
+            return FileHierarchy.file(accountId, stagingAreaId, resolvedOriginalPath.getFileName().toString(), resolvedOriginalPath.toString(), parentFileHierarchy,
                     fileDetails);
         }
         return fileHierarchy.get();
     }
 
     /**
-     * @param path          Original file path
-     * @param accountId     account id
-     * @param stagingAreaId staging area id
+     * @param path
+     *         Original file path
+     * @param accountId
+     *         account id
+     * @param stagingAreaId
+     *         staging area id
+     *
      * @return FileHierarchy Parent FileHierarchy object
      */
     default FileHierarchy fileHierarchyRecursion(final Path path, final String accountId, final String stagingAreaId) {//TODO Need to make as private method. Supported in java 9

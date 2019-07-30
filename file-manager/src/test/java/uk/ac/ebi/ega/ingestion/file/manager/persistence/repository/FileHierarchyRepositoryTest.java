@@ -32,6 +32,7 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.transaction.annotation.Transactional;
+import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileHierarchyException;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileDetails;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileHierarchy;
 
@@ -59,16 +60,16 @@ public class FileHierarchyRepositoryTest {
     }
 
     @Test
-    public void saveFileRootDirectory() {
+    public void saveFileRootDirectory() throws FileHierarchyException {
         fileHierarchyRepository.saveNewFile("ega-account-01", "ega-staging-01", "test1.bam", createFileDetails());
-        final Optional<FileHierarchy> byOriginalPath = fileHierarchyRepository.findByOriginalPathAndAccountIdAndStagingAreaId("test1.bam", "ega-account-01", "ega-staging-01");
+        final Optional<FileHierarchy> byOriginalPath = fileHierarchyRepository.findByOriginalPathAndAccountIdAndStagingAreaId("/test1.bam", "ega-account-01", "ega-staging-01");
         assertTrue(byOriginalPath.isPresent());
     }
 
     @Test
     @Transactional
     @Sql(scripts = "classpath:cleanDatabase.sql")
-    public void saveFileInDirectory() {
+    public void saveFileInDirectory() throws FileHierarchyException {
         fileHierarchyRepository.saveNewFile("ega-account-01", "ega-staging-01", "/test/test1.bam", createFileDetails());
         TestTransaction.flagForCommit();
         TestTransaction.end();
@@ -83,7 +84,7 @@ public class FileHierarchyRepositoryTest {
     @Test
     @Transactional
     @Sql(scripts = "classpath:cleanDatabase.sql")
-    public void saveFilesInDirectory() {
+    public void saveFilesInDirectory() throws FileHierarchyException {
         fileHierarchyRepository.saveNewFile("ega-account-01", "ega-staging-01", "/test/test1.bam", createFileDetails());
         fileHierarchyRepository.saveNewFile("ega-account-01", "ega-staging-01", "/test/test2.bam", createFileDetails());
         TestTransaction.flagForCommit();

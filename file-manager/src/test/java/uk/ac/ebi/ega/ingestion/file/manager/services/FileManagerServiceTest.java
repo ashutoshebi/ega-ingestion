@@ -120,6 +120,15 @@ public class FileManagerServiceTest {
     }
 
     @Transactional
+    @Test(expected = FileHierarchyException.class)
+    public void archive_WhenPassEmptyPath_ThenThrowsFileHierarchyException() throws IOException, FileHierarchyException {
+
+        when(fireService.archiveFile(nullable(String.class), any(File.class), anyString(), anyString())).thenReturn(Optional.of(1L));
+
+        fileManagerService.archive(createArchiveEvent(""));
+    }
+
+    @Transactional
     @Test
     public void findAll_WhenPassValidFilePath_ThenReturnsFiles() throws IOException, FileHierarchyException {
 
@@ -202,6 +211,35 @@ public class FileManagerServiceTest {
         assertEquals(FileStructureType.FOLDER, fileHierarchy.getFileType());
         assertEquals("/nfs/ega/public", fileHierarchy.getOriginalPath());
         assertEquals("public", fileHierarchy.getName());
+
+        TestTransaction.end();
+    }
+
+    @Transactional
+    @Test
+    public void findAll_WhenArchivedWithOnlyFilenameAsPath_ThenReturnsFile() throws IOException, FileHierarchyException {
+
+        when(fireService.archiveFile(nullable(String.class), any(File.class), anyString(), anyString())).thenReturn(Optional.of(1L));
+
+        fileManagerService.archive(createArchiveEvent("ega-box-01-012345677890.cip"));
+
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+
+        TestTransaction.start();
+
+        final Optional<List<FileHierarchy>> fileHierarchies = fileManagerService.findAll(Paths.get("/ega-box-01-012345677890.cip"),
+                "user-ega-box-1130", "ega-box-1130");
+
+        assertNotNull(fileHierarchies);
+        assertTrue(fileHierarchies.isPresent());
+        assertFalse(fileHierarchies.get().isEmpty());
+
+        final FileHierarchy fileHierarchy = fileHierarchies.get().get(0);
+
+        assertEquals(FileStructureType.FILE, fileHierarchy.getFileType());
+        assertEquals("/ega-box-01-012345677890.cip", fileHierarchy.getOriginalPath());
+        assertEquals("ega-box-01-012345677890.cip", fileHierarchy.getName());
 
         TestTransaction.end();
     }
