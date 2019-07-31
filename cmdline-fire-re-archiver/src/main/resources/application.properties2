@@ -1,0 +1,50 @@
+#####################################################################################
+# Server port
+#####################################################################################
+server.port = 8090
+#####################################################################################
+# Datasource configuration
+#####################################################################################
+spring.datasource.url=@ega.file.encryption.url@
+spring.datasource.username=@ega.file.encryption.user@
+spring.datasource.password=@ega.file.encryption.password@
+spring.datasource.driver-class-name=org.postgresql.Driver
+spring.datasource.hikari.maximum-pool-size=5
+spring.datasource.hikari.minimum-idle=1
+spring.datasource.initialization-mode=never
+spring.datasource.schema=classpath:/schema.sql
+spring.jpa.hibernate.ddl-auto=none
+spring.jpa.properties.hibernate.show_sql=false
+spring.jpa.properties.hibernate.format_sql=false
+spring.jpa.properties.hibernate.temp.use_jdbc_metadata_defaults=false
+#####################################################################################
+# Kafka
+#####################################################################################
+spring.kafka.client-id=1
+spring.kafka.consumer.group-id=file-encryption
+spring.kafka.bootstrap-servers=@kafka.server.url@
+spring.kafka.file.ingestion.queue.name=@queue.file.ingestion@
+spring.kafka.file.archive.queue.name=@queue.file.archive@
+#####################################################################################
+# Actuator endpoint configuration
+#####################################################################################
+management.endpoints.web.exposure.include=*
+management.endpoint.shutdown.enabled=true
+#management.endpoints.web.exposure.exclude=loggers
+management.endpoint.health.show-details=always
+#####################################################################################
+# file-encryption process
+#####################################################################################
+file.encryption.staging.root = @file.encryption.staging.root@
+file.encryption.keyring.private = @file.encryption.keyring.private@
+file.encryption.keyring.private.key = @file.encryption.keyring.private.key@
+file.encryption.job.execution.retry.type=@file.re.encryption.job.execution.retry.type@
+file.encryption.job.execution.retry.delay=@file.re.encryption.job.execution.retry.delay@
+file.encryption.job.execution.retry.max.delay=@file.re.encryption.job.execution.retry.max.delay@
+file.encryption.static.key=@file.encryption.static.key@
+#####################################################################################
+# Logging
+#####################################################################################
+logging.level.com.zaxxer.hikari=INFO
+#logging.level.org.hibernate.type=trace
+logging.level.uk.ac.ebi.ega = DEBUG
