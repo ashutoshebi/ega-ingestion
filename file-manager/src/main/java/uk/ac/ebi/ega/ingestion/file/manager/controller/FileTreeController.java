@@ -30,7 +30,7 @@ import org.springframework.web.servlet.HandlerMapping;
 import uk.ac.ebi.ega.ingestion.file.manager.dto.FileTreeBoxDTO;
 import uk.ac.ebi.ega.ingestion.file.manager.dto.FileTreeDTO;
 import uk.ac.ebi.ega.ingestion.file.manager.dto.FileTreeWrapper;
-import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileHierarchy;
+import uk.ac.ebi.ega.ingestion.file.manager.models.FileHierarchyModel;
 import uk.ac.ebi.ega.ingestion.file.manager.services.IFileManagerService;
 import uk.ac.ebi.ega.ingestion.file.manager.utils.FileStructureType;
 
@@ -68,23 +68,23 @@ public class FileTreeController {
         final FileTreeBoxDTO folderIngestionBoxDTO = new FileTreeBoxDTO(FileStructureType.FOLDER.name(), new ArrayList<>());
         final FileTreeWrapper fileTreeWrapper = new FileTreeWrapper(fileTreeBoxDTO, folderIngestionBoxDTO);
 
-        final Optional<List<FileHierarchy>> optionalFileHierarchies = fileManagerService.findAll(path, accountId, locationId);
-        final List<FileHierarchy> fileHierarchies = optionalFileHierarchies.orElseThrow(FileNotFoundException::new);
+        final Optional<List<FileHierarchyModel>> optionalFileHierarchies = fileManagerService.findAll(path, accountId, locationId);
+        final List<FileHierarchyModel> fileHierarchyModels = optionalFileHierarchies.orElseThrow(FileNotFoundException::new);
 
-        fileHierarchies.forEach(fileHierarchy -> {
+        fileHierarchyModels.forEach(fileHierarchyModel -> {
 
                     final Link selfLink = new Link(new StringBuilder(baseURI).append(path).append("/")
-                            .append(fileHierarchy.getName()).toString(), REL);
+                            .append(fileHierarchyModel.getName()).toString(), REL);
 
-                    if (FileStructureType.FILE.equals(fileHierarchy.getFileType())) {
-                        final FileTreeDTO fileTreeDTO = new FileTreeDTO(fileHierarchy.getAccountId(), fileHierarchy.getStagingAreaId(),
-                                fileHierarchy.getFileDetails().getPlainSize(), fileHierarchy.getFileDetails().getEncryptedSize(), fileHierarchy.getName(),
-                                fileHierarchy.getFileDetails().getPlainMd5(), fileHierarchy.getUpdateDate(), fileHierarchy.getFileDetails().getStatus());
+                    if (FileStructureType.FILE.equals(fileHierarchyModel.getFileType())) {
+                        final FileTreeDTO fileTreeDTO = new FileTreeDTO(fileHierarchyModel.getAccountId(), fileHierarchyModel.getStagingAreaId(),
+                                fileHierarchyModel.getFileDetails().getPlainSize(), fileHierarchyModel.getFileDetails().getEncryptedSize(), fileHierarchyModel.getName(),
+                                fileHierarchyModel.getFileDetails().getPlainMd5(), fileHierarchyModel.getUpdatedDate(), fileHierarchyModel.getFileDetails().getStatus());
                         fileTreeDTO.add(selfLink);
                         fileTreeBoxDTO.getFileTreeDTOS().add(fileTreeDTO);
                     } else {
-                        final FileTreeDTO fileTreeDTO = new FileTreeDTO(fileHierarchy.getAccountId(), fileHierarchy.getStagingAreaId(),
-                                fileHierarchy.getName());
+                        final FileTreeDTO fileTreeDTO = new FileTreeDTO(fileHierarchyModel.getAccountId(), fileHierarchyModel.getStagingAreaId(),
+                                fileHierarchyModel.getName());
                         fileTreeDTO.add(selfLink);
                         folderIngestionBoxDTO.getFileTreeDTOS().add(fileTreeDTO);
                     }

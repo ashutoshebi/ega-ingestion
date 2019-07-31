@@ -25,6 +25,8 @@ import uk.ac.ebi.ega.fire.ingestion.service.IFireService;
 import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEvent;
 import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileHierarchyException;
 import uk.ac.ebi.ega.ingestion.file.manager.models.ArchivedFile;
+import uk.ac.ebi.ega.ingestion.file.manager.models.FileDetailsModel;
+import uk.ac.ebi.ega.ingestion.file.manager.models.FileHierarchyModel;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileDetails;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileHierarchy;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.FileHierarchyRepository;
@@ -38,6 +40,7 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class FileManagerService implements IFileManagerService {
 
@@ -58,14 +61,22 @@ public class FileManagerService implements IFileManagerService {
     }
 
     @Override
-    public Optional<List<FileHierarchy>> findAll(final Path filePath, final String accountId, final String stagingAreaId) throws FileNotFoundException {
+    public Optional<List<FileHierarchyModel>> findAll(final Path filePath, final String accountId, final String stagingAreaId) throws FileNotFoundException {
         final Optional<FileHierarchy> optionalFileHierarchy = fileHierarchyRepository.findByOriginalPathAndAccountIdAndStagingAreaId(filePath.normalize().toString(), accountId, stagingAreaId);
         final FileHierarchy fileHierarchy = optionalFileHierarchy.orElseThrow(FileNotFoundException::new);
 
         if (FileStructureType.FILE.equals(fileHierarchy.getFileType())) {
-            return Optional.of(Collections.singletonList(fileHierarchy));
+            return Optional.of(Collections.singletonList(file(fileHierarchy)));
         }
-        return Optional.ofNullable(fileHierarchy.getChildPaths());
+
+        final List<FileHierarchyModel> fileHierarchyModels = fileHierarchy.getChildPaths().stream().map(fileHierarchyLocal -> {
+            if (FileStructureType.FILE.equals(fileHierarchyLocal.getFileType())) {
+                return file(fileHierarchyLocal);
+            }
+            return folder(fileHierarchyLocal);
+        }).collect(Collectors.toList());
+
+        return Optional.of(fileHierarchyModels);
     }
 
     @Override
@@ -107,5 +118,47 @@ public class FileManagerService implements IFileManagerService {
             throw new FileHierarchyException("Exception while creating file structure => " +
                     "FileManagerService::createFileHierarchy(EncryptComplete) " + e.getMessage(), e);
         }
+    }
+
+    private FileHierarchyModel file(final FileHierarchy fileHierarchy) {
+        return FileHierarchyModel.file(
+                fileHierarchy.getId(),
+                fileHierarchy.getAccountId(),
+                fileHierarchy.getStagingAreaId(),
+                fileHierarchy.getName(),
+                fileHierarchy.getOriginalPath(),
+                fileHierarchy.getFileType(),
+                fileHierarchy.getCreatedDate(),
+                fileHierarchy.getUpdateDate(),
+                newFileDetailsModel(fileHierarchy.getFileDetails())
+        );
+    }
+
+    private FileHierarchyModel folder(final FileHierarchy fileHierarchy) {
+        return FileHierarchyModel.folder(
+                fileHierarchy.getId(),
+                fileHierarchy.getAccountId(),
+                fileHierarchy.getStagingAreaId(),
+                fileHierarchy.getName(),
+                fileHierarchy.getOriginalPath(),
+                fileHierarchy.getFileType(),
+                fileHierarchy.getCreatedDate(),
+                fileHierarchy.getUpdateDate()
+        );
+    }
+
+    private FileDetailsModel newFileDetailsModel(final FileDetails fileDetails) {
+        return new FileDetailsModel(
+                fileDetails.getId(),
+                fileDetails.getDosPath(),
+                fileDetails.getPlainSize(),
+                fileDetails.getPlainMd5(),
+                fileDetails.getEncryptedSize(),
+                fileDetails.getEncryptedMd5(),
+                fileDetails.getKey(),
+                fileDetails.getStatus(),
+                fileDetails.getCreatedDate(),
+                fileDetails.getUpdateDate()
+        );
     }
 }
