@@ -17,6 +17,7 @@
  */
 package uk.ac.ebi.ega.ingestion.file.manager.persistence.repository;
 
+import io.micrometer.core.instrument.util.StringUtils;
 import org.springframework.data.repository.CrudRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileHierarchyException;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileDetails;
@@ -44,7 +45,7 @@ public interface FileHierarchyRepository extends CrudRepository<FileHierarchy, L
         /* More checks can be added if file/folder name has some restrictions.
            Regex checks for filenames, paths etc.
          */
-        if (originalPath.isEmpty()) {
+        if (StringUtils.isEmpty(originalPath)) {
             throw new FileHierarchyException("Error in FileHierarchyRepository::createHierarchy(String,String,String,FileDetails) => file path is invalid");
         }
 

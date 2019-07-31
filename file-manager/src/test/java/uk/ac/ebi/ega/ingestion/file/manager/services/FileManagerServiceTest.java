@@ -119,7 +119,6 @@ public class FileManagerServiceTest {
         fileManagerService.archive(createArchiveEvent("/nfs//ega/public///ega-box-01-012345677890.cip/"));
     }
 
-    @Transactional
     @Test(expected = FileHierarchyException.class)
     public void archive_WhenPassEmptyPath_ThenThrowsFileHierarchyException() throws IOException, FileHierarchyException {
 
