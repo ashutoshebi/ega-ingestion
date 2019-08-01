@@ -23,6 +23,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
 import java.io.FileNotFoundException;
 
@@ -41,8 +42,9 @@ public class RestControllerAdvice extends RepositoryRestExceptionHandler {
     /**
      * @return ResponseEntity with 404 http status code.
      */
+    @ResponseStatus(value = HttpStatus.NOT_FOUND, reason = "Path does not exists")
     @ExceptionHandler(FileNotFoundException.class)
-    public ResponseEntity<?> contentNotFoundExceptionHandler() {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+    public void contentNotFoundExceptionHandler() {
+
     }
 }
