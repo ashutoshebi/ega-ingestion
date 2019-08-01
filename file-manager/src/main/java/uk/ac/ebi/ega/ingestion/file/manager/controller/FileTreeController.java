@@ -40,7 +40,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
 
@@ -68,8 +67,7 @@ public class FileTreeController {
         final FileTreeBoxDTO folderIngestionBoxDTO = new FileTreeBoxDTO(FileStructureType.FOLDER.name(), new ArrayList<>());
         final FileTreeWrapper fileTreeWrapper = new FileTreeWrapper(fileTreeBoxDTO, folderIngestionBoxDTO);
 
-        final Optional<List<FileHierarchyModel>> optionalFileHierarchies = fileManagerService.findAll(path, accountId, locationId);
-        final List<FileHierarchyModel> fileHierarchyModels = optionalFileHierarchies.orElseThrow(FileNotFoundException::new);
+        final List<FileHierarchyModel> fileHierarchyModels = fileManagerService.findAll(path, accountId, locationId);
 
         fileHierarchyModels.forEach(fileHierarchyModel -> {
 
