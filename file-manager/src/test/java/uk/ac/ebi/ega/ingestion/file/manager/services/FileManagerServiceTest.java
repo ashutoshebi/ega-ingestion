@@ -302,6 +302,64 @@ public class FileManagerServiceTest {
     }
 
     @Transactional
+    @Test
+    public void findAll_WhenRetrieveFilesWithCaseInsensitiveFilePath_ThenReturnsFiles() throws IOException, FileHierarchyException {
+
+        when(fireService.archiveFile(nullable(String.class), any(File.class), anyString(), anyString())).thenReturn(Optional.of(1L));
+
+        fileManagerService.archive(createArchiveEvent("/nfs/ega/public/ega-box-01-012345677890.cip"));
+
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+
+        TestTransaction.start();
+
+        final Optional<List<FileHierarchyModel>> fileHierarchyModels = fileManagerService.findAll(Paths.get("/NFS/ega/PUBLIC/ega-BOX-01-012345677890.cIp"),
+                "user-ega-box-1130", "ega-box-1130");
+
+        assertNotNull(fileHierarchyModels);
+        assertTrue(fileHierarchyModels.isPresent());
+        assertFalse(fileHierarchyModels.get().isEmpty());
+
+        final FileHierarchyModel fileHierarchy = fileHierarchyModels.get().get(0);
+
+        assertEquals(FileStructureType.FILE, fileHierarchy.getFileType());
+        assertEquals("/nfs/ega/public/ega-box-01-012345677890.cip", fileHierarchy.getOriginalPath());
+        assertEquals("ega-box-01-012345677890.cip", fileHierarchy.getName());
+
+        TestTransaction.end();
+    }
+
+    @Transactional
+    @Test
+    public void findAll_WhenRetrieveFilesWithCaseInsensitiveAccountIdAndStagingAreaId_ThenReturnsFiles() throws IOException, FileHierarchyException {
+
+        when(fireService.archiveFile(nullable(String.class), any(File.class), anyString(), anyString())).thenReturn(Optional.of(1L));
+
+        fileManagerService.archive(createArchiveEvent("/nfs/ega/public/ega-box-01-012345677890.cip"));
+
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+
+        TestTransaction.start();
+
+        final Optional<List<FileHierarchyModel>> fileHierarchyModels = fileManagerService.findAll(Paths.get("/nfs/ega/public/ega-box-01-012345677890.cip"),
+                "uSer-EGA-boX-1130", "EgA-bOx-1130");
+
+        assertNotNull(fileHierarchyModels);
+        assertTrue(fileHierarchyModels.isPresent());
+        assertFalse(fileHierarchyModels.get().isEmpty());
+
+        final FileHierarchyModel fileHierarchy = fileHierarchyModels.get().get(0);
+
+        assertEquals(FileStructureType.FILE, fileHierarchy.getFileType());
+        assertEquals("/nfs/ega/public/ega-box-01-012345677890.cip", fileHierarchy.getOriginalPath());
+        assertEquals("ega-box-01-012345677890.cip", fileHierarchy.getName());
+
+        TestTransaction.end();
+    }
+
+    @Transactional
     @Test(expected = FileNotFoundException.class)
     public void findAll_WhenPassInvalidAccountIdAndLocationId_ThenThrowsException() throws IOException, FileHierarchyException {
 

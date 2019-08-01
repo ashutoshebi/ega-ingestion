@@ -62,7 +62,7 @@ public class FileHierarchyRepositoryTest {
     @Test
     public void saveFileRootDirectory() throws FileHierarchyException {
         fileHierarchyRepository.saveNewFile("ega-account-01", "ega-staging-01", "test1.bam", createFileDetails());
-        final Optional<FileHierarchy> byOriginalPath = fileHierarchyRepository.findByOriginalPathAndAccountIdAndStagingAreaId("/test1.bam", "ega-account-01", "ega-staging-01");
+        final Optional<FileHierarchy> byOriginalPath = fileHierarchyRepository.findOne("/test1.bam", "ega-account-01", "ega-staging-01");
         assertTrue(byOriginalPath.isPresent());
     }
 
@@ -75,7 +75,7 @@ public class FileHierarchyRepositoryTest {
         TestTransaction.end();
 
         TestTransaction.start();
-        final Optional<FileHierarchy> byOriginalPath = fileHierarchyRepository.findByOriginalPathAndAccountIdAndStagingAreaId("/test", "ega-account-01", "ega-staging-01");
+        final Optional<FileHierarchy> byOriginalPath = fileHierarchyRepository.findOne("/test", "ega-account-01", "ega-staging-01");
         assertTrue(byOriginalPath.isPresent());
         assertEquals(1, byOriginalPath.get().getChildPaths().size());
         TestTransaction.end();
@@ -91,7 +91,7 @@ public class FileHierarchyRepositoryTest {
         TestTransaction.end();
 
         TestTransaction.start();
-        final Optional<FileHierarchy> byOriginalPath = fileHierarchyRepository.findByOriginalPathAndAccountIdAndStagingAreaId("/test", "ega-account-01", "ega-staging-01");
+        final Optional<FileHierarchy> byOriginalPath = fileHierarchyRepository.findOne("/test", "ega-account-01", "ega-staging-01");
         assertTrue(byOriginalPath.isPresent());
         assertEquals(2, byOriginalPath.get().getChildPaths().size());
         TestTransaction.end();
