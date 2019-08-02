@@ -40,6 +40,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
 
@@ -67,27 +68,27 @@ public class FileTreeController {
         final FileTreeBoxDTO folderIngestionBoxDTO = new FileTreeBoxDTO(FileStructureType.FOLDER.name(), new ArrayList<>());
         final FileTreeWrapper fileTreeWrapper = new FileTreeWrapper(fileTreeBoxDTO, folderIngestionBoxDTO);
 
-        final List<FileHierarchyModel> fileHierarchyModels = fileManagerService.findAll(path, accountId, locationId);
+        final Optional<List<FileHierarchyModel>> optionalFileHierarchyModels = fileManagerService.findAll(path, accountId, locationId);
 
-        fileHierarchyModels.forEach(fileHierarchyModel -> {
+        optionalFileHierarchyModels.ifPresent(fileHierarchyModels -> {
+            for (FileHierarchyModel fileHierarchyModel : fileHierarchyModels) {
+                final Link selfLink = new Link(new StringBuilder(baseURI).append(path).append("/")
+                        .append(fileHierarchyModel.getName()).toString(), REL);
 
-                    final Link selfLink = new Link(new StringBuilder(baseURI).append(path).append("/")
-                            .append(fileHierarchyModel.getName()).toString(), REL);
-
-                    if (FileStructureType.FILE.equals(fileHierarchyModel.getFileType())) {
-                        final FileTreeDTO fileTreeDTO = new FileTreeDTO(fileHierarchyModel.getAccountId(), fileHierarchyModel.getStagingAreaId(),
-                                fileHierarchyModel.getFileDetails().getPlainSize(), fileHierarchyModel.getFileDetails().getEncryptedSize(), fileHierarchyModel.getName(),
-                                fileHierarchyModel.getFileDetails().getPlainMd5(), fileHierarchyModel.getUpdatedDate(), fileHierarchyModel.getFileDetails().getStatus());
-                        fileTreeDTO.add(selfLink);
-                        fileTreeBoxDTO.getFileTreeDTOS().add(fileTreeDTO);
-                    } else {
-                        final FileTreeDTO fileTreeDTO = new FileTreeDTO(fileHierarchyModel.getAccountId(), fileHierarchyModel.getStagingAreaId(),
-                                fileHierarchyModel.getName());
-                        fileTreeDTO.add(selfLink);
-                        folderIngestionBoxDTO.getFileTreeDTOS().add(fileTreeDTO);
-                    }
+                if (FileStructureType.FILE.equals(fileHierarchyModel.getFileType())) {
+                    final FileTreeDTO fileTreeDTO = new FileTreeDTO(fileHierarchyModel.getAccountId(), fileHierarchyModel.getStagingAreaId(),
+                            fileHierarchyModel.getFileDetails().getPlainSize(), fileHierarchyModel.getFileDetails().getEncryptedSize(), fileHierarchyModel.getName(),
+                            fileHierarchyModel.getFileDetails().getPlainMd5(), fileHierarchyModel.getUpdatedDate(), fileHierarchyModel.getFileDetails().getStatus());
+                    fileTreeDTO.add(selfLink);
+                    fileTreeBoxDTO.getFileTreeDTOS().add(fileTreeDTO);
+                } else {
+                    final FileTreeDTO fileTreeDTO = new FileTreeDTO(fileHierarchyModel.getAccountId(), fileHierarchyModel.getStagingAreaId(),
+                            fileHierarchyModel.getName());
+                    fileTreeDTO.add(selfLink);
+                    folderIngestionBoxDTO.getFileTreeDTOS().add(fileTreeDTO);
                 }
-        );
+            }
+        });
         return new Resource<>(fileTreeWrapper, new Link(baseURI, REL));
     }
 

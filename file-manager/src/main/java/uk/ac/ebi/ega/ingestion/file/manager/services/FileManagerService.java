@@ -61,20 +61,20 @@ public class FileManagerService implements IFileManagerService {
     }
 
     @Override
-    public List<FileHierarchyModel> findAll(final Path filePath, final String accountId, final String stagingAreaId) throws FileNotFoundException {
+    public Optional<List<FileHierarchyModel>> findAll(final Path filePath, final String accountId, final String stagingAreaId) throws FileNotFoundException {
         final Optional<FileHierarchy> optionalFileHierarchy = fileHierarchyRepository.findOne(filePath.normalize().toString(), accountId, stagingAreaId);
         final FileHierarchy fileHierarchy = optionalFileHierarchy.orElseThrow(FileNotFoundException::new);
 
         if (FileStructureType.FILE.equals(fileHierarchy.getFileType())) {
-            return Collections.singletonList(file(fileHierarchy));
+            return Optional.of(Collections.singletonList(file(fileHierarchy)));
         }
 
-        return fileHierarchy.getChildPaths().stream().map(fileHierarchyLocal -> {
+        return Optional.ofNullable(fileHierarchy.getChildPaths()).flatMap(optionalValueFileHierarchies -> Optional.of(optionalValueFileHierarchies.stream().map(fileHierarchyLocal -> {
             if (FileStructureType.FILE.equals(fileHierarchyLocal.getFileType())) {
                 return file(fileHierarchyLocal);
             }
             return folder(fileHierarchyLocal);
-        }).collect(Collectors.toList());
+        }).collect(Collectors.toList())));
     }
 
     @Override

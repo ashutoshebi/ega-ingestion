@@ -59,6 +59,7 @@ import java.util.Optional;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.nullable;
@@ -139,13 +140,14 @@ public class FileManagerServiceTest {
 
         TestTransaction.start();
 
-        final List<FileHierarchyModel> fileHierarchyModels = fileManagerService.findAll(Paths.get("/nfs/ega/public/ega-box-01-012345677890.cip"),
+        final Optional<List<FileHierarchyModel>> fileHierarchyModels = fileManagerService.findAll(Paths.get("/nfs/ega/public/ega-box-01-012345677890.cip"),
                 "user-ega-box-1130", "ega-box-1130");
 
         assertNotNull(fileHierarchyModels);
-        assertFalse(fileHierarchyModels.isEmpty());
+        assertTrue(fileHierarchyModels.isPresent());
+        assertFalse(fileHierarchyModels.get().isEmpty());
 
-        final FileHierarchyModel fileHierarchy = fileHierarchyModels.get(0);
+        final FileHierarchyModel fileHierarchy = fileHierarchyModels.get().get(0);
 
         assertEquals(FileStructureType.FILE, fileHierarchy.getFileType());
         assertEquals("/nfs/ega/public/ega-box-01-012345677890.cip", fileHierarchy.getOriginalPath());
@@ -167,13 +169,14 @@ public class FileManagerServiceTest {
 
         TestTransaction.start();
 
-        final List<FileHierarchyModel> fileHierarchyModels = fileManagerService.findAll(Paths.get("/nfs/ega/public"),
+        final Optional<List<FileHierarchyModel>> fileHierarchyModels = fileManagerService.findAll(Paths.get("/nfs/ega/public"),
                 "user-ega-box-1130", "ega-box-1130");
 
         assertNotNull(fileHierarchyModels);
-        assertFalse(fileHierarchyModels.isEmpty());
+        assertTrue(fileHierarchyModels.isPresent());
+        assertFalse(fileHierarchyModels.get().isEmpty());
 
-        final FileHierarchyModel fileHierarchy = fileHierarchyModels.get(0);
+        final FileHierarchyModel fileHierarchy = fileHierarchyModels.get().get(0);
 
         assertEquals(FileStructureType.FILE, fileHierarchy.getFileType());
         assertEquals("/nfs/ega/public/ega-box-01-012345677890.cip", fileHierarchy.getOriginalPath());
@@ -195,13 +198,14 @@ public class FileManagerServiceTest {
 
         TestTransaction.start();
 
-        final List<FileHierarchyModel> fileHierarchyModels = fileManagerService.findAll(Paths.get("/nfs/ega"),
+        final Optional<List<FileHierarchyModel>> fileHierarchyModels = fileManagerService.findAll(Paths.get("/nfs/ega"),
                 "user-ega-box-1130", "ega-box-1130");
 
         assertNotNull(fileHierarchyModels);
-        assertFalse(fileHierarchyModels.isEmpty());
+        assertTrue(fileHierarchyModels.isPresent());
+        assertFalse(fileHierarchyModels.get().isEmpty());
 
-        final FileHierarchyModel fileHierarchy = fileHierarchyModels.get(0);
+        final FileHierarchyModel fileHierarchy = fileHierarchyModels.get().get(0);
 
         assertEquals(FileStructureType.FOLDER, fileHierarchy.getFileType());
         assertEquals("/nfs/ega/public", fileHierarchy.getOriginalPath());
@@ -223,13 +227,14 @@ public class FileManagerServiceTest {
 
         TestTransaction.start();
 
-        final List<FileHierarchyModel> fileHierarchyModels = fileManagerService.findAll(Paths.get("/ega-box-01-012345677890.cip"),
+        final Optional<List<FileHierarchyModel>> fileHierarchyModels = fileManagerService.findAll(Paths.get("/ega-box-01-012345677890.cip"),
                 "user-ega-box-1130", "ega-box-1130");
 
         assertNotNull(fileHierarchyModels);
-        assertFalse(fileHierarchyModels.isEmpty());
+        assertTrue(fileHierarchyModels.isPresent());
+        assertFalse(fileHierarchyModels.get().isEmpty());
 
-        final FileHierarchyModel fileHierarchy = fileHierarchyModels.get(0);
+        final FileHierarchyModel fileHierarchy = fileHierarchyModels.get().get(0);
 
         assertEquals(FileStructureType.FILE, fileHierarchy.getFileType());
         assertEquals("/ega-box-01-012345677890.cip", fileHierarchy.getOriginalPath());
@@ -251,13 +256,14 @@ public class FileManagerServiceTest {
 
         TestTransaction.start();
 
-        final List<FileHierarchyModel> fileHierarchyModels = fileManagerService.findAll(Paths.get("/nfs/ega/public/ega-box-01-012345677890.cip"),
+        final Optional<List<FileHierarchyModel>> fileHierarchyModels = fileManagerService.findAll(Paths.get("/nfs/ega/public/ega-box-01-012345677890.cip"),
                 "user-ega-box-1130", "ega-box-1130");
 
         assertNotNull(fileHierarchyModels);
-        assertFalse(fileHierarchyModels.isEmpty());
+        assertTrue(fileHierarchyModels.isPresent());
+        assertFalse(fileHierarchyModels.get().isEmpty());
 
-        final FileHierarchyModel fileHierarchy = fileHierarchyModels.get(0);
+        final FileHierarchyModel fileHierarchy = fileHierarchyModels.get().get(0);
 
         assertEquals(FileStructureType.FILE, fileHierarchy.getFileType());
         assertEquals("/nfs/ega/public/ega-box-01-012345677890.cip", fileHierarchy.getOriginalPath());
@@ -279,13 +285,14 @@ public class FileManagerServiceTest {
 
         TestTransaction.start();
 
-        final List<FileHierarchyModel> fileHierarchyModels = fileManagerService.findAll(Paths.get("/nfs//ega/public///ega-box-01-012345677890.cip/"),
+        final Optional<List<FileHierarchyModel>> fileHierarchyModels = fileManagerService.findAll(Paths.get("/nfs//ega/public///ega-box-01-012345677890.cip/"),
                 "user-ega-box-1130", "ega-box-1130");
 
         assertNotNull(fileHierarchyModels);
-        assertFalse(fileHierarchyModels.isEmpty());
+        assertTrue(fileHierarchyModels.isPresent());
+        assertFalse(fileHierarchyModels.get().isEmpty());
 
-        final FileHierarchyModel fileHierarchy = fileHierarchyModels.get(0);
+        final FileHierarchyModel fileHierarchy = fileHierarchyModels.get().get(0);
 
         assertEquals(FileStructureType.FILE, fileHierarchy.getFileType());
         assertEquals("/nfs/ega/public/ega-box-01-012345677890.cip", fileHierarchy.getOriginalPath());
@@ -307,13 +314,14 @@ public class FileManagerServiceTest {
 
         TestTransaction.start();
 
-        final List<FileHierarchyModel> fileHierarchyModels = fileManagerService.findAll(Paths.get("/NFS/ega/PUBLIC/ega-BOX-01-012345677890.cIp"),
+        final Optional<List<FileHierarchyModel>> fileHierarchyModels = fileManagerService.findAll(Paths.get("/NFS/ega/PUBLIC/ega-BOX-01-012345677890.cIp"),
                 "user-ega-box-1130", "ega-box-1130");
 
         assertNotNull(fileHierarchyModels);
-        assertFalse(fileHierarchyModels.isEmpty());
+        assertTrue(fileHierarchyModels.isPresent());
+        assertFalse(fileHierarchyModels.get().isEmpty());
 
-        final FileHierarchyModel fileHierarchy = fileHierarchyModels.get(0);
+        final FileHierarchyModel fileHierarchy = fileHierarchyModels.get().get(0);
 
         assertEquals(FileStructureType.FILE, fileHierarchy.getFileType());
         assertEquals("/nfs/ega/public/ega-box-01-012345677890.cip", fileHierarchy.getOriginalPath());
@@ -335,17 +343,63 @@ public class FileManagerServiceTest {
 
         TestTransaction.start();
 
-        final List<FileHierarchyModel> fileHierarchyModels = fileManagerService.findAll(Paths.get("/nfs/ega/public/ega-box-01-012345677890.cip"),
+        final Optional<List<FileHierarchyModel>> fileHierarchyModels = fileManagerService.findAll(Paths.get("/nfs/ega/public/ega-box-01-012345677890.cip"),
                 "uSer-EGA-boX-1130", "EgA-bOx-1130");
 
         assertNotNull(fileHierarchyModels);
-        assertFalse(fileHierarchyModels.isEmpty());
+        assertTrue(fileHierarchyModels.isPresent());
+        assertFalse(fileHierarchyModels.get().isEmpty());
 
-        final FileHierarchyModel fileHierarchy = fileHierarchyModels.get(0);
+        final FileHierarchyModel fileHierarchy = fileHierarchyModels.get().get(0);
 
         assertEquals(FileStructureType.FILE, fileHierarchy.getFileType());
         assertEquals("/nfs/ega/public/ega-box-01-012345677890.cip", fileHierarchy.getOriginalPath());
         assertEquals("ega-box-01-012345677890.cip", fileHierarchy.getName());
+
+        TestTransaction.end();
+    }
+
+    @Transactional
+    @Test
+    public void findAll_WhenRetrieveFilesWithEmptyFolder_ThenReturnsEmptyList() throws IOException, FileHierarchyException {
+
+        when(fireService.archiveFile(nullable(String.class), any(File.class), anyString(), anyString())).thenReturn(Optional.of(1L));
+
+        fileManagerService.archive(createArchiveEvent("/nfs/ega/public/ega-box-01-012345677890.cip"));
+
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+
+        TestTransaction.start();
+
+        final Optional<List<FileHierarchyModel>> fileHierarchyModels = fileManagerService.findAll(Paths.get("/nfs/ega/public/ega-box-01-012345677890.cip"),
+                "uSer-EGA-boX-1130", "EgA-bOx-1130");
+
+        assertNotNull(fileHierarchyModels);
+        assertTrue(fileHierarchyModels.isPresent());
+        assertFalse(fileHierarchyModels.get().isEmpty());
+
+        final FileHierarchyModel fileHierarchy = fileHierarchyModels.get().get(0);
+
+        assertEquals(FileStructureType.FILE, fileHierarchy.getFileType());
+        assertEquals("/nfs/ega/public/ega-box-01-012345677890.cip", fileHierarchy.getOriginalPath());
+        assertEquals("ega-box-01-012345677890.cip", fileHierarchy.getName());
+
+        TestTransaction.end();
+
+        TestTransaction.start();
+        TestTransaction.flagForCommit();
+        fileHierarchyRepository.deleteById(fileHierarchy.getId());
+        TestTransaction.end();
+
+        TestTransaction.start();
+
+        final Optional<List<FileHierarchyModel>> fileHierarchyModelsAfterChildDeleted = fileManagerService.findAll(Paths.get("/nfs/ega/public"),
+                "uSer-EGA-boX-1130", "EgA-bOx-1130");
+
+        assertNotNull(fileHierarchyModelsAfterChildDeleted);
+        assertTrue(fileHierarchyModelsAfterChildDeleted.isPresent());
+        assertTrue(fileHierarchyModelsAfterChildDeleted.get().isEmpty());
 
         TestTransaction.end();
     }
@@ -365,13 +419,14 @@ public class FileManagerServiceTest {
 
             TestTransaction.start();
 
-            final List<FileHierarchyModel> fileHierarchyModels = fileManagerService.findAll(Paths.get("/nfs/ega/public/ega-box-01-012345677890.cip"),
+            final Optional<List<FileHierarchyModel>> fileHierarchyModels = fileManagerService.findAll(Paths.get("/nfs/ega/public/ega-box-01-012345677890.cip"),
                     "user-ega-box-1130", "ega-box-1130");
 
             assertNotNull(fileHierarchyModels);
-            assertFalse(fileHierarchyModels.isEmpty());
+            assertTrue(fileHierarchyModels.isPresent());
+            assertFalse(fileHierarchyModels.get().isEmpty());
 
-            final FileHierarchyModel fileHierarchy = fileHierarchyModels.get(0);
+            final FileHierarchyModel fileHierarchy = fileHierarchyModels.get().get(0);
 
             assertEquals(FileStructureType.FILE, fileHierarchy.getFileType());
             assertEquals("/nfs/ega/public/ega-box-01-012345677890.cip", fileHierarchy.getOriginalPath());

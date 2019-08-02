@@ -25,10 +25,11 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 
 public interface IFileManagerService {
 
-    List<FileHierarchyModel> findAll(Path filePath, String accountId, String stagingAreaId) throws FileNotFoundException;
+    Optional<List<FileHierarchyModel>> findAll(Path filePath, String accountId, String stagingAreaId) throws FileNotFoundException;
 
     void archive(ArchiveEvent archiveEvent) throws IOException, FileHierarchyException;
 }
