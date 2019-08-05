@@ -138,7 +138,7 @@ create table FILE_DETAILS
     DOS_PATH        varchar(255) not null,
     STATUS          varchar(255) not null,
     CREATED_DATE    timestamp    not null,
-    UPDATE_DATE     timestamp    not null
+    UPDATED_DATE    timestamp    not null
 );
 
 create table FILE_HIERARCHY
