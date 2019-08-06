@@ -17,9 +17,13 @@
  */
 package uk.ac.ebi.ega.ingestion.file.manager.services;
 
+import com.querydsl.core.types.Predicate;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEvent;
 import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileHierarchyException;
 import uk.ac.ebi.ega.ingestion.file.manager.models.FileHierarchyModel;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileHierarchy;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -32,4 +36,6 @@ public interface IFileManagerService {
     List<FileHierarchyModel> findAll(Path filePath, String accountId, String stagingAreaId) throws FileNotFoundException;
 
     void archive(ArchiveEvent archiveEvent) throws IOException, FileHierarchyException;
+
+    Page<FileHierarchyModel> findAllFiles(String accountId, String stagingAreaId, Predicate predicate, Pageable pageable) throws FileNotFoundException;
 }

@@ -17,8 +17,14 @@
  */
 package uk.ac.ebi.ega.ingestion.file.manager.services;
 
+import com.querydsl.core.types.Ops;
+import com.querydsl.core.types.Predicate;
+import com.querydsl.core.types.dsl.Expressions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
 import uk.ac.ebi.ega.encryption.core.utils.io.FileUtils;
 import uk.ac.ebi.ega.fire.ingestion.service.IFireService;
@@ -28,6 +34,7 @@ import uk.ac.ebi.ega.ingestion.file.manager.models.ArchivedFile;
 import uk.ac.ebi.ega.ingestion.file.manager.models.FileHierarchyModel;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileDetails;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileHierarchy;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.QFileHierarchy;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.FileHierarchyRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.utils.FileStructureType;
 
@@ -100,6 +107,21 @@ public class FileManagerService implements IFileManagerService {
         );
 
         addFile(archivedFile);
+    }
+
+    // Method returns only files & not folders.
+    @Override
+    public Page<FileHierarchyModel> findAllFiles(final String accountId, final String stagingAreaId,
+                                                 final Predicate predicate, final Pageable pageable) throws FileNotFoundException {
+        final Predicate filePredicate = Expressions.allOf(Expressions.predicate(Ops.EQ, QFileHierarchy.fileHierarchy.fileType,
+                Expressions.constant(FileStructureType.FILE))).and(predicate);
+
+        final Page<FileHierarchy> fileHierarchyPage = fileHierarchyRepository.findAll(accountId, stagingAreaId, filePredicate, pageable);
+
+        if (!fileHierarchyPage.hasContent()) {
+            throw new FileNotFoundException();
+        }
+        return new PageImpl<>(fileHierarchyPage.stream().map(FileHierarchy::toFile).collect(Collectors.toList()));
     }
 
     private void addFile(ArchivedFile archivedFile) throws FileHierarchyException {
