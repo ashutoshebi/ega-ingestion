@@ -33,12 +33,14 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.transaction.annotation.Transactional;
 import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileHierarchyException;
+import uk.ac.ebi.ega.ingestion.file.manager.models.FileHierarchyModel;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileDetails;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileHierarchy;
 
 import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringRunner.class)
@@ -94,6 +96,34 @@ public class FileHierarchyRepositoryTest {
         final Optional<FileHierarchy> byOriginalPath = fileHierarchyRepository.findOne("/test", "ega-account-01", "ega-staging-01");
         assertTrue(byOriginalPath.isPresent());
         assertEquals(2, byOriginalPath.get().getChildPaths().size());
+        TestTransaction.end();
+    }
+
+    @Test
+    @Transactional
+    @Sql(scripts = "classpath:cleanDatabase.sql")
+    public void saveFilesInDirectoryAndRetrieveFolderWithNoChildren() throws FileHierarchyException {
+        fileHierarchyRepository.saveNewFile("ega-account-01", "ega-staging-01", "/test/test1.bam", createFileDetails());
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+
+        TestTransaction.start();
+        final Optional<FileHierarchy> byOriginalPath = fileHierarchyRepository.findOne("/test/test1.bam", "ega-account-01", "ega-staging-01");
+        assertTrue(byOriginalPath.isPresent());
+        TestTransaction.end();
+
+        TestTransaction.start();
+        TestTransaction.flagForCommit();
+        final FileHierarchy fileHierarchy = byOriginalPath.get();
+        fileHierarchyRepository.deleteById(fileHierarchy.getId());
+        TestTransaction.end();
+
+        TestTransaction.start();
+        final Optional<FileHierarchy> byOriginalPathAfterDeleted = fileHierarchyRepository.findOne("/test", "ega-account-01", "ega-staging-01");
+        assertTrue(byOriginalPathAfterDeleted.isPresent());
+        final FileHierarchy fileHierarchyAfterChildDeleted = byOriginalPathAfterDeleted.get();
+        assertNotNull(fileHierarchyAfterChildDeleted.getChildPaths());
+        assertTrue(fileHierarchyAfterChildDeleted.getChildPaths().isEmpty());
         TestTransaction.end();
     }
 

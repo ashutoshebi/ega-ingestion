@@ -29,7 +29,7 @@ import java.util.Optional;
 
 public interface IFileManagerService {
 
-    Optional<List<FileHierarchyModel>> findAll(Path filePath, String accountId, String stagingAreaId) throws FileNotFoundException;
+    List<FileHierarchyModel> findAll(Path filePath, String accountId, String stagingAreaId) throws FileNotFoundException;
 
     void archive(ArchiveEvent archiveEvent) throws IOException, FileHierarchyException;
 }

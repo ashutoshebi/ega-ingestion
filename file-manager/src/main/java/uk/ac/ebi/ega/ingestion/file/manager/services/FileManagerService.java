@@ -25,7 +25,6 @@ import uk.ac.ebi.ega.fire.ingestion.service.IFireService;
 import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEvent;
 import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileHierarchyException;
 import uk.ac.ebi.ega.ingestion.file.manager.models.ArchivedFile;
-import uk.ac.ebi.ega.ingestion.file.manager.models.FileDetailsModel;
 import uk.ac.ebi.ega.ingestion.file.manager.models.FileHierarchyModel;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileDetails;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileHierarchy;
@@ -61,20 +60,20 @@ public class FileManagerService implements IFileManagerService {
     }
 
     @Override
-    public Optional<List<FileHierarchyModel>> findAll(final Path filePath, final String accountId, final String stagingAreaId) throws FileNotFoundException {
+    public List<FileHierarchyModel> findAll(final Path filePath, final String accountId, final String stagingAreaId) throws FileNotFoundException {
         final Optional<FileHierarchy> optionalFileHierarchy = fileHierarchyRepository.findOne(filePath.normalize().toString(), accountId, stagingAreaId);
         final FileHierarchy fileHierarchy = optionalFileHierarchy.orElseThrow(FileNotFoundException::new);
 
         if (FileStructureType.FILE.equals(fileHierarchy.getFileType())) {
-            return Optional.of(Collections.singletonList(file(fileHierarchy)));
+            return Collections.singletonList(fileHierarchy.toFile());
         }
 
-        return Optional.ofNullable(fileHierarchy.getChildPaths()).flatMap(optionalValueFileHierarchies -> Optional.of(optionalValueFileHierarchies.stream().map(fileHierarchyLocal -> {
+        return fileHierarchy.getChildPaths().stream().map(fileHierarchyLocal -> {
             if (FileStructureType.FILE.equals(fileHierarchyLocal.getFileType())) {
-                return file(fileHierarchyLocal);
+                return fileHierarchyLocal.toFile();
             }
-            return folder(fileHierarchyLocal);
-        }).collect(Collectors.toList())));
+            return fileHierarchyLocal.toFolder();
+        }).collect(Collectors.toList());
     }
 
     @Override
@@ -116,47 +115,5 @@ public class FileManagerService implements IFileManagerService {
             throw new FileHierarchyException("Exception while creating file structure => " +
                     "FileManagerService::createFileHierarchy(EncryptComplete) " + e.getMessage(), e);
         }
-    }
-
-    private FileHierarchyModel file(final FileHierarchy fileHierarchy) {
-        return FileHierarchyModel.file(
-                fileHierarchy.getId(),
-                fileHierarchy.getAccountId(),
-                fileHierarchy.getStagingAreaId(),
-                fileHierarchy.getName(),
-                fileHierarchy.getOriginalPath(),
-                fileHierarchy.getFileType(),
-                fileHierarchy.getCreatedDate(),
-                fileHierarchy.getUpdateDate(),
-                newFileDetailsModel(fileHierarchy.getFileDetails())
-        );
-    }
-
-    private FileHierarchyModel folder(final FileHierarchy fileHierarchy) {
-        return FileHierarchyModel.folder(
-                fileHierarchy.getId(),
-                fileHierarchy.getAccountId(),
-                fileHierarchy.getStagingAreaId(),
-                fileHierarchy.getName(),
-                fileHierarchy.getOriginalPath(),
-                fileHierarchy.getFileType(),
-                fileHierarchy.getCreatedDate(),
-                fileHierarchy.getUpdateDate()
-        );
-    }
-
-    private FileDetailsModel newFileDetailsModel(final FileDetails fileDetails) {
-        return new FileDetailsModel(
-                fileDetails.getId(),
-                fileDetails.getDosPath(),
-                fileDetails.getPlainSize(),
-                fileDetails.getPlainMd5(),
-                fileDetails.getEncryptedSize(),
-                fileDetails.getEncryptedMd5(),
-                fileDetails.getKey(),
-                fileDetails.getStatus(),
-                fileDetails.getCreatedDate(),
-                fileDetails.getUpdateDate()
-        );
     }
 }
