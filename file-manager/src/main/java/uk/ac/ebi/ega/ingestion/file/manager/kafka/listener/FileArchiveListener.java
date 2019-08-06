@@ -37,9 +37,9 @@ public class FileArchiveListener {
         this.encryptJobService = encryptJobService;
     }
 
-    @KafkaListener(id = "${spring.kafka.client-id}", topics = "${spring.kafka.file.archive.queue.name}",
-            groupId = "${spring.kafka.consumer.group-id}")
-    public void listenEncryptionCompletedQueue(ArchiveEvent archiveEvent, Acknowledgment acknowledgment) {
+    @KafkaListener(id = "file-manager-archive-listener", topics = "${spring.kafka.file.archive.queue.name}",
+            groupId = "${spring.kafka.consumer.group-id}", containerFactory = "archiveEventListenerContainerFactory")
+    public void listenArchiveEventQueue(ArchiveEvent archiveEvent, Acknowledgment acknowledgment) {
         try {
             encryptJobService.archive(archiveEvent);
         } catch (FileHierarchyException | IOException e) {

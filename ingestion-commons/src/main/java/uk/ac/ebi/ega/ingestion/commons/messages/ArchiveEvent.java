@@ -24,29 +24,32 @@ import java.util.Objects;
 
 public class ArchiveEvent {
 
-    private final String accountId;
+    private String accountId;
 
-    private final String stagingAreaId;
+    private String stagingAreaId;
 
-    private final String originalPath;
+    private String originalPath;
 
-    private final String stagingPath;
-
-    @JsonProperty
-    private final long plainSize;
-
-    private final String plainMd5;
+    private String stagingPath;
 
     @JsonProperty
-    private final long encryptedSize;
+    private long plainSize;
 
-    private final String encryptedMd5;
+    private String plainMd5;
 
-    private final String keyPath;
+    @JsonProperty
+    private long encryptedSize;
 
-    private final LocalDateTime startDateTime;
+    private String encryptedMd5;
 
-    private final LocalDateTime endDateTime;
+    private String keyPath;
+
+    private LocalDateTime startDateTime;
+
+    private LocalDateTime endDateTime;
+
+    protected ArchiveEvent() {
+    }
 
     public ArchiveEvent(final String accountId, final String stagingAreaId, final String originalPath,
                         final String stagingPath, final long plainSize, final String plainMd5,

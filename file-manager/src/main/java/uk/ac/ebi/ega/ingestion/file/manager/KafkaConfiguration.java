@@ -26,6 +26,7 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -37,10 +38,14 @@ import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
+import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.support.converter.StringJsonMessageConverter;
 import org.springframework.kafka.support.serializer.JsonSerializer;
+import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEvent;
+import uk.ac.ebi.ega.ingestion.file.manager.kafka.listener.FileArchiveListener;
 import uk.ac.ebi.ega.ingestion.file.manager.kafka.message.DownloadBoxFileProcess;
 import uk.ac.ebi.ega.ingestion.file.manager.kafka.message.ReEncryptComplete;
+import uk.ac.ebi.ega.ingestion.file.manager.services.IFileManagerService;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -96,6 +101,11 @@ public class KafkaConfiguration {
     }
 
     @Bean
+    public ConsumerFactory<String, ReEncryptComplete> reEncryptCompleteConsumerFactory() {
+        return new DefaultKafkaConsumerFactory<>(consumerConfigs());
+    }
+
+    @Bean
     public Map<String, Object> consumerConfigs() {
         Map<String, Object> properties = new HashMap<>();
         properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
@@ -108,8 +118,39 @@ public class KafkaConfiguration {
     }
 
     @Bean
-    public ConsumerFactory<String, ReEncryptComplete> reEncryptCompleteConsumerFactory() {
-        return new DefaultKafkaConsumerFactory<>(consumerConfigs());
+    public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String, ArchiveEvent>>
+    archiveEventListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, ArchiveEvent> factory =
+                new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConcurrency(1);
+        factory.setConsumerFactory(archiveEventConsumerFactory());
+        factory.setMessageConverter(new StringJsonMessageConverter(getObjectMapper()));
+        factory.getContainerProperties().setPollTimeout(600000);
+        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
+        return factory;
+    }
+
+    @Bean
+    public ConsumerFactory<String, ArchiveEvent> archiveEventConsumerFactory() {
+        return new DefaultKafkaConsumerFactory<>(manualConsumerConfigs());
+    }
+
+    @Bean
+    public Map<String, Object> manualConsumerConfigs() {
+        Map<String, Object> properties = new HashMap<>();
+        properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        properties.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, 3000);
+        properties.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, 10000);
+        properties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest"); //TODO Change to latest
+        properties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
+        return properties;
+    }
+
+    @Bean
+    public FileArchiveListener fileArchiveListener(@Autowired IFileManagerService fileManagerService) {
+        return new FileArchiveListener(fileManagerService);
     }
 
 }
