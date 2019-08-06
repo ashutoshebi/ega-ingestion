@@ -20,7 +20,6 @@ package uk.ac.ebi.ega.ingestion.file.manager.dto.resources.assemblers;
 import org.springframework.hateoas.mvc.ResourceAssemblerSupport;
 import uk.ac.ebi.ega.ingestion.file.manager.controller.FileTreeController;
 import uk.ac.ebi.ega.ingestion.file.manager.dto.FileTreeDTO;
-import uk.ac.ebi.ega.ingestion.file.manager.models.FileDetailsModel;
 import uk.ac.ebi.ega.ingestion.file.manager.models.FileHierarchyModel;
 
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
@@ -36,17 +35,8 @@ public class FileHierarchyResourceAssembler extends ResourceAssemblerSupport<Fil
 
     @Override
     public FileTreeDTO toResource(final FileHierarchyModel fileHierarchyModel) {
-        final FileDetailsModel fileDetailsModel = fileHierarchyModel.getFileDetails();
-        final FileTreeDTO fileTreeDTO = new FileTreeDTO(
-                fileHierarchyModel.getAccountId(),
-                fileHierarchyModel.getStagingAreaId(),
-                fileHierarchyModel.getName(),
-                fileDetailsModel.getPlainSize(),
-                fileDetailsModel.getEncryptedSize(),
-                fileDetailsModel.getPlainMd5(),
-                fileDetailsModel.getUpdatedDate(),
-                fileDetailsModel.getStatus()
-        );
+
+        final FileTreeDTO fileTreeDTO = FileTreeDTO.file(fileHierarchyModel);
 
         fileTreeDTO.add(linkTo(controllerClass).
                 slash(fileHierarchyModel.getAccountId()).
