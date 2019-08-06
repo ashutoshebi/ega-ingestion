@@ -56,7 +56,9 @@ public class OldFireService implements IFireService {
     private File moveFileToFireStaging(File file, String pathOnFire) throws IOException {
         final Path fileInStagingPath = fireStaging.resolve(pathOnFire).resolve(file.getName());
         final File fileInStaging = fileInStagingPath.toFile();
+
         try {
+            Files.createDirectories(fileInStagingPath.getParent());
             Files.move(file.toPath(), fileInStagingPath, ATOMIC_MOVE);
             logger.info("File '{}' moved to '{}", file.getAbsolutePath(), fileInStaging.getAbsolutePath());
             return fileInStaging;

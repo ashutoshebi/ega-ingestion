@@ -21,7 +21,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.DependsOn;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -50,6 +49,7 @@ import uk.ac.ebi.ega.ingestion.file.manager.services.key.RandomKeyGenerator;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 @Configuration
@@ -102,19 +102,24 @@ public class FileManagerConfiguration {
     }
 
     @Bean
-    public IFireService fireIngestion(@Value("fire.staging.path") String fireStagingPath,
+    public IFireService fireIngestion(@Value("${fire.staging.path}") String fireStagingPath,
                                       IProFilerDatabaseService proFilerDatabaseService) throws FileNotFoundException {
-        final File file = new File(fireStagingPath);
+        return new OldFireService(assertAndGetPath(fireStagingPath), proFilerDatabaseService);
+    }
+
+    private Path assertAndGetPath(String path) throws FileNotFoundException {
+        final File file = new File(path);
         if (!file.exists()) {
             throw new FileNotFoundException(file.getAbsolutePath());
         }
-        return new OldFireService(file.toPath(), proFilerDatabaseService);
+        return file.toPath();
     }
 
     @Bean
     public IFileManagerService fileManagerService(IFireService fireIngestion,
+                                                  @Value("${file.manager.fire.relative.path}") String fireBoxRelativePath,
                                                   FileHierarchyRepository fileHierarchyRepository) {
-        return new FileManagerService(fireIngestion, Paths.get("/"), fileHierarchyRepository);
+        return new FileManagerService(fireIngestion, Paths.get(fireBoxRelativePath), fileHierarchyRepository);
     }
 
     @Bean
