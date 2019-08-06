@@ -64,13 +64,13 @@ public class FileTreeController {
         final List<FileHierarchyModel> fileHierarchyModels = fileManagerService.findAll(path, accountId, locationId);
 
         for (FileHierarchyModel fileHierarchyModel : fileHierarchyModels) {
-            final Link selfLink = new Link(new StringBuilder(baseURI).append(path).append("/")
-                    .append(fileHierarchyModel.getName()).toString(), REL);
+            final Link selfLink = new Link(new StringBuilder(baseURI).
+                    append(fileHierarchyModel.getOriginalPath()).toString(), REL);
 
             if (FileStructureType.FILE.equals(fileHierarchyModel.getFileType())) {
                 final FileTreeDTO fileTreeDTO = FileTreeDTO.file(fileHierarchyModel);
                 fileTreeDTO.add(selfLink);
-                fileTreeWrapper.addFile(FileTreeDTO.file(fileHierarchyModel));
+                fileTreeWrapper.addFile(fileTreeDTO);
             } else {
                 final FileTreeDTO fileTreeDTO = FileTreeDTO.folder(fileHierarchyModel);
                 fileTreeDTO.add(selfLink);
