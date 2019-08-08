@@ -17,10 +17,6 @@
  */
 package uk.ac.ebi.ega.cmdline.fire.re.archiver.services;
 
-import uk.ac.ebi.ega.cmdline.fire.re.archiver.models.IngestionPipelineFile;
-import uk.ac.ebi.ega.cmdline.fire.re.archiver.models.IngestionPipelineResult;
-import uk.ac.ebi.ega.cmdline.fire.re.archiver.services.exceptions.SystemErrorException;
-import uk.ac.ebi.ega.cmdline.fire.re.archiver.services.exceptions.UserErrorException;
 import uk.ac.ebi.ega.encryption.core.DecryptInputStream;
 import uk.ac.ebi.ega.encryption.core.EncryptOutputStream;
 import uk.ac.ebi.ega.encryption.core.StreamPipelineBuilder;
@@ -30,6 +26,10 @@ import uk.ac.ebi.ega.encryption.core.encryption.exceptions.AlgorithmInitializati
 import uk.ac.ebi.ega.encryption.core.encryption.exceptions.WrongPassword;
 import uk.ac.ebi.ega.encryption.core.stream.PipelineStream;
 import uk.ac.ebi.ega.encryption.core.utils.io.FileUtils;
+import uk.ac.ebi.ega.file.encryption.processor.pipelines.IngestionPipelineFile;
+import uk.ac.ebi.ega.file.encryption.processor.pipelines.IngestionPipelineResult;
+import uk.ac.ebi.ega.file.encryption.processor.pipelines.exceptions.SystemErrorException;
+import uk.ac.ebi.ega.file.encryption.processor.pipelines.exceptions.UserErrorException;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -85,6 +85,7 @@ public class ReEncryptionService implements IReEncryptionService {
                         .build()
         ) {
             final long bytesTransferred = stream.execute();
+
             return new IngestionPipelineResult(
                     new IngestionPipelineFile(origin, decryptInputStream.getMd5(), decryptInputStream.available()),
                     decryptInputStream.getUnencryptedMd5(),

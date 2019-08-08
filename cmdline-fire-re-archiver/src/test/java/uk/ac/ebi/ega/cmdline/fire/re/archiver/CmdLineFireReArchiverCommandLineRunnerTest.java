@@ -20,7 +20,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.springframework.context.ApplicationContext;
-import uk.ac.ebi.ega.cmdline.fire.re.archiver.FireArchiverCommandLineRunner.ReturnValue;
+import uk.ac.ebi.ega.cmdline.fire.re.archiver.CmdLineFireReArchiverCommandLineRunner.ReturnValue;
+import uk.ac.ebi.ega.cmdline.fire.re.archiver.services.IReEncryptionService;
 import uk.ac.ebi.ega.cmdline.fire.re.archiver.utils.IStableIdGenerator;
 import uk.ac.ebi.ega.fire.ingestion.service.IFireService;
 
@@ -36,7 +37,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class FireArchiverCommandLineRunnerTest {
+public class CmdLineFireReArchiverCommandLineRunnerTest {
 
     private static final String STABLE_ID = "CMD_123";
     private static final String MD5_OF_INPUT_FILE = "d41d8cd98f00b204e9800998ecf8427e";
@@ -45,12 +46,13 @@ public class FireArchiverCommandLineRunnerTest {
     private final IFireService fireService = mock(IFireService.class);
     private final IStableIdGenerator stableIdGenerator = mock(IStableIdGenerator.class);
     private final ApplicationContext applicationContext = mock(ApplicationContext.class);
+    private final IReEncryptionService reEncryptionService = mock(IReEncryptionService.class);
 
     @Rule
     public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-    private final FireArchiverCommandLineRunner archiver = new FireArchiverCommandLineRunner(applicationContext,
-            fireService, stableIdGenerator);
+    private final CmdLineFireReArchiverCommandLineRunner archiver = new CmdLineFireReArchiverCommandLineRunner(applicationContext,
+            fireService, stableIdGenerator, reEncryptionService);
 
     private File inputFile;
 

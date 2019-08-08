@@ -15,7 +15,7 @@
  */
 package uk.ac.ebi.ega.cmdline.fire.re.archiver;
 
-public class CmdLineFireArchiverProperties {
+public class CmdLineFireReArchiverProperties {
 
     private String stagingPath;
 

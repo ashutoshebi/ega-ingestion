@@ -22,7 +22,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.kafka.core.KafkaTemplate;
 import uk.ac.ebi.ega.cmdline.fire.re.archiver.services.IReEncryptionService;
 import uk.ac.ebi.ega.cmdline.fire.re.archiver.services.ReEncryptionService;
 import uk.ac.ebi.ega.cmdline.fire.re.archiver.utils.IStableIdGenerator;
@@ -36,30 +35,25 @@ import uk.ac.ebi.ega.fire.ingestion.service.IFireService;
 import uk.ac.ebi.ega.fire.ingestion.service.IProFilerDatabaseService;
 import uk.ac.ebi.ega.fire.ingestion.service.OldFireService;
 import uk.ac.ebi.ega.fire.ingestion.service.ProFilerDatabaseService;
-import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEvent;
 import uk.ac.ebi.ega.jobs.core.Job;
-import uk.ac.ebi.ega.jobs.core.services.ExecutorPersistenceService;
-import uk.ac.ebi.ega.jobs.core.utils.DelayConfiguration;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.concurrent.TimeUnit;
 
-// TODO bjuhasz: rename this class (ReArchiver) and all the others, too.
 @Configuration
-public class CmdLineFireArchiverConfiguration {
+public class CmdLineFireReArchiverConfiguration {
 
     @Bean
     @ConfigurationProperties(prefix = "ega.cmdline.fire.archiver.config")
-    public CmdLineFireArchiverProperties archiverProperties() {
-        return new CmdLineFireArchiverProperties();
+    public CmdLineFireReArchiverProperties archiverProperties() {
+        return new CmdLineFireReArchiverProperties();
     }
 
     @Bean
-    public IStableIdGenerator stableIdGenerator(final CmdLineFireArchiverProperties archiverProperties) {
+    public IStableIdGenerator stableIdGenerator(final CmdLineFireReArchiverProperties archiverProperties) {
         final String stableIdPrefix = archiverProperties.getStableIdPrefix();
         return new StableIdGenerator(stableIdPrefix);
     }
@@ -67,8 +61,9 @@ public class CmdLineFireArchiverConfiguration {
     @Bean
     public CommandLineRunner commandLineRunner(final ApplicationContext applicationContext,
                                                final IFireService fireService,
-                                               final IStableIdGenerator stableIdGenerator) {
-        return new FireArchiverCommandLineRunner(applicationContext, fireService, stableIdGenerator);
+                                               final IStableIdGenerator stableIdGenerator,
+                                               final IReEncryptionService reEncryptionService) {
+        return new CmdLineFireReArchiverCommandLineRunner(applicationContext, fireService, stableIdGenerator, reEncryptionService);
     }
 
     @Bean
@@ -78,14 +73,15 @@ public class CmdLineFireArchiverConfiguration {
 
     @Bean
     public IFireService fireService(final IProFilerDatabaseService proFilerDatabaseService,
-                                    final CmdLineFireArchiverProperties properties) {
+                                    final CmdLineFireReArchiverProperties properties) {
         final Path fireStaging = Paths.get(properties.getStagingPath());
         return new OldFireService(fireStaging, proFilerDatabaseService);
     }
 
     @Bean
     public IReEncryptionService reEncryptionService() {
-        return new ReEncryptionService();
+        // TODO bjuhasz
+        return new ReEncryptionService(null, null, null);
     }
 
     ///////////// TODO bjuhasz:
@@ -119,17 +115,17 @@ public class CmdLineFireArchiverConfiguration {
 
     @Bean
     public EncryptService encryptService(@Value("${file.encryption.staging.root}") String staging,
-                                         ExecutorPersistenceService executorPersistenceService,
-                                         Job<IngestionProcess> job,
-                                         KafkaTemplate<String, ArchiveEvent> kafkaTemplate,
-                                         final DelayConfiguration delayConfiguration) throws FileNotFoundException {
+                                         Job<IngestionProcess> job) throws FileNotFoundException {
         final File stagingRoot = new File(staging);
 
         if (!stagingRoot.exists()) {
             throw new FileNotFoundException("Staging path for encryption is not found");
         }
 
+/*
         return new EncryptService(stagingRoot.toPath(), executorPersistenceService, job,
                 kafkaTemplate, completedTopic, delayConfiguration);
+*/
+        return null;
     }
 }

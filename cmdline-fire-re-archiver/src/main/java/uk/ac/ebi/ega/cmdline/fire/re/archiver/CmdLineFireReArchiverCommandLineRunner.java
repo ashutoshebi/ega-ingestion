@@ -15,6 +15,7 @@
  */
 package uk.ac.ebi.ega.cmdline.fire.re.archiver;
 
+import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
@@ -23,6 +24,8 @@ import org.springframework.context.ApplicationContext;
 import uk.ac.ebi.ega.cmdline.fire.re.archiver.services.IReEncryptionService;
 import uk.ac.ebi.ega.cmdline.fire.re.archiver.utils.IStableIdGenerator;
 import uk.ac.ebi.ega.encryption.core.utils.Hash;
+import uk.ac.ebi.ega.file.encryption.processor.pipelines.exceptions.SystemErrorException;
+import uk.ac.ebi.ega.file.encryption.processor.pipelines.exceptions.UserErrorException;
 import uk.ac.ebi.ega.fire.ingestion.service.IFireService;
 
 import java.io.File;
@@ -34,10 +37,11 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Optional;
 
-public class FireArchiverCommandLineRunner implements CommandLineRunner {
+public class CmdLineFireReArchiverCommandLineRunner implements CommandLineRunner {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(FireArchiverCommandLineRunner.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CmdLineFireReArchiverCommandLineRunner.class);
 
+    private static final String EXTENSION_OF_RE_ENCRYPTED_FILES = ".cip";
     private static final int BUFFER_SIZE = 8192;
 
     private final ApplicationContext applicationContext;
@@ -45,10 +49,10 @@ public class FireArchiverCommandLineRunner implements CommandLineRunner {
     private final IStableIdGenerator stableIdGenerator;
     private final IReEncryptionService reEncryptionService;
 
-    FireArchiverCommandLineRunner(final ApplicationContext applicationContext,
-                                  final IFireService fireService,
-                                  final IStableIdGenerator stableIdGenerator,
-                                  final IReEncryptionService reEncryptionService) {
+    CmdLineFireReArchiverCommandLineRunner(final ApplicationContext applicationContext,
+                                           final IFireService fireService,
+                                           final IStableIdGenerator stableIdGenerator,
+                                           final IReEncryptionService reEncryptionService) {
         this.applicationContext = applicationContext;
         this.fireService = fireService;
         this.stableIdGenerator = stableIdGenerator;
@@ -69,21 +73,33 @@ public class FireArchiverCommandLineRunner implements CommandLineRunner {
         try {
             final String stableId = stableIdGenerator.generate();
             final File inputFile = args.getFilePath().toFile();
-            final String md5 = getMd5(inputFile);
+            final File reEncryptedFile = getReEncryptedFileBasedOn(inputFile);
             final String pathOnFire = args.getPathOnFire();
 
-            reEncryptionService.reEncrypt(inputFile, pathOnFire);
+            reEncryptionService.reEncrypt(inputFile, reEncryptedFile);
 
-            fireService.archiveFile(stableId, inputFile, md5, pathOnFire);
+            final String md5 = getMd5(reEncryptedFile);
+
+            fireService.archiveFile(stableId, reEncryptedFile, md5, pathOnFire);
 
             return ReturnValue.EVERYTHING_OK.getValue();
+
         } catch (FileNotFoundException e) {
             LOGGER.error("Input file was not found: {}", e.getMessage());
             return ReturnValue.EXCEPTION_DURING_ARCHIVING.getValue();
         } catch (NoSuchAlgorithmException | IOException e) {
             LOGGER.error("Exception during archiving: ", e);
             return ReturnValue.EXCEPTION_DURING_ARCHIVING.getValue();
+        } catch (UserErrorException | SystemErrorException e) {
+            LOGGER.error("Exception during re-encryption: ", e);
+            return ReturnValue.EXCEPTION_DURING_RE_ENCRYPTION.getValue();
         }
+    }
+
+    private File getReEncryptedFileBasedOn(final File file) {
+        final String absFilePathWithoutExtension = FilenameUtils.removeExtension(file.getAbsolutePath());
+        final String absFilePathWithExtension = absFilePathWithoutExtension + EXTENSION_OF_RE_ENCRYPTED_FILES;
+        return new File(absFilePathWithExtension);
     }
 
     private String getMd5(final File inputFile) throws IOException, NoSuchAlgorithmException {
@@ -111,7 +127,8 @@ public class FireArchiverCommandLineRunner implements CommandLineRunner {
     enum ReturnValue {
         EVERYTHING_OK(0),
         EXCEPTION_DURING_ARCHIVING(1),
-        EMPTY_COMMAND_LINE_ARGUMENTS(2);
+        EXCEPTION_DURING_RE_ENCRYPTION(2),
+        EMPTY_COMMAND_LINE_ARGUMENTS(3);
 
         private int value;
 
