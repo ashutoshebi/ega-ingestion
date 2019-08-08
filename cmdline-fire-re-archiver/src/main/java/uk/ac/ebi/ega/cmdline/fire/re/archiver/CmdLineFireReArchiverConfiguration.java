@@ -15,7 +15,6 @@
  */
 package uk.ac.ebi.ega.cmdline.fire.re.archiver;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.ApplicationContext;
@@ -26,16 +25,12 @@ import uk.ac.ebi.ega.cmdline.fire.re.archiver.services.IReEncryptionService;
 import uk.ac.ebi.ega.cmdline.fire.re.archiver.services.ReEncryptionService;
 import uk.ac.ebi.ega.cmdline.fire.re.archiver.utils.IStableIdGenerator;
 import uk.ac.ebi.ega.cmdline.fire.re.archiver.utils.StableIdGenerator;
-import uk.ac.ebi.ega.file.encryption.processor.jobs.EncryptJob;
-import uk.ac.ebi.ega.file.encryption.processor.models.IngestionProcess;
-import uk.ac.ebi.ega.file.encryption.processor.services.EncryptService;
 import uk.ac.ebi.ega.file.encryption.processor.services.IPasswordGeneratorService;
 import uk.ac.ebi.ega.file.encryption.processor.services.PasswordGeneratorService;
 import uk.ac.ebi.ega.fire.ingestion.service.IFireService;
 import uk.ac.ebi.ega.fire.ingestion.service.IProFilerDatabaseService;
 import uk.ac.ebi.ega.fire.ingestion.service.OldFireService;
 import uk.ac.ebi.ega.fire.ingestion.service.ProFilerDatabaseService;
-import uk.ac.ebi.ega.jobs.core.Job;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -46,8 +41,9 @@ import java.nio.file.Paths;
 @Configuration
 public class CmdLineFireReArchiverConfiguration {
 
+    // TODO bjuhasz: why is this preferred over @Value("${file.encryption.static.key}")?
     @Bean
-    @ConfigurationProperties(prefix = "ega.cmdline.fire.archiver.config")
+    @ConfigurationProperties(prefix = "ega.cmdline.fire.re.archiver.config")
     public CmdLineFireReArchiverProperties archiverProperties() {
         return new CmdLineFireReArchiverProperties();
     }
@@ -78,34 +74,11 @@ public class CmdLineFireReArchiverConfiguration {
         return new OldFireService(fireStaging, proFilerDatabaseService);
     }
 
-    @Bean
-    public IReEncryptionService reEncryptionService() {
-        // TODO bjuhasz
-        return new ReEncryptionService(null, null, null);
-    }
-
-    ///////////// TODO bjuhasz:
 
     @Bean
-    public Job<IngestionProcess> encryptJob(@Value("${file.encryption.keyring.private}") String privateKeyRing,
-                                            @Value("${file.encryption.keyring.private.key}") String privateKeyRingPassword,
-                                            IPasswordGeneratorService passwordGeneratorService) throws IOException {
-        final File privateKeyRingFile = new File(privateKeyRing);
-        if (!privateKeyRingFile.exists()) {
-            throw new FileNotFoundException("Private key ring file could not be found");
-        }
-        final File privateKeyRingPasswordFile = new File(privateKeyRingPassword);
-        if (!privateKeyRingPasswordFile.exists()) {
-            throw new FileNotFoundException("Password file for private key ring could not be found");
-        }
-
-        return new EncryptJob(privateKeyRingFile, privateKeyRingPasswordFile,
-                passwordGeneratorService);
-    }
-
-    @Bean
-    public IPasswordGeneratorService passwordGeneratorService(@Value("${file.encryption.static.key}") String encryptionKeyPath)
+    public IPasswordGeneratorService passwordGeneratorService(final CmdLineFireReArchiverProperties properties)
             throws IOException {
+        final String encryptionKeyPath = properties.getEncryptionKeyPath();
         final File encryptPasswordFile = new File(encryptionKeyPath);
         if (!encryptPasswordFile.exists()) {
             throw new FileNotFoundException("Password file to encrypt output file could not be found");
@@ -114,18 +87,27 @@ public class CmdLineFireReArchiverConfiguration {
     }
 
     @Bean
-    public EncryptService encryptService(@Value("${file.encryption.staging.root}") String staging,
-                                         Job<IngestionProcess> job) throws FileNotFoundException {
-        final File stagingRoot = new File(staging);
+    public IReEncryptionService reEncryptionService(final CmdLineFireReArchiverProperties properties) throws FileNotFoundException {
+        // TODO bjuhasz
 
-        if (!stagingRoot.exists()) {
-            throw new FileNotFoundException("Staging path for encryption is not found");
+        final File privateKeyRingFile = new File(properties.getPrivateKeyRing());
+        if (!privateKeyRingFile.exists()) {
+            throw new FileNotFoundException("Private key ring file could not be found");
+        }
+        final File privateKeyRingPasswordFile = new File(properties.getPrivateKeyRingPassword());
+        if (!privateKeyRingPasswordFile.exists()) {
+            throw new FileNotFoundException("Password file for private key ring could not be found");
         }
 
+        ///////////// TODO bjuhasz:
 /*
-        return new EncryptService(stagingRoot.toPath(), executorPersistenceService, job,
-                kafkaTemplate, completedTopic, delayConfiguration);
+    @Bean
+    public Job<IngestionProcess> encryptJob(@Value("${file.encryption.keyring.private}") String privateKeyRing,
+                                            @Value("${file.encryption.keyring.private.key}") String privateKeyRingPassword,
+                                            IPasswordGeneratorService passwordGeneratorService) throws IOException {
 */
-        return null;
+
+        return new ReEncryptionService(null, null, null);
     }
+
 }

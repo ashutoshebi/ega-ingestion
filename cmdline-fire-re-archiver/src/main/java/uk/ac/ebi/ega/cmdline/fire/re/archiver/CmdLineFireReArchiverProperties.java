@@ -18,8 +18,10 @@ package uk.ac.ebi.ega.cmdline.fire.re.archiver;
 public class CmdLineFireReArchiverProperties {
 
     private String stagingPath;
-
     private String stableIdPrefix;
+    private String privateKeyRing;
+    private String privateKeyRingPassword;
+    private String encryptionKeyPath;
 
     public String getStagingPath() {
         return stagingPath;
@@ -36,4 +38,29 @@ public class CmdLineFireReArchiverProperties {
     public void setStableIdPrefix(final String stableIdPrefix) {
         this.stableIdPrefix = stableIdPrefix;
     }
+
+    public String getPrivateKeyRing() {
+        return privateKeyRing;
+    }
+
+    public void setPrivateKeyRing(final String privateKeyRing) {
+        this.privateKeyRing = privateKeyRing;
+    }
+
+    public String getPrivateKeyRingPassword() {
+        return privateKeyRingPassword;
+    }
+
+    public void setPrivateKeyRingPassword(final String privateKeyRingPassword) {
+        this.privateKeyRingPassword = privateKeyRingPassword;
+    }
+
+    public String getEncryptionKeyPath() {
+        return encryptionKeyPath;
+    }
+
+    public void setEncryptionKeyPath(final String encryptionKeyPath) {
+        this.encryptionKeyPath = encryptionKeyPath;
+    }
+
 }
