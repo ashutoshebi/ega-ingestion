@@ -20,28 +20,34 @@ package uk.ac.ebi.ega.ingestion.file.manager.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import org.springframework.hateoas.ResourceSupport;
 
+import java.util.ArrayList;
+import java.util.Collection;
+
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FileTreeWrapper extends ResourceSupport {
 
-    private FileTreeBoxDTO file;
-    private FileTreeBoxDTO folder;
+    private final Collection<FileTreeDTO> files;
+    private final Collection<FileTreeDTO> folders;
 
     public FileTreeWrapper() {
         super();
+        this.files = new ArrayList<>();
+        this.folders = new ArrayList<>();
     }
 
-    public FileTreeWrapper(final FileTreeBoxDTO file,
-                           final FileTreeBoxDTO folder) {
-        super();
-        this.file = file;
-        this.folder = folder;
+    public void addFile(final FileTreeDTO file) {
+        files.add(file);
     }
 
-    public FileTreeBoxDTO getFile() {
-        return file;
+    public void addFolder(final FileTreeDTO folder) {
+        folders.add(folder);
     }
 
-    public FileTreeBoxDTO getFolder() {
-        return folder;
+    public Collection<FileTreeDTO> getFiles() {
+        return files;
+    }
+
+    public Collection<FileTreeDTO> getFolders() {
+        return folders;
     }
 }

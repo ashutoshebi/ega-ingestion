@@ -20,6 +20,8 @@ package uk.ac.ebi.ega.ingestion.file.manager.persistence.entities;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import uk.ac.ebi.ega.ingestion.file.manager.models.FileDetailsModel;
+import uk.ac.ebi.ega.ingestion.file.manager.models.FileHierarchyModel;
 import uk.ac.ebi.ega.ingestion.file.manager.utils.FileStructureType;
 
 import javax.persistence.CascadeType;
@@ -151,5 +153,45 @@ public class FileHierarchy {
         return new FileHierarchy(accountId, stagingAreaId, name, path, parent, FileStructureType.FILE, fileDetails);
     }
 
+    public FileHierarchyModel toFile() {
+        return FileHierarchyModel.file(
+                getId(),
+                getAccountId(),
+                getStagingAreaId(),
+                getName(),
+                getOriginalPath(),
+                getFileType(),
+                getCreatedDate(),
+                getUpdateDate(),
+                newFileDetailsModel());
+    }
+
+    public FileHierarchyModel toFolder() {
+        return FileHierarchyModel.folder(
+                getId(),
+                getAccountId(),
+                getStagingAreaId(),
+                getName(),
+                getOriginalPath(),
+                getFileType(),
+                getCreatedDate(),
+                getUpdateDate()
+        );
+    }
+
+    private FileDetailsModel newFileDetailsModel() {
+        return new FileDetailsModel(
+                getFileDetails().getId(),
+                getFileDetails().getDosPath(),
+                getFileDetails().getPlainSize(),
+                getFileDetails().getPlainMd5(),
+                getFileDetails().getEncryptedSize(),
+                getFileDetails().getEncryptedMd5(),
+                getFileDetails().getKey(),
+                getFileDetails().getStatus(),
+                getFileDetails().getCreatedDate(),
+                getFileDetails().getUpdateDate()
+        );
+    }
 }
 

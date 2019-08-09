@@ -17,25 +17,33 @@
  */
 package uk.ac.ebi.ega.ingestion.file.manager.services;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 import uk.ac.ebi.ega.encryption.core.utils.io.FileUtils;
 import uk.ac.ebi.ega.fire.ingestion.service.IFireService;
 import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEvent;
 import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileHierarchyException;
 import uk.ac.ebi.ega.ingestion.file.manager.models.ArchivedFile;
+import uk.ac.ebi.ega.ingestion.file.manager.models.FileHierarchyModel;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileDetails;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileHierarchy;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.FileHierarchyRepository;
+import uk.ac.ebi.ega.ingestion.file.manager.utils.FileStructureType;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class FileManagerService implements IFileManagerService {
+
+    private final Logger LOGGER = LoggerFactory.getLogger(FileManagerService.class);
 
     private final IFireService fireService;
 
@@ -52,11 +60,20 @@ public class FileManagerService implements IFileManagerService {
     }
 
     @Override
-    public List<FileHierarchy> findAll(final String filePath) {
-        List<FileHierarchy> fileHierarchies = new ArrayList<>();
-        Optional<FileHierarchy> optionalFileHierarchy = fileHierarchyRepository.findByOriginalPath(filePath);
-        optionalFileHierarchy.ifPresent(fileHierarchy -> fileHierarchies.addAll(fileHierarchy.getChildPaths()));
-        return fileHierarchies;
+    public List<FileHierarchyModel> findAll(final Path filePath, final String accountId, final String stagingAreaId) throws FileNotFoundException {
+        final Optional<FileHierarchy> optionalFileHierarchy = fileHierarchyRepository.findOne(filePath.normalize().toString(), accountId, stagingAreaId);
+        final FileHierarchy fileHierarchy = optionalFileHierarchy.orElseThrow(FileNotFoundException::new);
+
+        if (FileStructureType.FILE.equals(fileHierarchy.getFileType())) {
+            return Collections.singletonList(fileHierarchy.toFile());
+        }
+
+        return fileHierarchy.getChildPaths().stream().map(fileHierarchyLocal -> {
+            if (FileStructureType.FILE.equals(fileHierarchyLocal.getFileType())) {
+                return fileHierarchyLocal.toFile();
+            }
+            return fileHierarchyLocal.toFolder();
+        }).collect(Collectors.toList());
     }
 
     @Override
@@ -94,6 +111,7 @@ public class FileManagerService implements IFileManagerService {
             fileHierarchyRepository.saveNewFile(archivedFile.getAccountId(), archivedFile.getStagingAreaId(),
                     archivedFile.getPath(), fileDetails);
         } catch (Exception e) {
+            LOGGER.error(e.getMessage(), e);
             throw new FileHierarchyException("Exception while creating file structure => " +
                     "FileManagerService::createFileHierarchy(EncryptComplete) " + e.getMessage(), e);
         }

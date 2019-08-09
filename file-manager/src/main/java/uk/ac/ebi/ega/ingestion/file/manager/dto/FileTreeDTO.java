@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.hateoas.ResourceSupport;
+import uk.ac.ebi.ega.ingestion.file.manager.models.FileHierarchyModel;
 
 import java.time.LocalDateTime;
 
@@ -41,9 +42,9 @@ public class FileTreeDTO extends ResourceSupport {
         super();
     }
 
-    public FileTreeDTO(final String accountId, final String locationId, final Long plainTextFileSize,
-                       final Long encryptedFileSize, final String name, final String md5PlainTextFile,
-                       final LocalDateTime modifiedDate, final String status) {
+    private FileTreeDTO(final String accountId, final String locationId, final Long plainTextFileSize,
+                        final Long encryptedFileSize, final String name, final String md5PlainTextFile,
+                        final LocalDateTime modifiedDate, final String status) {
         super();
         this.accountId = accountId;
         this.locationId = locationId;
@@ -55,7 +56,7 @@ public class FileTreeDTO extends ResourceSupport {
         this.status = status;
     }
 
-    public FileTreeDTO(final String accountId, final String locationId, final String name) {
+    private FileTreeDTO(final String accountId, final String locationId, final String name) {
         super();
         this.accountId = accountId;
         this.locationId = locationId;
@@ -103,4 +104,22 @@ public class FileTreeDTO extends ResourceSupport {
         return encryptedFileSize;
     }
 
+    public static FileTreeDTO file(final FileHierarchyModel fileHierarchyModel) {
+        return new FileTreeDTO(
+                fileHierarchyModel.getAccountId(),
+                fileHierarchyModel.getStagingAreaId(),
+                fileHierarchyModel.getFileDetails().getPlainSize(),
+                fileHierarchyModel.getFileDetails().getEncryptedSize(),
+                fileHierarchyModel.getName(),
+                fileHierarchyModel.getFileDetails().getPlainMd5(),
+                fileHierarchyModel.getUpdatedDate(),
+                fileHierarchyModel.getFileDetails().getStatus());
+    }
+
+    public static FileTreeDTO folder(final FileHierarchyModel fileHierarchyModel) {
+        return new FileTreeDTO(
+                fileHierarchyModel.getAccountId(),
+                fileHierarchyModel.getStagingAreaId(),
+                fileHierarchyModel.getName());
+    }
 }

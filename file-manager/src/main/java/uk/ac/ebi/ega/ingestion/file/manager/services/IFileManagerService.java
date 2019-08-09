@@ -19,15 +19,17 @@ package uk.ac.ebi.ega.ingestion.file.manager.services;
 
 import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEvent;
 import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileHierarchyException;
-import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileHierarchy;
+import uk.ac.ebi.ega.ingestion.file.manager.models.FileHierarchyModel;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 
 public interface IFileManagerService {
 
-    List<FileHierarchy> findAll(String originalFilePath);
+    List<FileHierarchyModel> findAll(Path filePath, String accountId, String stagingAreaId) throws FileNotFoundException;
 
     void archive(ArchiveEvent archiveEvent) throws IOException, FileHierarchyException;
-
 }

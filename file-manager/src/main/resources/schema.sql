@@ -130,16 +130,14 @@ create table HISTORIC_DOWNLOAD_BOX_FILE_JOB
 create table FILE_DETAILS
 (
     ID              bigserial primary key,
-    CREATED_DATE    timestamp    not null,
     ENCRYPTED_MD5   varchar(255) not null,
     ENCRYPTED_SIZE  bigint       not null,
-    END_DATE_TIME   timestamp    not null,
-    KEY_PATH        varchar(255) not null,
+    KEY		        varchar(255) not null,
     PLAIN_MD5       varchar(255) not null,
     PLAIN_SIZE      bigint       not null,
-    STAGING_PATH    varchar(255) not null,
-    START_DATE_TIME timestamp    not null,
+    DOS_PATH        varchar(255) not null,
     STATUS          varchar(255) not null,
+    CREATED_DATE    timestamp    not null,
     UPDATE_DATE     timestamp    not null
 );
 

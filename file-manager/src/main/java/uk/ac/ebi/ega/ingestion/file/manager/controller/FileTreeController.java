@@ -27,15 +27,16 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.HandlerMapping;
-import uk.ac.ebi.ega.ingestion.file.manager.dto.FileTreeBoxDTO;
 import uk.ac.ebi.ega.ingestion.file.manager.dto.FileTreeDTO;
 import uk.ac.ebi.ega.ingestion.file.manager.dto.FileTreeWrapper;
-import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileHierarchy;
+import uk.ac.ebi.ega.ingestion.file.manager.models.FileHierarchyModel;
 import uk.ac.ebi.ega.ingestion.file.manager.services.IFileManagerService;
 import uk.ac.ebi.ega.ingestion.file.manager.utils.FileStructureType;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
+import java.io.FileNotFoundException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
@@ -53,38 +54,29 @@ public class FileTreeController {
 
     @GetMapping(value = "/{accountId}/{locationId}/**", produces = MediaTypes.HAL_JSON_VALUE)
     public Resource<FileTreeWrapper> getFileHierarchy(@PathVariable String accountId,
-                                                      @PathVariable String locationId, HttpServletRequest request) {
+                                                      @PathVariable String locationId, HttpServletRequest request) throws FileNotFoundException {
 
         final Link link = linkTo(FileTreeController.class).withSelfRel();
-        final String path = extractFilePath(request);
+        final Path path = Paths.get(extractFilePath(request));
         final String baseURI = new StringBuilder(link.getHref()).append("/").append(accountId).append("/")
                 .append(locationId).toString();
+        final FileTreeWrapper fileTreeWrapper = new FileTreeWrapper();
+        final List<FileHierarchyModel> fileHierarchyModels = fileManagerService.findAll(path, accountId, locationId);
 
-        final FileTreeBoxDTO fileTreeBoxDTO = new FileTreeBoxDTO(FileStructureType.FILE.name(), new ArrayList<>());
-        final FileTreeBoxDTO folderIngestionBoxDTO = new FileTreeBoxDTO(FileStructureType.FOLDER.name(), new ArrayList<>());
-        final FileTreeWrapper fileTreeWrapper = new FileTreeWrapper(fileTreeBoxDTO, folderIngestionBoxDTO);
+        for (FileHierarchyModel fileHierarchyModel : fileHierarchyModels) {
+            final Link selfLink = new Link(new StringBuilder(baseURI).
+                    append(fileHierarchyModel.getOriginalPath()).toString(), REL);
 
-        final List<FileHierarchy> fileHierarchies = fileManagerService.findAll(path);
-
-        fileHierarchies.forEach(fileHierarchy -> {
-
-                    final Link selfLink = new Link(new StringBuilder(baseURI).append(path).append("/")
-                            .append(fileHierarchy.getName()).toString(), REL);
-
-                    if (FileStructureType.FILE.equals(fileHierarchy.getFileType())) {
-                        final FileTreeDTO fileTreeDTO = new FileTreeDTO(fileHierarchy.getAccountId(), fileHierarchy.getStagingAreaId(),
-                                fileHierarchy.getFileDetails().getPlainSize(), fileHierarchy.getFileDetails().getEncryptedSize(), fileHierarchy.getName(),
-                                fileHierarchy.getFileDetails().getPlainMd5(), fileHierarchy.getUpdateDate(), fileHierarchy.getFileDetails().getStatus());
-                        fileTreeDTO.add(selfLink);
-                        fileTreeBoxDTO.getFileTreeDTOS().add(fileTreeDTO);
-                    } else {
-                        final FileTreeDTO fileTreeDTO = new FileTreeDTO(fileHierarchy.getAccountId(), fileHierarchy.getStagingAreaId(),
-                                fileHierarchy.getName());
-                        fileTreeDTO.add(selfLink);
-                        folderIngestionBoxDTO.getFileTreeDTOS().add(fileTreeDTO);
-                    }
-                }
-        );
+            if (FileStructureType.FILE.equals(fileHierarchyModel.getFileType())) {
+                final FileTreeDTO fileTreeDTO = FileTreeDTO.file(fileHierarchyModel);
+                fileTreeDTO.add(selfLink);
+                fileTreeWrapper.addFile(fileTreeDTO);
+            } else {
+                final FileTreeDTO fileTreeDTO = FileTreeDTO.folder(fileHierarchyModel);
+                fileTreeDTO.add(selfLink);
+                fileTreeWrapper.addFolder(fileTreeDTO);
+            }
+        }
         return new Resource<>(fileTreeWrapper, new Link(baseURI, REL));
     }
 

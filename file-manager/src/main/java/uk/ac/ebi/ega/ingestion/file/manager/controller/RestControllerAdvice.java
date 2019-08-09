@@ -19,7 +19,13 @@ package uk.ac.ebi.ega.ingestion.file.manager.controller;
 
 import org.springframework.context.MessageSource;
 import org.springframework.data.rest.webmvc.RepositoryRestExceptionHandler;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
+
+import java.io.FileNotFoundException;
 
 @ControllerAdvice
 public class RestControllerAdvice extends RepositoryRestExceptionHandler {
@@ -31,5 +37,14 @@ public class RestControllerAdvice extends RepositoryRestExceptionHandler {
      */
     public RestControllerAdvice(MessageSource messageSource) {
         super(messageSource);
+    }
+
+    /**
+     * @return ResponseEntity with 404 http status code.
+     */
+    @ResponseStatus(value = HttpStatus.NOT_FOUND, reason = "Path does not exists")
+    @ExceptionHandler(FileNotFoundException.class)
+    public void contentNotFoundExceptionHandler() {
+
     }
 }
