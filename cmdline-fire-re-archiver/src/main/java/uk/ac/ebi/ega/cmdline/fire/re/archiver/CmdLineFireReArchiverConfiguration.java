@@ -74,7 +74,6 @@ public class CmdLineFireReArchiverConfiguration {
         return new OldFireService(fireStaging, proFilerDatabaseService);
     }
 
-
     @Bean
     public IPasswordGeneratorService passwordGeneratorService(final CmdLineFireReArchiverProperties properties)
             throws IOException {
@@ -87,27 +86,22 @@ public class CmdLineFireReArchiverConfiguration {
     }
 
     @Bean
-    public IReEncryptionService reEncryptionService(final CmdLineFireReArchiverProperties properties) throws FileNotFoundException {
-        // TODO bjuhasz
+    public IReEncryptionService reEncryptionService(final CmdLineFireReArchiverProperties properties,
+                                                    final IPasswordGeneratorService passwordGeneratorService) throws FileNotFoundException {
 
         final File privateKeyRingFile = new File(properties.getPrivateKeyRing());
         if (!privateKeyRingFile.exists()) {
             throw new FileNotFoundException("Private key ring file could not be found");
         }
+
         final File privateKeyRingPasswordFile = new File(properties.getPrivateKeyRingPassword());
         if (!privateKeyRingPasswordFile.exists()) {
             throw new FileNotFoundException("Password file for private key ring could not be found");
         }
 
-        ///////////// TODO bjuhasz:
-/*
-    @Bean
-    public Job<IngestionProcess> encryptJob(@Value("${file.encryption.keyring.private}") String privateKeyRing,
-                                            @Value("${file.encryption.keyring.private.key}") String privateKeyRingPassword,
-                                            IPasswordGeneratorService passwordGeneratorService) throws IOException {
-*/
+        final char[] password = passwordGeneratorService.generate();
 
-        return new ReEncryptionService(null, null, null);
+        return new ReEncryptionService(privateKeyRingFile, privateKeyRingPasswordFile, password);
     }
 
 }

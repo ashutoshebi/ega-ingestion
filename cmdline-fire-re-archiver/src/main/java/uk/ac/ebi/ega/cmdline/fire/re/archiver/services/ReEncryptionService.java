@@ -38,24 +38,27 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+// This class is based on the
+// {@link uk.ac.ebi.ega.file.encryption.processor.pipelines.DefaultIngestionPipeline} class.
 public class ReEncryptionService implements IReEncryptionService {
 
-    private final List<File> outputFiles;
-    private File origin;
-    private File output;
-    private char[] password;
     private File secretRing;
     private File secretRingKey;
+    private char[] password;
+    private final List<File> outputFiles = new ArrayList<>();
+    private File origin;
+    private File output;
 
     public ReEncryptionService(final File secretRing, final File secretRingKey, final char[] password) {
-        this.outputFiles = new ArrayList<>();
         this.secretRing = secretRing;
         this.secretRingKey = secretRingKey;
         this.password = password;
     }
 
     @Override
-    public final IngestionPipelineResult reEncrypt(final File origin, final File output) throws SystemErrorException, UserErrorException {
+    public final IngestionPipelineResult reEncrypt(final File origin, final File output)
+            throws SystemErrorException, UserErrorException {
+
         this.origin = origin;
         this.output = output;
 

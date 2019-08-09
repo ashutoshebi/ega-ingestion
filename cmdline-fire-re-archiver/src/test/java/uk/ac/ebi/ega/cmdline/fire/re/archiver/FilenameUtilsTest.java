@@ -9,14 +9,12 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class FilePathTest {
+public class FilenameUtilsTest {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(FilePathTest.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(FilenameUtilsTest.class);
     private static final String EXTENSION_OF_RE_ENCRYPTED_FILES = ".cip";
 
     @Rule

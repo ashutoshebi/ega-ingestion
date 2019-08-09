@@ -1,9 +1,11 @@
 
-# CMDLINE-FIRE-ARCHIVER
+# CMDLINE-FIRE-RE-ARCHIVER
 
 A simple command-line application for archiving files into Fire.
-The input files will not be re-encrypted; they will be stored
-in Fire as they are now.
+
+The GPG-encrypted input-file is first decrypted, 
+then re-encrypted using Alexander's AES flavour (AesCtr256Ega),
+finally it is stored in Fire.
 
 # Running
 

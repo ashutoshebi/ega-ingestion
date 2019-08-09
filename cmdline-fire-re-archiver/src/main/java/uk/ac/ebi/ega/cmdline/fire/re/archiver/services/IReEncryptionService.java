@@ -8,6 +8,13 @@ import java.io.File;
 
 public interface IReEncryptionService {
 
-    IngestionPipelineResult reEncrypt(final File origin, final File output) throws SystemErrorException, UserErrorException;
+    /**
+     * First decrypt the given GPG-encrypted input-file
+     * and then encrypt it using Alexander's AES flavour
+     * ({@link uk.ac.ebi.ega.encryption.core.encryption.AesCtr256Ega}).
+     */
+    IngestionPipelineResult reEncrypt(final File gpgEncryptedInputFile,
+                                      final File aesCtr256EgaEncryptedOutputFile)
+            throws SystemErrorException, UserErrorException;
 
 }

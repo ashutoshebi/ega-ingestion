@@ -73,7 +73,7 @@ public class CmdLineFireReArchiverCommandLineRunner implements CommandLineRunner
         try {
             final String stableId = stableIdGenerator.generate();
             final File inputFile = args.getFilePath().toFile();
-            final File reEncryptedFile = getReEncryptedFileBasedOn(inputFile);
+            final File reEncryptedFile = getOutputFileBasedOn(inputFile, EXTENSION_OF_RE_ENCRYPTED_FILES);
             final String pathOnFire = args.getPathOnFire();
 
             reEncryptionService.reEncrypt(inputFile, reEncryptedFile);
@@ -96,9 +96,20 @@ public class CmdLineFireReArchiverCommandLineRunner implements CommandLineRunner
         }
     }
 
-    private File getReEncryptedFileBasedOn(final File file) {
-        final String absFilePathWithoutExtension = FilenameUtils.removeExtension(file.getAbsolutePath());
-        final String absFilePathWithExtension = absFilePathWithoutExtension + EXTENSION_OF_RE_ENCRYPTED_FILES;
+    /**
+     * Creates a File object (called outputFile) based on the inputFile:
+     * the outputFile is located in the same directory as the inputFile,
+     * but it will have a different file extension: the one which was given.
+     *
+     * @param inputFile a File
+     * @param extension the outputFile will have this extension,
+     *                  instead of the inputFile's extension
+     * @return a File which is located in the same directory as the inputFile,
+     * but which has the supplied file extension.
+     */
+    private File getOutputFileBasedOn(final File inputFile, final String extension) {
+        final String absFilePathWithoutExtension = FilenameUtils.removeExtension(inputFile.getAbsolutePath());
+        final String absFilePathWithExtension = absFilePathWithoutExtension + extension;
         return new File(absFilePathWithExtension);
     }
 
