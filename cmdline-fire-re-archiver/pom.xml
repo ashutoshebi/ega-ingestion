@@ -6,7 +6,8 @@
 
     <artifactId>cmdline-fire-re-archiver</artifactId>
     <version>${revision}</version>
-    <description>A command-line application for archiving files into the Fire Data Object Store.</description>
+    <description>A command-line application for re-encrypting files
+        and then storing them in the Fire Data Object Store.</description>
     <packaging>jar</packaging>
 
     <parent>

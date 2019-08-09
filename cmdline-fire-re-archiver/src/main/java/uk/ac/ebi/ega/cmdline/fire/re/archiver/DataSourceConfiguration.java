@@ -27,13 +27,13 @@ import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 public class DataSourceConfiguration {
 
     @Bean("pro_filer_datasource_properties")
-    @ConfigurationProperties(prefix = "ega.cmdline.fire.archiver.datasource.pro-filer")
+    @ConfigurationProperties(prefix = "ega.cmdline.fire.re.archiver.datasource.pro-filer")
     public DataSourceProperties proFilerDataSourceProperties() {
         return new DataSourceProperties();
     }
 
     @Bean("pro_filer_datasource")
-    @ConfigurationProperties(prefix = "ega.cmdline.fire.archiver.datasource.pro-filer.hikari")
+    @ConfigurationProperties(prefix = "ega.cmdline.fire.re.archiver.datasource.pro-filer.hikari")
     public HikariDataSource proFilerDataSource() {
         return proFilerDataSourceProperties().initializeDataSourceBuilder().type(HikariDataSource.class).build();
     }
