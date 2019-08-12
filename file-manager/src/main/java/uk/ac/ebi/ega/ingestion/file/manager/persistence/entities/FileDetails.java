@@ -27,7 +27,6 @@ import javax.persistence.EntityListeners;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.Table;
 import java.time.LocalDateTime;
 
 @Entity
@@ -63,7 +62,7 @@ public class FileDetails {
     private LocalDateTime createdDate;
 
     @LastModifiedDate
-    private LocalDateTime updateDate;
+    private LocalDateTime updatedDate;
 
     protected FileDetails() {
     }
@@ -116,7 +115,7 @@ public class FileDetails {
         return createdDate;
     }
 
-    public LocalDateTime getUpdateDate() {
-        return updateDate;
+    public LocalDateTime getUpdatedDate() {
+        return updatedDate;
     }
 }

@@ -23,6 +23,8 @@ import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.StringExpression;
 import com.querydsl.core.types.dsl.StringPath;
 import io.micrometer.core.instrument.util.StringUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 import org.springframework.data.querydsl.binding.QuerydslBinderCustomizer;
 import org.springframework.data.querydsl.binding.QuerydslBindings;
@@ -40,7 +42,7 @@ import java.util.Optional;
 public interface FileHierarchyRepository extends PagingAndSortingRepository<FileHierarchy, Long>,
         QuerydslPredicateExecutor<FileHierarchy>, QuerydslBinderCustomizer<QFileHierarchy> {
 
-    default Optional<FileHierarchy> findOne(String filePath, String accountId, String stagingAreaId) {
+    default Optional<FileHierarchy> findOne(final String filePath, final String accountId, final String stagingAreaId) {
         final Predicate predicate = Expressions.allOf(
                 Expressions.predicate(Ops.EQ_IGNORE_CASE, QFileHierarchy.fileHierarchy.originalPath,
                         Expressions.constant(filePath)),
@@ -49,6 +51,16 @@ public interface FileHierarchyRepository extends PagingAndSortingRepository<File
                 Expressions.predicate(Ops.EQ_IGNORE_CASE, QFileHierarchy.fileHierarchy.stagingAreaId,
                         Expressions.constant(stagingAreaId)));
         return findOne(predicate);
+    }
+
+    default Page<FileHierarchy> findAll(final String accountId, final String stagingAreaId, final Predicate predicate,
+                                        final Pageable pageable) {
+        final Predicate predefinedPredicate = Expressions.allOf(
+                Expressions.predicate(Ops.EQ_IGNORE_CASE, QFileHierarchy.fileHierarchy.accountId,
+                        Expressions.constant(accountId)),
+                Expressions.predicate(Ops.EQ_IGNORE_CASE, QFileHierarchy.fileHierarchy.stagingAreaId,
+                        Expressions.constant(stagingAreaId))).and(predicate);
+        return findAll(predefinedPredicate, pageable);
     }
 
     default FileHierarchy saveNewFolder(final String accountId, final String stagingAreaId, final String name,

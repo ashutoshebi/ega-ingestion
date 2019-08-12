@@ -82,7 +82,7 @@ public class FileHierarchy {
     private LocalDateTime createdDate;
 
     @LastModifiedDate
-    private LocalDateTime updateDate;
+    private LocalDateTime updatedDate;
 
     protected FileHierarchy() {
     }
@@ -127,8 +127,8 @@ public class FileHierarchy {
         return createdDate;
     }
 
-    public LocalDateTime getUpdateDate() {
-        return updateDate;
+    public LocalDateTime getUpdatedDate() {
+        return updatedDate;
     }
 
     public String getAccountId() {
@@ -162,7 +162,7 @@ public class FileHierarchy {
                 getOriginalPath(),
                 getFileType(),
                 getCreatedDate(),
-                getUpdateDate(),
+                getUpdatedDate(),
                 newFileDetailsModel());
     }
 
@@ -175,7 +175,7 @@ public class FileHierarchy {
                 getOriginalPath(),
                 getFileType(),
                 getCreatedDate(),
-                getUpdateDate()
+                getUpdatedDate()
         );
     }
 
@@ -190,7 +190,7 @@ public class FileHierarchy {
                 getFileDetails().getKey(),
                 getFileDetails().getStatus(),
                 getFileDetails().getCreatedDate(),
-                getFileDetails().getUpdateDate()
+                getFileDetails().getUpdatedDate()
         );
     }
 }

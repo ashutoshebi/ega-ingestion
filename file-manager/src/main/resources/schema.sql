@@ -138,7 +138,7 @@ create table FILE_DETAILS
     DOS_PATH        varchar(255) not null,
     STATUS          varchar(255) not null,
     CREATED_DATE    timestamp    not null,
-    UPDATE_DATE     timestamp    not null
+    UPDATED_DATE    timestamp    not null
 );
 
 create table FILE_HIERARCHY
@@ -150,7 +150,7 @@ create table FILE_HIERARCHY
     NAME            varchar(255)  not null,
     ORIGINAL_PATH   varchar(4096) not null,
     STAGING_AREA_ID varchar(255)  not null,
-    UPDATE_DATE     timestamp     not null,
+    UPDATED_DATE    timestamp     not null,
     FILE_DETAILS_ID bigint,
     PARENT_ID       bigint,
     CONSTRAINT UK_ORIGINAL_PATH unique (ORIGINAL_PATH),

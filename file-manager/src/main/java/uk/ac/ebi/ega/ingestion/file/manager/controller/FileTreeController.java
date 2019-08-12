@@ -17,9 +17,15 @@
  */
 package uk.ac.ebi.ega.ingestion.file.manager.controller;
 
+import com.querydsl.core.types.Predicate;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.querydsl.binding.QuerydslPredicate;
+import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.MediaTypes;
+import org.springframework.hateoas.PagedResources;
 import org.springframework.hateoas.Resource;
+import org.springframework.http.MediaType;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,7 +35,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.HandlerMapping;
 import uk.ac.ebi.ega.ingestion.file.manager.dto.FileTreeDTO;
 import uk.ac.ebi.ega.ingestion.file.manager.dto.FileTreeWrapper;
+import uk.ac.ebi.ega.ingestion.file.manager.dto.resources.assemblers.FileHierarchyResourceAssembler;
 import uk.ac.ebi.ega.ingestion.file.manager.models.FileHierarchyModel;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileHierarchy;
 import uk.ac.ebi.ega.ingestion.file.manager.services.IFileManagerService;
 import uk.ac.ebi.ega.ingestion.file.manager.utils.FileStructureType;
 
@@ -78,6 +86,17 @@ public class FileTreeController {
             }
         }
         return new Resource<>(fileTreeWrapper, new Link(baseURI, REL));
+    }
+
+    @GetMapping(value = "/list/{accountId}/{locationId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public PagedResources<FileTreeDTO> getAllFiles(@PathVariable String accountId,
+                                                   @PathVariable String locationId,
+                                                   @QuerydslPredicate(root = FileHierarchy.class)
+                                                           Predicate predicate,
+                                                   Pageable pageable,
+                                                   PagedResourcesAssembler assembler,
+                                                   FileHierarchyResourceAssembler fileHierarchyResourceAssembler) throws FileNotFoundException {
+        return assembler.toResource(fileManagerService.findAllFiles(accountId, locationId, predicate, pageable), fileHierarchyResourceAssembler);
     }
 
     private String extractFilePath(HttpServletRequest request) {
