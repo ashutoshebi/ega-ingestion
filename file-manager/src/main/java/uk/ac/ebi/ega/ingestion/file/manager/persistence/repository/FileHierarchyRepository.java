@@ -25,22 +25,44 @@ import com.querydsl.core.types.dsl.StringPath;
 import io.micrometer.core.instrument.util.StringUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 import org.springframework.data.querydsl.binding.QuerydslBinderCustomizer;
 import org.springframework.data.querydsl.binding.QuerydslBindings;
 import org.springframework.data.querydsl.binding.SingleValueBinding;
 import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.data.repository.query.Param;
 import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileHierarchyException;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileDetails;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileHierarchy;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.QFileHierarchy;
+import uk.ac.ebi.ega.ingestion.file.manager.utils.FileStructureType;
 
+import javax.persistence.QueryHint;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
+import java.util.stream.Stream;
+
+import static org.hibernate.jpa.QueryHints.HINT_FETCH_SIZE;
 
 public interface FileHierarchyRepository extends PagingAndSortingRepository<FileHierarchy, Long>,
         QuerydslPredicateExecutor<FileHierarchy>, QuerydslBinderCustomizer<QFileHierarchy> {
+
+    String HINT_FETCH_SIZE_VALUE = "50";
+
+    @QueryHints(value = @QueryHint(name = HINT_FETCH_SIZE, value = HINT_FETCH_SIZE_VALUE))
+    @Query(value = "select fh from FileHierarchy fh where LOWER(fh.accountId) = LOWER(:accountId) " +
+            "and LOWER(fh.stagingAreaId) = LOWER(:stagingAreaId) and fh.parentPath.id = :parentId and fh.fileType = :fileStructureType order by fh.originalPath")
+    Stream<FileHierarchy> findAll(@Param("accountId") String accountId, @Param("stagingAreaId") String stagingAreaId,
+                                  @Param("parentId") Long parentId, @Param("fileStructureType") FileStructureType fileStructureType);
+
+    @QueryHints(value = @QueryHint(name = HINT_FETCH_SIZE, value = HINT_FETCH_SIZE_VALUE))
+    @Query(value = "select fh from FileHierarchy fh where LOWER(fh.accountId) = LOWER(:accountId) " +
+            "and LOWER(fh.stagingAreaId) = LOWER(:stagingAreaId) and fh.fileType = :fileStructureType order by fh.originalPath")
+    Stream<FileHierarchy> findAll(@Param("accountId") String accountId, @Param("stagingAreaId") String stagingAreaId,
+                                  @Param("fileStructureType") FileStructureType fileStructureType);
 
     default Optional<FileHierarchy> findOne(final String filePath, final String accountId, final String stagingAreaId) {
         final Predicate predicate = Expressions.allOf(

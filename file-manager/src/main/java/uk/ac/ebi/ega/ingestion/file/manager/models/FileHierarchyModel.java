@@ -34,6 +34,11 @@ public class FileHierarchyModel {
     private LocalDateTime createdDate;
     private LocalDateTime updatedDate;
 
+    /**
+     * Convenient constant for the common case of a tab delimiter.
+     */
+    private static final String DELIMITER_TAB = "\t";
+
     public FileHierarchyModel(final Long id, final String accountId, final String stagingAreaId, final String name,
                               final String originalPath, final FileStructureType fileType, final LocalDateTime createdDate,
                               final LocalDateTime updatedDate, final FileDetailsModel fileDetails) {
@@ -94,5 +99,37 @@ public class FileHierarchyModel {
                                           final String originalPath, final FileStructureType fileType, final LocalDateTime createdDate,
                                           final LocalDateTime updatedDate, final FileDetailsModel fileDetails) {
         return new FileHierarchyModel(id, accountId, stagingAreaId, name, originalPath, fileType, createdDate, updatedDate, Objects.requireNonNull(fileDetails));
+    }
+
+    /**
+     * @return String of Tab separated property values.
+     * This method returns values for type File.
+     * @See FileHierarchyModel#getColumnNames()
+     */
+    public String toStringFileDetails() {
+        return new StringBuilder(getAccountId()).append(DELIMITER_TAB).
+                append(getStagingAreaId()).append(DELIMITER_TAB).
+                append(getName()).append(DELIMITER_TAB).
+                append(getFileDetails().getPlainMd5()).append(DELIMITER_TAB).
+                append(getFileDetails().getPlainSize()).append(DELIMITER_TAB).
+                append(getFileDetails().getEncryptedSize()).append(DELIMITER_TAB).
+                append(getFileDetails().getStatus()).append(DELIMITER_TAB).
+                append(getFileDetails().getUpdatedDate()).
+                toString();
+    }
+
+    /**
+     * @return String of Tab separated column names for property values
+     * @See FileHierarchyModel#toStringFileDetails()
+     */
+    public static String getColumnNames() {
+        return "Account Id" + DELIMITER_TAB +
+                "Staging Area Id" + DELIMITER_TAB +
+                "File Name" + DELIMITER_TAB +
+                "Plain MD5" + DELIMITER_TAB +
+                "Plain MD5 Size" + DELIMITER_TAB +
+                "Encrypted Size" + DELIMITER_TAB +
+                "Status" + DELIMITER_TAB +
+                "Modified Date" + "\n";
     }
 }

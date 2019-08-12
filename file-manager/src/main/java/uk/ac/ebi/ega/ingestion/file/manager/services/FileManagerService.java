@@ -38,6 +38,7 @@ import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.QFileHierarchy;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.FileHierarchyRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.utils.FileStructureType;
 
+import javax.persistence.EntityManager;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -46,24 +47,27 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class FileManagerService implements IFileManagerService {
 
     private final Logger LOGGER = LoggerFactory.getLogger(FileManagerService.class);
 
     private final IFireService fireService;
-
     private final Path fireBoxRelativePath;
-
     private final FileHierarchyRepository fileHierarchyRepository;
+    private final EntityManager entityManager;
 
     public FileManagerService(final IFireService fireService,
                               final Path fireBoxRelativePath,
-                              final FileHierarchyRepository fileHierarchyRepository) {
+                              final FileHierarchyRepository fileHierarchyRepository,
+                              final EntityManager entityManager) {
         this.fireService = fireService;
         this.fireBoxRelativePath = fireBoxRelativePath;
         this.fileHierarchyRepository = fileHierarchyRepository;
+        this.entityManager = entityManager;
     }
 
     @Override
@@ -122,6 +126,46 @@ public class FileManagerService implements IFileManagerService {
             throw new FileNotFoundException();
         }
         return new PageImpl<>(fileHierarchyPage.stream().map(FileHierarchy::toFile).collect(Collectors.toList()));
+    }
+
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Stream<FileHierarchyModel> findAllFiles(final String accountId, final String stagingAreaId, final Path filePath) throws FileNotFoundException {
+
+        final Optional<FileHierarchy> optionalFileHierarchy = fileHierarchyRepository.findOne(filePath.normalize().toString(), accountId, stagingAreaId);
+        final FileHierarchy fileHierarchy = optionalFileHierarchy.orElseThrow(FileNotFoundException::new);
+
+        if (FileStructureType.FILE.equals(fileHierarchy.getFileType())) {
+            return Stream.of(fileHierarchy.toFile());
+        }
+
+        return fileHierarchyRepository.findAll(accountId, stagingAreaId, fileHierarchy.getId(), FileStructureType.FILE).
+                map(fileHierarchyMapEntityToModel());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Stream<FileHierarchyModel> findAllFiles(final String accountId, final String stagingAreaId) {
+        return fileHierarchyRepository.findAll(accountId, stagingAreaId, FileStructureType.FILE).
+                map(fileHierarchyMapEntityToModel());
+    }
+
+    /**
+     * After each mapping FileHierarchy object is being detached from current Hibernate session.
+     *
+     * @return Entity to Model mapping function.
+     */
+    private Function<FileHierarchy, FileHierarchyModel> fileHierarchyMapEntityToModel() {
+        return fileHierarchy -> {
+            final FileHierarchyModel fileHierarchyModel = fileHierarchy.toFile();
+            entityManager.detach(fileHierarchy);
+            return fileHierarchyModel;
+        };
     }
 
     private void addFile(ArchivedFile archivedFile) throws FileHierarchyException {

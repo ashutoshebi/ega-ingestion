@@ -23,13 +23,12 @@ import org.springframework.data.domain.Pageable;
 import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEvent;
 import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileHierarchyException;
 import uk.ac.ebi.ega.ingestion.file.manager.models.FileHierarchyModel;
-import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileHierarchy;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Stream;
 
 public interface IFileManagerService {
 
@@ -38,4 +37,32 @@ public interface IFileManagerService {
     void archive(ArchiveEvent archiveEvent) throws IOException, FileHierarchyException;
 
     Page<FileHierarchyModel> findAllFiles(String accountId, String stagingAreaId, Predicate predicate, Pageable pageable) throws FileNotFoundException;
+
+    /**
+     * Returns Stream of FileHierarchyModel for given filePath. If filePath is file itself, then file will be returned.
+     * If filePath is a Folder path then all files under this path will be returned OR
+     * will return empty Stream if no file exists under this path.
+     * Stream result is ordered by originalPath.
+     *
+     * @param accountId
+     * @param stagingAreaId
+     * @param filePath
+     *
+     * @return Stream of FileHierarchyModel object.
+     * @throws FileNotFoundException
+     *         throws if path is invalid. Provided path doesn't exists.
+     */
+    Stream<FileHierarchyModel> findAllFiles(String accountId, String stagingAreaId, Path filePath) throws FileNotFoundException;
+
+    /**
+     * Returns all files under path /AccountId/StagingAreaId OR
+     * will return empty Stream if no file exists under this path.
+     * Stream result is ordered by originalPath.
+     *
+     * @param accountId
+     * @param stagingAreaId
+     *
+     * @return Stream of FileHierarchyModel object.
+     */
+    Stream<FileHierarchyModel> findAllFiles(String accountId, String stagingAreaId);
 }

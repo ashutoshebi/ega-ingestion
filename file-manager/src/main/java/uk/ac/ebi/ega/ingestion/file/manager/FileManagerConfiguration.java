@@ -47,6 +47,7 @@ import uk.ac.ebi.ega.ingestion.file.manager.services.IMailingService;
 import uk.ac.ebi.ega.ingestion.file.manager.services.MailingService;
 import uk.ac.ebi.ega.ingestion.file.manager.services.key.RandomKeyGenerator;
 
+import javax.persistence.EntityManager;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.nio.file.Path;
@@ -118,8 +119,8 @@ public class FileManagerConfiguration {
     @Bean
     public IFileManagerService fileManagerService(IFireService fireIngestion,
                                                   @Value("${file.manager.fire.relative.path}") String fireBoxRelativePath,
-                                                  FileHierarchyRepository fileHierarchyRepository) {
-        return new FileManagerService(fireIngestion, Paths.get(fireBoxRelativePath), fileHierarchyRepository);
+                                                  FileHierarchyRepository fileHierarchyRepository, EntityManager entityManager) {
+        return new FileManagerService(fireIngestion, Paths.get(fireBoxRelativePath), fileHierarchyRepository, entityManager);
     }
 
     @Bean
