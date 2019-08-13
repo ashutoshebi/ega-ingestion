@@ -21,6 +21,7 @@ import uk.ac.ebi.ega.ingestion.file.manager.utils.FileStructureType;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
+import java.util.StringJoiner;
 
 public class FileHierarchyModel {
 
@@ -34,14 +35,9 @@ public class FileHierarchyModel {
     private LocalDateTime createdDate;
     private LocalDateTime updatedDate;
 
-    /**
-     * Convenient constant for the common case of a tab delimiter.
-     */
-    private static final String DELIMITER_TAB = "\t";
-
-    public FileHierarchyModel(final Long id, final String accountId, final String stagingAreaId, final String name,
-                              final String originalPath, final FileStructureType fileType, final LocalDateTime createdDate,
-                              final LocalDateTime updatedDate, final FileDetailsModel fileDetails) {
+    private FileHierarchyModel(final Long id, final String accountId, final String stagingAreaId, final String name,
+                               final String originalPath, final FileStructureType fileType, final LocalDateTime createdDate,
+                               final LocalDateTime updatedDate, final FileDetailsModel fileDetails) {
         this.id = Objects.requireNonNull(id);
         this.accountId = Objects.requireNonNull(accountId);
         this.stagingAreaId = Objects.requireNonNull(stagingAreaId);
@@ -107,14 +103,15 @@ public class FileHierarchyModel {
      * @See FileHierarchyModel#getColumnNames()
      */
     public String toStringFileDetails() {
-        return new StringBuilder(getAccountId()).append(DELIMITER_TAB).
-                append(getStagingAreaId()).append(DELIMITER_TAB).
-                append(getName()).append(DELIMITER_TAB).
-                append(getFileDetails().getPlainMd5()).append(DELIMITER_TAB).
-                append(getFileDetails().getPlainSize()).append(DELIMITER_TAB).
-                append(getFileDetails().getEncryptedSize()).append(DELIMITER_TAB).
-                append(getFileDetails().getStatus()).append(DELIMITER_TAB).
-                append(getFileDetails().getUpdatedDate()).
+        return new StringJoiner("\t").
+                add(getAccountId()).
+                add(getStagingAreaId()).
+                add(getName()).
+                add(getFileDetails().getPlainMd5()).
+                add(getFileDetails().getPlainSize().toString()).
+                add(getFileDetails().getEncryptedSize().toString()).
+                add(getFileDetails().getStatus()).
+                add(getFileDetails().getUpdatedDate().toString()).
                 toString();
     }
 
@@ -123,13 +120,17 @@ public class FileHierarchyModel {
      * @See FileHierarchyModel#toStringFileDetails()
      */
     public static String getColumnNames() {
-        return "Account Id" + DELIMITER_TAB +
-                "Staging Area Id" + DELIMITER_TAB +
-                "File Name" + DELIMITER_TAB +
-                "Plain MD5" + DELIMITER_TAB +
-                "Plain MD5 Size" + DELIMITER_TAB +
-                "Encrypted Size" + DELIMITER_TAB +
-                "Status" + DELIMITER_TAB +
-                "Modified Date" + "\n";
+        return new StringJoiner("\t").
+                add("Account Id").
+                add("Staging Area Id").
+                add("File Name").
+                add("Plain MD5").
+                add("Plain MD5 Size").
+                add("Encrypted Size").
+                add("Status").
+                add("Modified Date").
+                add("\n").
+                toString().
+                intern();
     }
 }
