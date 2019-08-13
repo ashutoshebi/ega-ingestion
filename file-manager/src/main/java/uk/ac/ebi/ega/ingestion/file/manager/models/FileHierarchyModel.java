@@ -114,6 +114,7 @@ public class FileHierarchyModel {
                 add(getFileDetails().getEncryptedSize().toString()).
                 add(getFileDetails().getStatus()).
                 add(getFileDetails().getUpdatedDate().toString()).
+                add("\n").
                 toString();
     }
 
