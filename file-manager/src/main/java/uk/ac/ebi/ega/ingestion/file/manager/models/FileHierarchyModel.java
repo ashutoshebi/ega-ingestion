@@ -35,6 +35,8 @@ public class FileHierarchyModel {
     private LocalDateTime createdDate;
     private LocalDateTime updatedDate;
 
+    private static final String COLUMN_NAMES = buildColumnNames();
+
     private FileHierarchyModel(final Long id, final String accountId, final String stagingAreaId, final String name,
                                final String originalPath, final FileStructureType fileType, final LocalDateTime createdDate,
                                final LocalDateTime updatedDate, final FileDetailsModel fileDetails) {
@@ -120,6 +122,10 @@ public class FileHierarchyModel {
      * @See FileHierarchyModel#toStringFileDetails()
      */
     public static String getColumnNames() {
+        return COLUMN_NAMES;
+    }
+
+    private static String buildColumnNames() {
         return new StringJoiner("\t").
                 add("Account Id").
                 add("Staging Area Id").
