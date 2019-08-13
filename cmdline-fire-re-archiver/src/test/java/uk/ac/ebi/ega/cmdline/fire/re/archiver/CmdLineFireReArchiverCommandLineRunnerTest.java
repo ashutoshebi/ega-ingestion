@@ -22,6 +22,10 @@ import org.junit.rules.TemporaryFolder;
 import org.springframework.context.ApplicationContext;
 import uk.ac.ebi.ega.cmdline.fire.re.archiver.CmdLineFireReArchiverCommandLineRunner.ReturnValue;
 import uk.ac.ebi.ega.cmdline.fire.re.archiver.services.IReEncryptionService;
+import uk.ac.ebi.ega.cmdline.fire.re.archiver.services.IngestionPipelineFile;
+import uk.ac.ebi.ega.cmdline.fire.re.archiver.services.IngestionPipelineResult;
+import uk.ac.ebi.ega.cmdline.fire.re.archiver.services.exceptions.SystemErrorException;
+import uk.ac.ebi.ega.cmdline.fire.re.archiver.services.exceptions.UserErrorException;
 import uk.ac.ebi.ega.cmdline.fire.re.archiver.utils.IStableIdGenerator;
 import uk.ac.ebi.ega.fire.ingestion.service.IFireService;
 
@@ -29,7 +33,6 @@ import java.io.File;
 import java.io.IOException;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -41,7 +44,7 @@ import static org.mockito.Mockito.when;
 public class CmdLineFireReArchiverCommandLineRunnerTest {
 
     private static final String STABLE_ID = "CMD_123";
-    private static final String MD5_OF_INPUT_FILE = "d41d8cd98f00b204e9800998ecf8427e";
+    private static final String MD5_OF_OUTPUT_FILE = "c12123498f00b204e9800998ec111111";
     private static final String PATH_ON_FIRE = "/fire/path/store/here";
 
     private final IFireService fireService = mock(IFireService.class);
@@ -51,37 +54,38 @@ public class CmdLineFireReArchiverCommandLineRunnerTest {
     @Rule
     public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-    private CmdLineFireReArchiverCommandLineRunner archiver;
-
-    private File inputFile;
+    private final IReEncryptionService reEncryptionService = mock(IReEncryptionService.class);
+    private final CmdLineFireReArchiverCommandLineRunner archiver = new CmdLineFireReArchiverCommandLineRunner(applicationContext,
+            fireService, stableIdGenerator, reEncryptionService);
+    private File encryptedInputFile;
+    private File reEncryptedOutputFile;
 
     @Before
     public void setUp() throws IOException {
-        inputFile = temporaryFolder.newFile();
+        encryptedInputFile = temporaryFolder.newFile("temp1.gpg");
+        reEncryptedOutputFile = temporaryFolder.newFile("temp1.cip");
         when(stableIdGenerator.generate()).thenReturn(STABLE_ID);
     }
 
     @Test
-    public void commandLineRunner_SuppliedCorrectArguments_ExecutesSuccessfully() throws IOException {
-        archiver = new CmdLineFireReArchiverCommandLineRunner(applicationContext,
-                fireService, stableIdGenerator,  mockReEncryptionService());
+    public void commandLineRunner_SuppliedCorrectArguments_ExecutesSuccessfully() throws IOException, UserErrorException, SystemErrorException {
         final CommandLineParser correctArguments = getCorrectArguments();
+        when(reEncryptionService.reEncrypt(eq(encryptedInputFile), any(File.class))).thenReturn(createIngestionPipelineResult());
 
         final int returnValue = archiver.archiveFile(correctArguments);
 
         assertThat(returnValue).isEqualTo(ReturnValue.EVERYTHING_OK.ordinal());
-        verify(fireService).archiveFile(eq(STABLE_ID), any(File.class), eq(MD5_OF_INPUT_FILE), eq(PATH_ON_FIRE));
+        verify(fireService).archiveFile(eq(STABLE_ID), eq(reEncryptedOutputFile), eq(MD5_OF_OUTPUT_FILE), eq(PATH_ON_FIRE));
     }
 
     @Test
-    public void commandLineRunner_SuppliedWithNonExistingInputFile_ReturnsFailureReturnValue() throws IOException {
-        archiver = new CmdLineFireReArchiverCommandLineRunner(applicationContext,
-                fireService, stableIdGenerator, mock(IReEncryptionService.class));
+    public void commandLineRunner_SuppliedWithNonExistingInputFile_ReturnsFailureReturnValue() throws IOException, UserErrorException, SystemErrorException {
         final CommandLineParser invalidArguments = getArguments("/non/existent/file");
+        when(reEncryptionService.reEncrypt(any(File.class), any(File.class))).thenThrow(new SystemErrorException(encryptedInputFile + " does not exist"));
 
         final int returnValue = archiver.archiveFile(invalidArguments);
 
-        assertThat(returnValue).isEqualTo(ReturnValue.EXCEPTION_DURING_ARCHIVING.ordinal());
+        assertThat(returnValue).isEqualTo(ReturnValue.EXCEPTION_DURING_RE_ENCRYPTION.ordinal());
         verify(fireService, never()).archiveFile(anyString(), any(File.class), anyString(), anyString());
     }
 
@@ -93,22 +97,15 @@ public class CmdLineFireReArchiverCommandLineRunnerTest {
     }
 
     private CommandLineParser getCorrectArguments() throws IOException {
-        final String inputFilePath = inputFile.toPath().toString();
+        final String inputFilePath = encryptedInputFile.toPath().toString();
         return getArguments(inputFilePath);
     }
 
-    private IReEncryptionService mockReEncryptionService() {
-        return (gpgEncryptedInputFile, aesCtr256EgaEncryptedOutputFile) -> {
-            try {
-                //noinspection ResultOfMethodCallIgnored
-                aesCtr256EgaEncryptedOutputFile.createNewFile();
-            } catch (IOException e) {
-                fail("Couldn't create " + aesCtr256EgaEncryptedOutputFile);
-            }
-
-            // Return value is unimportant.
-            return null;
-        };
+    private IngestionPipelineResult createIngestionPipelineResult() {
+        return new IngestionPipelineResult(
+                new IngestionPipelineFile(encryptedInputFile, "md5OfInputFile", 123L),
+                "plainDecryptedMd5", 234L, "key".toCharArray(),
+                new IngestionPipelineFile(reEncryptedOutputFile, MD5_OF_OUTPUT_FILE, 345L));
     }
 
 }

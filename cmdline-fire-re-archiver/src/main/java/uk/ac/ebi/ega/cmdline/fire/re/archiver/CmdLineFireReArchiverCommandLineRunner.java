@@ -22,19 +22,14 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
 import uk.ac.ebi.ega.cmdline.fire.re.archiver.services.IReEncryptionService;
+import uk.ac.ebi.ega.cmdline.fire.re.archiver.services.IngestionPipelineResult;
 import uk.ac.ebi.ega.cmdline.fire.re.archiver.services.exceptions.SystemErrorException;
 import uk.ac.ebi.ega.cmdline.fire.re.archiver.services.exceptions.UserErrorException;
 import uk.ac.ebi.ega.cmdline.fire.re.archiver.utils.IStableIdGenerator;
-import uk.ac.ebi.ega.encryption.core.utils.Hash;
 import uk.ac.ebi.ega.fire.ingestion.service.IFireService;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Optional;
 
 public class CmdLineFireReArchiverCommandLineRunner implements CommandLineRunner {
@@ -42,7 +37,6 @@ public class CmdLineFireReArchiverCommandLineRunner implements CommandLineRunner
     private static final Logger LOGGER = LoggerFactory.getLogger(CmdLineFireReArchiverCommandLineRunner.class);
 
     private static final String EXTENSION_OF_RE_ENCRYPTED_FILES = ".cip";
-    private static final int BUFFER_SIZE = 8192;
 
     private final ApplicationContext applicationContext;
     private final IFireService fireService;
@@ -76,20 +70,14 @@ public class CmdLineFireReArchiverCommandLineRunner implements CommandLineRunner
             final File reEncryptedFile = getOutputFileBasedOn(inputFile, EXTENSION_OF_RE_ENCRYPTED_FILES);
             final String pathOnFire = args.getPathOnFire();
 
-            reEncryptionService.reEncrypt(inputFile, reEncryptedFile);
+            final IngestionPipelineResult ingestionPipelineResult = reEncryptionService.reEncrypt(inputFile, reEncryptedFile);
 
-            final String md5 = getMd5(reEncryptedFile);
+            final String reEncryptedMd5 = ingestionPipelineResult.getEncryptedFile().getMd5();
 
-            fireService.archiveFile(stableId, reEncryptedFile, md5, pathOnFire);
+            fireService.archiveFile(stableId, reEncryptedFile, reEncryptedMd5, pathOnFire);
 
             return ReturnValue.EVERYTHING_OK.getValue();
 
-        } catch (FileNotFoundException e) {
-            LOGGER.error("Input file was not found: {}", e.getMessage());
-            return ReturnValue.EXCEPTION_DURING_ARCHIVING.getValue();
-        } catch (NoSuchAlgorithmException | IOException e) {
-            LOGGER.error("Exception during archiving: ", e);
-            return ReturnValue.EXCEPTION_DURING_ARCHIVING.getValue();
         } catch (UserErrorException | SystemErrorException e) {
             LOGGER.error("Exception during re-encryption: ", e);
             return ReturnValue.EXCEPTION_DURING_RE_ENCRYPTION.getValue();
@@ -113,33 +101,10 @@ public class CmdLineFireReArchiverCommandLineRunner implements CommandLineRunner
         return new File(absFilePathWithExtension);
     }
 
-    private String getMd5(final File inputFile) throws IOException, NoSuchAlgorithmException {
-        try (final InputStream encryptedInput = new FileInputStream(inputFile)) {
-
-            final byte[] buffer = new byte[BUFFER_SIZE];
-            final MessageDigest messageDigestOfEncryptedFile = MessageDigest.getInstance("MD5");
-            int bytesRead;
-
-            do {
-                bytesRead = encryptedInput.read(buffer);
-                if (bytesRead > 0) {
-                    messageDigestOfEncryptedFile.update(buffer, 0, bytesRead);
-                }
-            } while (bytesRead != -1);
-
-            final String md5 = Hash.normalize(messageDigestOfEncryptedFile);
-
-            LOGGER.debug("The MD5 of the {} file is: {}", inputFile, md5);
-
-            return md5;
-        }
-    }
-
     enum ReturnValue {
         EVERYTHING_OK(0),
-        EXCEPTION_DURING_ARCHIVING(1),
-        EXCEPTION_DURING_RE_ENCRYPTION(2),
-        EMPTY_COMMAND_LINE_ARGUMENTS(3);
+        EXCEPTION_DURING_RE_ENCRYPTION(1),
+        EMPTY_COMMAND_LINE_ARGUMENTS(2);
 
         private int value;
 
