@@ -17,6 +17,7 @@
  */
 package uk.ac.ebi.ega.ingestion.file.manager;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,6 +30,7 @@ import uk.ac.ebi.ega.ingestion.file.manager.services.IFileStatusUpdaterService;
 @Configuration
 public class FileStatusUpdaterConfiguration {
 
+    @Autowired
     private IFileStatusUpdaterService fileStatusUpdaterService;
 
     @Bean
@@ -36,8 +38,7 @@ public class FileStatusUpdaterConfiguration {
                                                               final IFireService fireService,
                                                               @Value("${file.status.updater.batch.size}")
                                                               final int batchSize) {
-        fileStatusUpdaterService = new FileStatusUpdaterService(fileDetailsRepository, fireService, batchSize);
-        return fileStatusUpdaterService;
+        return new FileStatusUpdaterService(fileDetailsRepository, fireService, batchSize);
     }
 
     @Scheduled(fixedDelayString = "${file.status.updater.fixed.delay.seconds}000")

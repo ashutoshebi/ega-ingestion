@@ -32,6 +32,6 @@ public interface IFireService {
      * @param fileIds ega-pro-filer.ega_ARCHIVE.file.file_id's
      * @return the DB-rows as a list of OldFireFile object
      */
-    List<OldFireFile> findAllByFileId(final List<Long> fileIds);
+    List<OldFireFile> findAllByFileId(List<Long> fileIds);
 
 }
