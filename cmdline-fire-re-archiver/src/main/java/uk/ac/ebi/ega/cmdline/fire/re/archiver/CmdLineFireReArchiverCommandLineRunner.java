@@ -22,10 +22,10 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
 import uk.ac.ebi.ega.cmdline.fire.re.archiver.services.IReEncryptionService;
+import uk.ac.ebi.ega.cmdline.fire.re.archiver.services.exceptions.SystemErrorException;
+import uk.ac.ebi.ega.cmdline.fire.re.archiver.services.exceptions.UserErrorException;
 import uk.ac.ebi.ega.cmdline.fire.re.archiver.utils.IStableIdGenerator;
 import uk.ac.ebi.ega.encryption.core.utils.Hash;
-import uk.ac.ebi.ega.file.encryption.processor.pipelines.exceptions.SystemErrorException;
-import uk.ac.ebi.ega.file.encryption.processor.pipelines.exceptions.UserErrorException;
 import uk.ac.ebi.ega.fire.ingestion.service.IFireService;
 
 import java.io.File;

@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.IOException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -46,13 +47,11 @@ public class CmdLineFireReArchiverCommandLineRunnerTest {
     private final IFireService fireService = mock(IFireService.class);
     private final IStableIdGenerator stableIdGenerator = mock(IStableIdGenerator.class);
     private final ApplicationContext applicationContext = mock(ApplicationContext.class);
-    private final IReEncryptionService reEncryptionService = mock(IReEncryptionService.class);
 
     @Rule
     public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-    private final CmdLineFireReArchiverCommandLineRunner archiver = new CmdLineFireReArchiverCommandLineRunner(applicationContext,
-            fireService, stableIdGenerator, reEncryptionService);
+    private CmdLineFireReArchiverCommandLineRunner archiver;
 
     private File inputFile;
 
@@ -64,16 +63,20 @@ public class CmdLineFireReArchiverCommandLineRunnerTest {
 
     @Test
     public void commandLineRunner_SuppliedCorrectArguments_ExecutesSuccessfully() throws IOException {
+        archiver = new CmdLineFireReArchiverCommandLineRunner(applicationContext,
+                fireService, stableIdGenerator,  mockReEncryptionService());
         final CommandLineParser correctArguments = getCorrectArguments();
 
         final int returnValue = archiver.archiveFile(correctArguments);
 
         assertThat(returnValue).isEqualTo(ReturnValue.EVERYTHING_OK.ordinal());
-        verify(fireService).archiveFile(eq(STABLE_ID), eq(inputFile), eq(MD5_OF_INPUT_FILE), eq(PATH_ON_FIRE));
+        verify(fireService).archiveFile(eq(STABLE_ID), any(File.class), eq(MD5_OF_INPUT_FILE), eq(PATH_ON_FIRE));
     }
 
     @Test
     public void commandLineRunner_SuppliedWithNonExistingInputFile_ReturnsFailureReturnValue() throws IOException {
+        archiver = new CmdLineFireReArchiverCommandLineRunner(applicationContext,
+                fireService, stableIdGenerator, mock(IReEncryptionService.class));
         final CommandLineParser invalidArguments = getArguments("/non/existent/file");
 
         final int returnValue = archiver.archiveFile(invalidArguments);
@@ -92,6 +95,20 @@ public class CmdLineFireReArchiverCommandLineRunnerTest {
     private CommandLineParser getCorrectArguments() throws IOException {
         final String inputFilePath = inputFile.toPath().toString();
         return getArguments(inputFilePath);
+    }
+
+    private IReEncryptionService mockReEncryptionService() {
+        return (gpgEncryptedInputFile, aesCtr256EgaEncryptedOutputFile) -> {
+            try {
+                //noinspection ResultOfMethodCallIgnored
+                aesCtr256EgaEncryptedOutputFile.createNewFile();
+            } catch (IOException e) {
+                fail("Couldn't create " + aesCtr256EgaEncryptedOutputFile);
+            }
+
+            // Return value is unimportant.
+            return null;
+        };
     }
 
 }

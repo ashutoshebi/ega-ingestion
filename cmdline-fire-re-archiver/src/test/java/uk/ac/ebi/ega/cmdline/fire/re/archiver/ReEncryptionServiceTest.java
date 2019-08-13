@@ -20,11 +20,11 @@ package uk.ac.ebi.ega.cmdline.fire.re.archiver;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import uk.ac.ebi.ega.cmdline.fire.re.archiver.services.IngestionPipelineResult;
 import uk.ac.ebi.ega.cmdline.fire.re.archiver.services.ReEncryptionService;
+import uk.ac.ebi.ega.cmdline.fire.re.archiver.services.exceptions.SystemErrorException;
+import uk.ac.ebi.ega.cmdline.fire.re.archiver.services.exceptions.UserErrorException;
 import uk.ac.ebi.ega.encryption.core.utils.io.FileUtils;
-import uk.ac.ebi.ega.file.encryption.processor.pipelines.IngestionPipelineResult;
-import uk.ac.ebi.ega.file.encryption.processor.pipelines.exceptions.SystemErrorException;
-import uk.ac.ebi.ega.file.encryption.processor.pipelines.exceptions.UserErrorException;
 
 import java.io.File;
 import java.io.IOException;
