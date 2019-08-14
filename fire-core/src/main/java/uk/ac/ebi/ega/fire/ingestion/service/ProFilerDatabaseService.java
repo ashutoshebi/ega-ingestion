@@ -63,7 +63,8 @@ public class ProFilerDatabaseService implements IProFilerDatabaseService {
                 "  f.file_id as file_id" +
                 ", a.fire_exit_code as fire_exit_code" +
                 ", a.fire_exit_reason as fire_exit_reason " +
-                "FROM file f JOIN archive a USING (file_id) " +
+                "FROM file f " +
+                "JOIN archive a ON f.file_id = a.file_id " +
                 "WHERE f.file_id in (:file_ids)";
 
         final MapSqlParameterSource parameters = new MapSqlParameterSource();

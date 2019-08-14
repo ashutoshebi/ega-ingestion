@@ -49,18 +49,26 @@ public class FileStatusUpdaterService implements IFileStatusUpdaterService {
 
     @Override
     public void updateStatus() {
+        LOGGER.trace("FileStatusUpdaterService.updateStatus was called.");
+
         Page<FileDetails> pageContainingLocalFilesBeingArchived;
         Pageable pageRequest = PageRequest.of(0, batchSize);
 
         do {
+            LOGGER.trace("Processing PageRequest: {}...", pageRequest);
+
             pageContainingLocalFilesBeingArchived = fileDetailsRepository
                     .findByStatus(FileStatus.ARCHIVE_IN_PROGRESS, pageRequest);
 
             final List<FileDetails> localFilesBeingArchived = pageContainingLocalFilesBeingArchived.getContent();
-            updateStatus(localFilesBeingArchived);
+            LOGGER.trace("Local files which are being archived and whose status should be updated: {}",
+                    localFilesBeingArchived);
+
+            if (!localFilesBeingArchived.isEmpty()) {
+                updateStatus(localFilesBeingArchived);
+            }
 
             pageRequest = pageRequest.next();
-
         } while (!pageContainingLocalFilesBeingArchived.isLast());
     }
 
@@ -72,6 +80,8 @@ public class FileStatusUpdaterService implements IFileStatusUpdaterService {
      */
     private void updateStatus(final List<FileDetails> localFilesBeingArchived) {
         final List<OldFireFile> filesInFire = getFilesInFireCorrespondingTo(localFilesBeingArchived);
+        LOGGER.trace("The files in Fire, whose status will be used to update the local files which are being archived: {}",
+                filesInFire);
         updateStatusesBasedOn(filesInFire, localFilesBeingArchived);
     }
 
@@ -88,11 +98,13 @@ public class FileStatusUpdaterService implements IFileStatusUpdaterService {
 
         // FileId => current FileStatus in Fire
         final Map<Long, Optional<FileStatus>> fileIdsToFileStatuses = getFileIdsAndFileStatusesOf(filesInFire);
+        LOGGER.trace("Map<\"FileId in Fire\", \"current FileStatus in Fire\">: {}", fileIdsToFileStatuses);
 
         for (final FileDetails localFileBeingArchived : localFilesBeingArchived) {
             final Long fileIdOfLocalFileBeingArchived = localFileBeingArchived.getFileId();
             final Long fileId = fileIdOfLocalFileBeingArchived;
             final Optional<FileStatus> optionalFileStatus = fileIdsToFileStatuses.get(fileId);
+            LOGGER.trace("Local file {} might be updated with status {}", localFileBeingArchived, optionalFileStatus);
 
             if (optionalFileStatus.isPresent()) {
                 final FileStatus fileStatusOfFileInFire = optionalFileStatus.get();
@@ -101,6 +113,7 @@ public class FileStatusUpdaterService implements IFileStatusUpdaterService {
                     LOGGER.error("The file in Fire with EGA_FILE_STABLE_ID={} is in an erroneous state.", fileId);
                 }
 
+                LOGGER.trace("Local file {} will be updated with status {}", localFileBeingArchived, optionalFileStatus);
                 localFileBeingArchived.setStatus(fileStatusOfFileInFire);
                 fileDetailsRepository.save(localFileBeingArchived);
             } else {
@@ -122,6 +135,8 @@ public class FileStatusUpdaterService implements IFileStatusUpdaterService {
     }
 
     private Optional<FileStatus> getFileStatus(final OldFireFile fireFile) {
+        LOGGER.trace("Getting the file status of the {} file (which is in Fire)...", fireFile);
+
         if (fireFile.getExitCode() == null && fireFile.getExitReason() == null) {
             return Optional.of(FileStatus.ARCHIVE_IN_PROGRESS);
         }

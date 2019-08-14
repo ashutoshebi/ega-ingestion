@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import uk.ac.ebi.ega.fire.ingestion.service.IFireService;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.FileDetailsRepository;
@@ -28,6 +29,7 @@ import uk.ac.ebi.ega.ingestion.file.manager.services.FileStatusUpdaterService;
 import uk.ac.ebi.ega.ingestion.file.manager.services.IFileStatusUpdaterService;
 
 @Configuration
+@EnableScheduling
 public class FileStatusUpdaterConfiguration {
 
     @Autowired
