@@ -87,10 +87,6 @@ public class ProFilerDatabaseService implements IProFilerDatabaseService {
         parameters.addValue("ega_id", egaFileId);
 
         KeyHolder holder = new GeneratedKeyHolder();
-
-        LOGGER.trace("Query to insert into the FILE table: " +
-                "query: {}, parameters: {}, holder: {}", query, parameters, holder);
-
         proFilerTemplate.update(query, parameters, holder);
         return holder.getKey().longValue();
     }
@@ -136,10 +132,6 @@ public class ProFilerDatabaseService implements IProFilerDatabaseService {
         parameters.addValue("archive_location_id", 1);
 
         KeyHolder holder = new GeneratedKeyHolder();
-
-        LOGGER.trace("Query to insert into the ARCHIVE table: " +
-                "query: {}, parameters: {}, holder: {}", query, parameters, holder);
-
         proFilerTemplate.update(query, parameters, holder);
         return holder.getKey().longValue();
     }
