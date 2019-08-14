@@ -62,13 +62,16 @@ public class FireArchiverCommandLineRunner implements CommandLineRunner {
     }
 
     int archiveFile(final CommandLineParser args) {
+        LOGGER.debug("Received the following command-line arguments: {}", args);
+
         try {
             final String stableId = stableIdGenerator.generate();
             final File inputFile = args.getFilePath().toFile();
             final String md5 = getMd5(inputFile);
             final String pathOnFire = args.getPathOnFire();
 
-            fireService.archiveFile(stableId, inputFile, md5, pathOnFire);
+            final Optional<Long> optionalArchiveId = fireService.archiveFile(stableId, inputFile, md5, pathOnFire);
+            LOGGER.debug("archiveId: {}", optionalArchiveId);
 
             return ReturnValue.EVERYTHING_OK.getValue();
         } catch (FileNotFoundException e) {
