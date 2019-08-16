@@ -15,12 +15,13 @@
  */
 package uk.ac.ebi.ega.fire.ingestion.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
-import org.springframework.transaction.annotation.Transactional;
 import uk.ac.ebi.ega.fire.utils.FileUtils;
 
 import java.io.File;
@@ -28,6 +29,8 @@ import java.sql.Timestamp;
 import java.util.Calendar;
 
 public class ProFilerDatabaseService implements IProFilerDatabaseService {
+
+    private final static Logger LOGGER = LoggerFactory.getLogger(ProFilerDatabaseService.class);
 
     private final NamedParameterJdbcTemplate proFilerTemplate;
 
@@ -38,8 +41,18 @@ public class ProFilerDatabaseService implements IProFilerDatabaseService {
 
     @Override
     public long archiveFile(String egaFileId, File file, String md5, String pathOnFire) {
+        LOGGER.debug("Started archiving the {} file with the following parameters: " +
+                "egaFileId: {}, md5: {}, pathOnFire: {}", file, egaFileId, md5, pathOnFire);
+
         long profilerFileId = insertFile(egaFileId, file, md5);
-        return insertArchive(profilerFileId, pathOnFire, file, md5);
+        LOGGER.debug("File has been inserted into the FILE table. " +
+                        "profilerFileId: {}, egaFileId: {}, file: {} ", profilerFileId, egaFileId, file);
+
+        final long archiveId = insertArchive(profilerFileId, pathOnFire, file, md5);
+        LOGGER.debug("File has been inserted into the ARCHIVE table. " +
+                "archiveId: {}, profilerFileId: {}, pathOnFire: {}", archiveId, profilerFileId, pathOnFire);
+
+        return archiveId;
     }
 
     private long insertFile(String egaFileId, File file, String md5) {

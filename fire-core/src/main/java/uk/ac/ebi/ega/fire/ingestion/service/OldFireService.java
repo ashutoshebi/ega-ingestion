@@ -44,9 +44,15 @@ public class OldFireService implements IFireService {
 
     @Override
     public Optional<Long> archiveFile(String egaFileId, File file, String md5, String pathOnFire) {
+        logger.debug("Started archiving the {} file with the following parameters: " +
+                        "egaFileId: {}, md5: {}, pathOnFire: {}", file, egaFileId, md5, pathOnFire);
+
         try {
             File fileInStaging = moveFileToFireStaging(file, pathOnFire);
-            return Optional.of(proFilerDatabaseService.archiveFile(egaFileId, fileInStaging, md5, pathOnFire));
+            long archiveId = proFilerDatabaseService.archiveFile(egaFileId, fileInStaging, md5, pathOnFire);
+            logger.debug("The {} file has been archived. archiveId: {}, egaFileId: {}, fileInStaging: {}, md5: {}, pathOnFire: {}",
+                    file, archiveId, egaFileId, fileInStaging, md5, pathOnFire);
+            return Optional.of(archiveId);
         } catch (IOException e) {
             logger.error(e.getMessage(), e);
             return Optional.empty();
@@ -58,9 +64,10 @@ public class OldFireService implements IFireService {
         final File fileInStaging = fileInStagingPath.toFile();
 
         try {
+            logger.debug("About to move '{}' to '{}'", file.getAbsolutePath(), fileInStaging.getAbsolutePath());
             Files.createDirectories(fileInStagingPath.getParent());
             Files.move(file.toPath(), fileInStagingPath, ATOMIC_MOVE);
-            logger.info("File '{}' moved to '{}", file.getAbsolutePath(), fileInStaging.getAbsolutePath());
+            logger.info("File '{}' moved to '{}'", file.getAbsolutePath(), fileInStaging.getAbsolutePath());
             return fileInStaging;
         } catch (NoSuchObjectException e) {
             if (fileInStaging.exists()) {
