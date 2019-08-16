@@ -69,4 +69,15 @@ public class IngestionPipelineResult {
     public IngestionPipelineFile getEncryptedIndexFile() {
         return encryptedIndexFile;
     }
+
+    @Override
+    public String toString() {
+        return "IngestionPipelineResult{" +
+                "originalFile=" + originalFile +
+                ", md5='" + md5 + '\'' +
+                ", bytesTransferred=" + bytesTransferred +
+                ", encryptedFile=" + encryptedFile +
+                ", encryptedIndexFile=" + encryptedIndexFile +
+                '}';
+    }
 }

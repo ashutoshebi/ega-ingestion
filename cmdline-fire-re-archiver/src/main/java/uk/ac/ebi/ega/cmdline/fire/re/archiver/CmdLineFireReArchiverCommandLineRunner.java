@@ -65,16 +65,24 @@ public class CmdLineFireReArchiverCommandLineRunner implements CommandLineRunner
 
     int archiveFile(final CommandLineParser args) {
         try {
+            LOGGER.debug("Received the following command-line arguments: {}", args);
+
             final String stableId = stableIdGenerator.generate();
             final File inputFile = args.getFilePath().toFile();
             final File reEncryptedFile = getOutputFileBasedOn(inputFile, EXTENSION_OF_RE_ENCRYPTED_FILES);
             final String pathOnFire = args.getPathOnFire();
 
+            LOGGER.trace("Re-encrypting the {} input-file into {}...", inputFile, reEncryptedFile);
             final IngestionPipelineResult ingestionPipelineResult = reEncryptionService.reEncrypt(inputFile, reEncryptedFile);
+            LOGGER.trace("The result of re-encrypting the {} input-file: {}", inputFile, ingestionPipelineResult);
 
             final String reEncryptedMd5 = ingestionPipelineResult.getEncryptedFile().getMd5();
 
-            fireService.archiveFile(stableId, reEncryptedFile, reEncryptedMd5, pathOnFire);
+            LOGGER.trace("Archiving the re-encrypted file {} with stableId {} into {}...",
+                    reEncryptedFile, stableId, pathOnFire);
+            final Optional<Long> optionalArchiveId = fireService.archiveFile(stableId, reEncryptedFile,
+                    reEncryptedMd5, pathOnFire);
+            LOGGER.debug("archiveId: {}", optionalArchiveId);
 
             return ReturnValue.EVERYTHING_OK.getValue();
 

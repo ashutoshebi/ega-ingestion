@@ -42,4 +42,13 @@ public class IngestionPipelineFile {
     public long getFileSize() {
         return fileSize;
     }
+
+    @Override
+    public String toString() {
+        return "IngestionPipelineFile{" +
+                "file=" + file +
+                ", md5='" + md5 + '\'' +
+                ", fileSize=" + fileSize +
+                '}';
+    }
 }

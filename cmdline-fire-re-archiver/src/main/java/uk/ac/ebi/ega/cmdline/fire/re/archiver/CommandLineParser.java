@@ -72,4 +72,12 @@ class CommandLineParser {
     String getPathOnFire() {
         return pathOnFire;
     }
+
+    @Override
+    public String toString() {
+        return "CommandLineParser{" +
+                "filePath=" + filePath +
+                ", pathOnFire='" + pathOnFire + '\'' +
+                '}';
+    }
 }

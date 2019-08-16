@@ -31,6 +31,7 @@ import uk.ac.ebi.ega.fire.ingestion.service.IFireService;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -46,6 +47,7 @@ public class CmdLineFireReArchiverCommandLineRunnerTest {
     private static final String STABLE_ID = "CMD_123";
     private static final String MD5_OF_OUTPUT_FILE = "c12123498f00b204e9800998ec111111";
     private static final String PATH_ON_FIRE = "/fire/path/store/here";
+    private static final Long ARCHIVE_ID = 234L;
 
     private final IFireService fireService = mock(IFireService.class);
     private final IStableIdGenerator stableIdGenerator = mock(IStableIdGenerator.class);
@@ -71,6 +73,8 @@ public class CmdLineFireReArchiverCommandLineRunnerTest {
     public void commandLineRunner_SuppliedCorrectArguments_ExecutesSuccessfully() throws IOException, UserErrorException, SystemErrorException {
         final CommandLineParser correctArguments = getCorrectArguments();
         when(reEncryptionService.reEncrypt(eq(encryptedInputFile), any(File.class))).thenReturn(createIngestionPipelineResult());
+        when(fireService.archiveFile(eq(STABLE_ID), eq(reEncryptedOutputFile), eq(MD5_OF_OUTPUT_FILE), eq(PATH_ON_FIRE)))
+                .thenReturn(Optional.of(ARCHIVE_ID));
 
         final int returnValue = archiver.archiveFile(correctArguments);
 
