@@ -41,7 +41,6 @@ import java.nio.file.Paths;
 @Configuration
 public class CmdLineFireReArchiverConfiguration {
 
-    // TODO bjuhasz: why is this preferred over @Value("${file.encryption.static.key}")?
     @Bean
     @ConfigurationProperties(prefix = "ega.cmdline.fire.re.archiver.config")
     public CmdLineFireReArchiverProperties archiverProperties() {
