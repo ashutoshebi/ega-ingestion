@@ -52,14 +52,18 @@ public class FileReportController {
                                            HttpServletRequest request,
                                            HttpServletResponse response) throws IOException {
         final Path extractedPath = Paths.get(extractVariablePath(request));
-        if (extractedPath.toString().isEmpty()) {
-            try (final Stream<FileHierarchyModel> fileHierarchyModelStream = fileManagerService.findAllFiles(accountId, locationId)) {
-                writeResponse(fileHierarchyModelStream, response);
-            }
-        } else {
-            try (final Stream<FileHierarchyModel> fileHierarchyModelStream = fileManagerService.findAllFiles(accountId, locationId, extractedPath)) {
-                writeResponse(fileHierarchyModelStream, response);
-            }
+
+        try (final Stream<FileHierarchyModel> fileHierarchyModelStream = fileManagerService.findAllFilesInPathNonRecursive(accountId, locationId, extractedPath)) {
+            writeResponse(fileHierarchyModelStream, response);
+        }
+    }
+
+    @RequestMapping(value = "/tsv/all/{accountId}/{locationId}", method = RequestMethod.GET)
+    @Transactional(value = "fileManager_transactionManager", readOnly = true)
+    public void generateTSVFileForAllFilesUsingStream(@PathVariable String accountId,
+                                                      @PathVariable String locationId, HttpServletResponse response) throws IOException {
+        try (final Stream<FileHierarchyModel> fileHierarchyModelStream = fileManagerService.findAllFilesInRootPathRecursive(accountId, locationId)) {
+            writeResponse(fileHierarchyModelStream, response);
         }
     }
 

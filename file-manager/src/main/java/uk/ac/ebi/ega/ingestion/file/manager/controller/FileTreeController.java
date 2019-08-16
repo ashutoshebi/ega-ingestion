@@ -67,7 +67,7 @@ public class FileTreeController {
         final String baseURI = new StringBuilder(link.getHref()).append("/").append(accountId).append("/")
                 .append(locationId).toString();
         final FileTreeWrapper fileTreeWrapper = new FileTreeWrapper();
-        final List<FileHierarchyModel> fileHierarchyModels = fileManagerService.findAll(path, accountId, locationId);
+        final List<FileHierarchyModel> fileHierarchyModels = fileManagerService.findAllFilesAndFoldersInPathNonRecursive(accountId, locationId, path);
 
         for (FileHierarchyModel fileHierarchyModel : fileHierarchyModels) {
             final Link selfLink = new Link(new StringBuilder(baseURI).
@@ -94,6 +94,6 @@ public class FileTreeController {
                                                    Pageable pageable,
                                                    PagedResourcesAssembler assembler,
                                                    FileHierarchyResourceAssembler fileHierarchyResourceAssembler) throws FileNotFoundException {
-        return assembler.toResource(fileManagerService.findAllFiles(accountId, locationId, predicate, pageable), fileHierarchyResourceAssembler);
+        return assembler.toResource(fileManagerService.findAllFilesInRootPathRecursive(accountId, locationId, predicate, pageable), fileHierarchyResourceAssembler);
     }
 }

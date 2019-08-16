@@ -32,37 +32,80 @@ import java.util.stream.Stream;
 
 public interface IFileManagerService {
 
-    List<FileHierarchyModel> findAll(Path filePath, String accountId, String stagingAreaId) throws FileNotFoundException;
-
     void archive(ArchiveEvent archiveEvent) throws IOException, FileHierarchyException;
 
-    Page<FileHierarchyModel> findAllFiles(String accountId, String stagingAreaId, Predicate predicate, Pageable pageable) throws FileNotFoundException;
-
     /**
-     * Returns Stream of FileHierarchyModel for given filePath. If filePath is file itself, then file will be returned.
-     * If filePath is a Folder path then all files under this path will be returned OR
-     * will return empty Stream if no file exists under this path.
-     * Stream result is ordered by originalPath.
+     * Returns List of FileHierarchyModel. Condition checks for case insensitive equals AccountId, StagingAreaId
+     * & FilePath; Result contains both Files & Folders inside given filePath but no Children.
+     * It Will return empty List if no data found.
+     * List is ordered by originalPath.
+     * It is a Non Recursive result.
      *
      * @param accountId
+     *         Account Id
      * @param stagingAreaId
+     *         Staging Area Id
      * @param filePath
+     *         File path
+     *
+     * @return List of FileHierarchyModel.
+     * @throws FileNotFoundException
+     */
+    List<FileHierarchyModel> findAllFilesAndFoldersInPathNonRecursive(String accountId, String stagingAreaId, Path filePath) throws FileNotFoundException;
+
+    /**
+     * Returns Page object of FileHierarchyModel. Condition checks for case insensitive equals AccountId, StagingAreaId
+     * and Predicate given. Result contains all Files inside root path & not Folders.
+     * Page will have no records if no data found.
+     * It is a Recursive result.
+     *
+     * @param accountId
+     *         Account Id
+     * @param stagingAreaId
+     *         Staging Area Id
+     * @param predicate
+     *         Predicate
+     * @param pageable
+     *         Pageable
+     *
+     * @return Page object of FileHierarchyModel.
+     * @throws FileNotFoundException
+     */
+    Page<FileHierarchyModel> findAllFilesInRootPathRecursive(String accountId, String stagingAreaId, Predicate predicate, Pageable pageable) throws FileNotFoundException;
+
+    /**
+     * Returns Stream of FileHierarchyModel for given filePath. If filePath is a file, then file will be returned.
+     * If filePath is a Folder path then all files under this folder will be returned. In case if Path is null then files at
+     * in root path will be returned whereas if no file present will return empty Stream.
+     * Stream is ordered by originalPath.
+     * It is a Non Recursive result.
+     *
+     * @param accountId
+     *         Account Id
+     * @param stagingAreaId
+     *         Staging Area Id
+     * @param filePath
+     *         File path
      *
      * @return Stream of FileHierarchyModel object.
      * @throws FileNotFoundException
-     *         throws if path is invalid. Provided path doesn't exists.
+     *         throws if path is invalid; Provided path doesn't exists.
      */
-    Stream<FileHierarchyModel> findAllFiles(String accountId, String stagingAreaId, Path filePath) throws FileNotFoundException;
+    Stream<FileHierarchyModel> findAllFilesInPathNonRecursive(String accountId, String stagingAreaId, Path filePath) throws FileNotFoundException;
 
     /**
-     * Returns all files under path /AccountId/StagingAreaId OR
+     * Returns all files in root path OR
      * will return empty Stream if no file exists under this path.
-     * Stream result is ordered by originalPath.
+     * Stream is ordered by originalPath.
+     * It is a Recursive result.
      *
      * @param accountId
+     *         Account Id
      * @param stagingAreaId
+     *         Staging Area Id
      *
      * @return Stream of FileHierarchyModel object.
      */
-    Stream<FileHierarchyModel> findAllFiles(String accountId, String stagingAreaId);
+    Stream<FileHierarchyModel> findAllFilesInRootPathRecursive(String accountId, String stagingAreaId);
 }
+

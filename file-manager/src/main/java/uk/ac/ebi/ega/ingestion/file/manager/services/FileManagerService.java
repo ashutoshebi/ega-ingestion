@@ -20,6 +20,7 @@ package uk.ac.ebi.ega.ingestion.file.manager.services;
 import com.querydsl.core.types.Ops;
 import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.Expressions;
+import io.micrometer.core.instrument.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -71,23 +72,6 @@ public class FileManagerService implements IFileManagerService {
     }
 
     @Override
-    public List<FileHierarchyModel> findAll(final Path filePath, final String accountId, final String stagingAreaId) throws FileNotFoundException {
-        final Optional<FileHierarchy> optionalFileHierarchy = fileHierarchyRepository.findOne(filePath.normalize().toString(), accountId, stagingAreaId);
-        final FileHierarchy fileHierarchy = optionalFileHierarchy.orElseThrow(FileNotFoundException::new);
-
-        if (FileStructureType.FILE.equals(fileHierarchy.getFileType())) {
-            return Collections.singletonList(fileHierarchy.toFile());
-        }
-
-        return fileHierarchy.getChildPaths().stream().map(fileHierarchyLocal -> {
-            if (FileStructureType.FILE.equals(fileHierarchyLocal.getFileType())) {
-                return fileHierarchyLocal.toFile();
-            }
-            return fileHierarchyLocal.toFolder();
-        }).collect(Collectors.toList());
-    }
-
-    @Override
     @Transactional(transactionManager = "fileManagerFireChainedTransactionManager", rollbackFor = Exception.class)
     public void archive(final ArchiveEvent archiveEvent) throws IOException, FileHierarchyException {
         final char[] password = FileUtils.readPasswordFile(Paths.get(archiveEvent.getKeyPath()));
@@ -113,14 +97,36 @@ public class FileManagerService implements IFileManagerService {
         addFile(archivedFile);
     }
 
-    // Method returns only files & not folders.
     @Override
-    public Page<FileHierarchyModel> findAllFiles(final String accountId, final String stagingAreaId,
-                                                 final Predicate predicate, final Pageable pageable) throws FileNotFoundException {
+    public List<FileHierarchyModel> findAllFilesAndFoldersInPathNonRecursive(final String accountId, final String stagingAreaId,
+                                                                             final Path filePath) throws FileNotFoundException {
+        if (StringUtils.isEmpty(filePath.toString())) {
+            return fileHierarchyRepository.findAllFilesAndFoldersInPathNonRecursive(accountId, stagingAreaId).stream().
+                    map(fileHierarchyFileAndFolderTypeMapEntityToModel()).
+                    collect(Collectors.toList());
+        }
+
+        final Optional<FileHierarchy> optionalFileHierarchy = fileHierarchyRepository.findOne(filePath.normalize().toString(),
+                accountId, stagingAreaId);
+        final FileHierarchy fileHierarchy = optionalFileHierarchy.orElseThrow(FileNotFoundException::new);
+
+        if (FileStructureType.FILE.equals(fileHierarchy.getFileType())) {
+            return Collections.singletonList(fileHierarchy.toFile());
+        }
+        return fileHierarchy.getChildPaths().stream().map(fileHierarchyFileAndFolderTypeMapEntityToModel()).
+                collect(Collectors.toList());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Page<FileHierarchyModel> findAllFilesInRootPathRecursive(final String accountId, final String stagingAreaId,
+                                                                    final Predicate predicate, final Pageable pageable) throws FileNotFoundException {
         final Predicate filePredicate = Expressions.allOf(Expressions.predicate(Ops.EQ, QFileHierarchy.fileHierarchy.fileType,
                 Expressions.constant(FileStructureType.FILE))).and(predicate);
 
-        final Page<FileHierarchy> fileHierarchyPage = fileHierarchyRepository.findAll(accountId, stagingAreaId, filePredicate, pageable);
+        final Page<FileHierarchy> fileHierarchyPage = fileHierarchyRepository.findAllFilesInRootPathRecursive(accountId, stagingAreaId, filePredicate, pageable);
 
         if (!fileHierarchyPage.hasContent()) {
             throw new FileNotFoundException();
@@ -133,7 +139,12 @@ public class FileManagerService implements IFileManagerService {
      * {@inheritDoc}
      */
     @Override
-    public Stream<FileHierarchyModel> findAllFiles(final String accountId, final String stagingAreaId, final Path filePath) throws FileNotFoundException {
+    public Stream<FileHierarchyModel> findAllFilesInPathNonRecursive(final String accountId, final String stagingAreaId,
+                                                                     final Path filePath) throws FileNotFoundException {
+        if (StringUtils.isEmpty(filePath.toString())) {
+            return fileHierarchyRepository.findAllFilesInPathNonRecursive(accountId, stagingAreaId).
+                    map(fileHierarchyFileTypeMapEntityToModel());
+        }
 
         final Optional<FileHierarchy> optionalFileHierarchy = fileHierarchyRepository.findOne(filePath.normalize().toString(), accountId, stagingAreaId);
         final FileHierarchy fileHierarchy = optionalFileHierarchy.orElseThrow(FileNotFoundException::new);
@@ -141,18 +152,17 @@ public class FileManagerService implements IFileManagerService {
         if (FileStructureType.FILE.equals(fileHierarchy.getFileType())) {
             return Stream.of(fileHierarchy.toFile());
         }
-
-        return fileHierarchyRepository.findAll(accountId, stagingAreaId, fileHierarchy.getId(), FileStructureType.FILE).
-                map(fileHierarchyMapEntityToModel());
+        return fileHierarchyRepository.findAllFilesOrFoldersInParentPathNonRecursive(accountId, stagingAreaId, fileHierarchy.getId(), FileStructureType.FILE).
+                map(fileHierarchyFileTypeMapEntityToModel());
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public Stream<FileHierarchyModel> findAllFiles(final String accountId, final String stagingAreaId) {
-        return fileHierarchyRepository.findAll(accountId, stagingAreaId, FileStructureType.FILE).
-                map(fileHierarchyMapEntityToModel());
+    public Stream<FileHierarchyModel> findAllFilesInRootPathRecursive(final String accountId, final String stagingAreaId) {
+        return fileHierarchyRepository.findAllFilesOrFoldersInRootPathRecursive(accountId, stagingAreaId, FileStructureType.FILE).
+                map(fileHierarchyFileTypeMapEntityToModel());
     }
 
     /**
@@ -160,11 +170,20 @@ public class FileManagerService implements IFileManagerService {
      *
      * @return Entity to Model mapping function.
      */
-    private Function<FileHierarchy, FileHierarchyModel> fileHierarchyMapEntityToModel() {
+    private Function<FileHierarchy, FileHierarchyModel> fileHierarchyFileTypeMapEntityToModel() {
         return fileHierarchy -> {
             final FileHierarchyModel fileHierarchyModel = fileHierarchy.toFile();
             entityManager.detach(fileHierarchy);
             return fileHierarchyModel;
+        };
+    }
+
+    private Function<FileHierarchy, FileHierarchyModel> fileHierarchyFileAndFolderTypeMapEntityToModel() {
+        return fileHierarchyLocal -> {
+            if (FileStructureType.FILE.equals(fileHierarchyLocal.getFileType())) {
+                return fileHierarchyLocal.toFile();
+            }
+            return fileHierarchyLocal.toFolder();
         };
     }
 

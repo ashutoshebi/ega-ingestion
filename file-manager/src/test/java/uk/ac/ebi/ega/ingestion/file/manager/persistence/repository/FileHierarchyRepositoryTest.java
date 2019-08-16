@@ -143,7 +143,7 @@ public class FileHierarchyRepositoryTest {
         TestTransaction.end();
 
         TestTransaction.start();
-        final Stream<FileHierarchy> fileHierarchyStream = fileHierarchyRepository.findAll("ega-account-01", "ega-staging-01", FileStructureType.FILE);
+        final Stream<FileHierarchy> fileHierarchyStream = fileHierarchyRepository.findAllFilesOrFoldersInRootPathRecursive("ega-account-01", "ega-staging-01", FileStructureType.FILE);
         assertNotNull(fileHierarchyStream);
 
         final Object[] fileHierarchyArray = fileHierarchyStream.toArray();
@@ -170,7 +170,7 @@ public class FileHierarchyRepositoryTest {
     @Transactional
     @Test
     public void findAll_WhenPassInValidArgumentValues_ThenReturnsEmptyStream() throws FileHierarchyException {
-        final Stream<FileHierarchy> fileHierarchyStream = fileHierarchyRepository.findAll("ega-account-01", "ega-staging-01",
+        final Stream<FileHierarchy> fileHierarchyStream = fileHierarchyRepository.findAllFilesOrFoldersInRootPathRecursive("ega-account-01", "ega-staging-01",
                 FileStructureType.FILE);
         assertNotNull(fileHierarchyStream);
         assertEquals(0, fileHierarchyStream.count());
