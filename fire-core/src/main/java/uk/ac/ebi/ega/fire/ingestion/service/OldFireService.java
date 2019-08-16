@@ -61,8 +61,8 @@ public class OldFireService implements IFireService {
     }
 
     @Override
-    public List<OldFireFile> findAllByFileId(final List<Long> fileIds) {
-        return proFilerDatabaseService.findAllByFileId(fileIds);
+    public List<OldFireFile> findAllByFireId(final List<Long> fireIds) {
+        return proFilerDatabaseService.findAllByFireId(fireIds);
     }
 
     private File moveFileToFireStaging(File file, String pathOnFire) throws IOException {

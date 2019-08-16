@@ -25,11 +25,12 @@ public interface IProFilerDatabaseService {
     long archiveFile(String egaFileId, File file, String md5, String pathOnFire);
 
     /**
-     * Joins the ega-pro-filer.ega_ARCHIVE.archive and ega-pro-filer.ega_ARCHIVE.file tables
-     * then returns those rows (as OldFireFile objects)
-     * where the ega-pro-filer.ega_ARCHIVE.file.file_id is equal to the given fileIds.
-     * @param fileIds ega-pro-filer.ega_ARCHIVE.file.file_id's
+     * Returns those rows (as OldFireFile objects)
+     * from the ega-pro-filer.ega_ARCHIVE.archive table
+     * where the archive_id is equal to the given fireIds.
+     *
+     * @param fireIds ega-pro-filer.ega_ARCHIVE.archive.archive_id's
      * @return the DB-rows as a list of OldFireFile object
      */
-    List<OldFireFile> findAllByFileId(final List<Long> fileIds);
+    List<OldFireFile> findAllByFireId(final List<Long> fireIds);
 }

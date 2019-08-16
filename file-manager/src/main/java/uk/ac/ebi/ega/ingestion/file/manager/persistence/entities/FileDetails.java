@@ -61,10 +61,8 @@ public class FileDetails {
     @Column(nullable = false)
     private FileStatus status;
 
-    // This is the "file_id" column in the "file" table
-    // in the "ega-pro-filer.ega_ARCHIVE" database.
     @Column(nullable = false)
-    private Long fileId;
+    private Long fireId;
 
     @CreatedDate
     private LocalDateTime createdDate;
@@ -77,7 +75,7 @@ public class FileDetails {
 
     public FileDetails(final String dosPath, final Long plainSize, final String plainMd5,
                        final Long encryptedSize, final String encryptedMd5,
-                       final String key, final FileStatus status, final Long fileId) {
+                       final String key, final FileStatus status, final Long fireId) {
         this.dosPath = dosPath;
         this.plainSize = plainSize;
         this.plainMd5 = plainMd5;
@@ -85,7 +83,7 @@ public class FileDetails {
         this.encryptedMd5 = encryptedMd5;
         this.key = key;
         this.status = status;
-        this.fileId = fileId;
+        this.fireId = fireId;
     }
 
     public Long getId() {
@@ -133,12 +131,10 @@ public class FileDetails {
     }
 
     /**
-     * Returns the same value as in the "file_id" column
-     * in the "file" table in the "ega-pro-filer.ega_ARCHIVE" database.
-     * @return fileId
+     * @return fireId the value of the "ega-pro-filer.ega_ARCHIVE.archive.archive_id" column.
      */
-    public Long getFileId() {
-        return fileId;
+    public Long getFireId() {
+        return fireId;
     }
 
     @Override
@@ -146,7 +142,7 @@ public class FileDetails {
         return "FileDetails{" +
                 "id=" + id +
                 ", status=" + status +
-                ", fileId=" + fileId +
+                ", fireId=" + fireId +
                 '}';
     }
 }

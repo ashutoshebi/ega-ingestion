@@ -86,31 +86,30 @@ public class FileStatusUpdaterService implements IFileStatusUpdaterService {
     }
 
     private List<OldFireFile> getFilesInFireCorrespondingTo(final List<FileDetails> localFilesBeingArchived) {
-        final List<Long> fileIdsOfLocalFilesBeingArchived = localFilesBeingArchived.stream()
-                .map(FileDetails::getFileId)
+        final List<Long> fireIdsOfLocalFilesBeingArchived = localFilesBeingArchived.stream()
+                .map(FileDetails::getFireId)
                 .collect(Collectors.toList());
 
-        return fireService.findAllByFileId(fileIdsOfLocalFilesBeingArchived);
+        return fireService.findAllByFireId(fireIdsOfLocalFilesBeingArchived);
     }
 
     private void updateStatusesBasedOn(final List<OldFireFile> filesInFire,
                                        final List<FileDetails> localFilesBeingArchived) {
 
-        // FileId => current FileStatus in Fire
-        final Map<Long, Optional<FileStatus>> fileIdsToFileStatuses = getFileIdsAndFileStatusesOf(filesInFire);
-        LOGGER.trace("Map<\"FileId in Fire\", \"current FileStatus in Fire\">: {}", fileIdsToFileStatuses);
+        // FireId => current FileStatus in Fire
+        final Map<Long, Optional<FileStatus>> fireIdsToFileStatuses = getFireIdsAndFileStatusesOf(filesInFire);
+        LOGGER.trace("Map<\"FireId in Fire\", \"current FileStatus in Fire\">: {}", fireIdsToFileStatuses);
 
         for (final FileDetails localFileBeingArchived : localFilesBeingArchived) {
-            final Long fileIdOfLocalFileBeingArchived = localFileBeingArchived.getFileId();
-            final Long fileId = fileIdOfLocalFileBeingArchived;
-            final Optional<FileStatus> optionalFileStatus = fileIdsToFileStatuses.get(fileId);
-            LOGGER.trace("Local file {} might be updated with status {}", localFileBeingArchived, optionalFileStatus);
+            final Long fireIdOfLocalFileBeingArchived = localFileBeingArchived.getFireId();
+            final Long fireId = fireIdOfLocalFileBeingArchived;
+            final Optional<FileStatus> optionalFileStatus = fireIdsToFileStatuses.get(fireId);
 
             if (optionalFileStatus.isPresent()) {
                 final FileStatus fileStatusOfFileInFire = optionalFileStatus.get();
 
                 if (FileStatus.ERROR.equals(fileStatusOfFileInFire)) {
-                    LOGGER.error("The file in Fire with EGA_FILE_STABLE_ID={} is in an erroneous state.", fileId);
+                    LOGGER.error("The file in Fire with ega-pro-filer.ega_ARCHIVE.archive.archive_id={} is in an erroneous state.", fireId);
                 }
 
                 LOGGER.trace("Local file {} will be updated with status {}", localFileBeingArchived, optionalFileStatus);
@@ -125,13 +124,13 @@ public class FileStatusUpdaterService implements IFileStatusUpdaterService {
     }
 
     /**
-     * Returns a map mapping the FileId to FileStatus of the given files.
+     * Returns a map mapping the FireId to FileStatus of the given files.
      * @param fireFiles list of files which are in Fire
-     * @return a map: FileId => current FileStatus in Fire
+     * @return a map: FireId => current FileStatus in Fire
      */
-    private Map<Long, Optional<FileStatus>> getFileIdsAndFileStatusesOf(final List<OldFireFile> fireFiles) {
+    private Map<Long, Optional<FileStatus>> getFireIdsAndFileStatusesOf(final List<OldFireFile> fireFiles) {
         return fireFiles.stream()
-                .collect(Collectors.toMap(OldFireFile::getFileId, this::getFileStatus));
+                .collect(Collectors.toMap(OldFireFile::getFireId, this::getFileStatus));
     }
 
     private Optional<FileStatus> getFileStatus(final OldFireFile fireFile) {

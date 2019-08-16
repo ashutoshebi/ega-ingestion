@@ -58,23 +58,22 @@ public class ProFilerDatabaseService implements IProFilerDatabaseService {
     }
 
     @Override
-    public List<OldFireFile> findAllByFileId(final List<Long> fileIds) {
+    public List<OldFireFile> findAllByFireId(final List<Long> fireIds) {
         final String query = "SELECT " +
-                "  f.file_id as file_id" +
-                ", a.fire_exit_code as fire_exit_code" +
-                ", a.fire_exit_reason as fire_exit_reason " +
-                "FROM file f " +
-                "JOIN archive a ON f.file_id = a.file_id " +
-                "WHERE f.file_id in (:file_ids)";
+                "archive_id, " +
+                "fire_exit_code, " +
+                "fire_exit_reason " +
+                "FROM archive " +
+                "WHERE archive_id in (:fire_ids)";
 
         final MapSqlParameterSource parameters = new MapSqlParameterSource();
-        parameters.addValue("file_ids", fileIds);
+        parameters.addValue("fire_ids", fireIds);
 
         final RowMapper<OldFireFile> rowMapper = (rs, rowNum) -> {
-            final Long fileId = rs.getLong("file_id");
+            final Long fireId = rs.getLong("archive_id");
             final Integer exitCode = rs.getInt("fire_exit_code");
             final String exitReason = rs.getString("fire_exit_reason");
-            return new OldFireFile(fileId, exitCode, exitReason);
+            return new OldFireFile(fireId, exitCode, exitReason);
         };
 
         return proFilerTemplate.query(query, parameters, rowMapper);
@@ -158,6 +157,7 @@ public class ProFilerDatabaseService implements IProFilerDatabaseService {
 
         KeyHolder holder = new GeneratedKeyHolder();
         proFilerTemplate.update(query, parameters, holder);
+        // That's the archive_id:
         return holder.getKey().longValue();
     }
 

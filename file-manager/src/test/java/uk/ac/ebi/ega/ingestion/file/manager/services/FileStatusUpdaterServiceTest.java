@@ -134,7 +134,7 @@ public class FileStatusUpdaterServiceTest {
     }
 
     private void fireShouldReturnGivenFile(final OldFireFile fireFile) {
-        when(fireService.findAllByFileId(Collections.singletonList(FIRE_ID))).thenReturn(Collections.singletonList(fireFile));
+        when(fireService.findAllByFireId(Collections.singletonList(FIRE_ID))).thenReturn(Collections.singletonList(fireFile));
     }
 
     private void createFileInLocalDBWhichIsBeingArchived() {
