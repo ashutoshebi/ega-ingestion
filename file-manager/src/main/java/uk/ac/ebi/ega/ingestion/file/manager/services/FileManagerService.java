@@ -152,7 +152,7 @@ public class FileManagerService implements IFileManagerService {
         if (FileStructureType.FILE.equals(fileHierarchy.getFileType())) {
             return Stream.of(fileHierarchy.toFile());
         }
-        return fileHierarchyRepository.findAllFilesOrFoldersInParentPathNonRecursive(accountId, stagingAreaId, fileHierarchy.getId(), FileStructureType.FILE).
+        return fileHierarchyRepository.findAllFilesOrFoldersInRootPathNonRecursive(accountId, stagingAreaId, fileHierarchy.getId(), FileStructureType.FILE).
                 map(fileHierarchyFileTypeMapEntityToModel());
     }
 

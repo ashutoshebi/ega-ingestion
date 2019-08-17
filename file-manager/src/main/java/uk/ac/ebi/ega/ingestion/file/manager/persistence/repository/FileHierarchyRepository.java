@@ -54,7 +54,7 @@ public interface FileHierarchyRepository extends PagingAndSortingRepository<File
     /**
      * Method is being called internally.
      *
-     * @See FileHierarchyRepository#findAllFilesOrFoldersInParentPathNonRecursive(String, String, Long, FileStructureType)
+     * @See FileHierarchyRepository#findAllFilesOrFoldersInRootPathNonRecursive(String, String, Long, FileStructureType)
      */
     @QueryHints(value = @QueryHint(name = HINT_FETCH_SIZE, value = HINT_FETCH_SIZE_VALUE))
     Stream<FileHierarchy> findAllByAccountIdAndStagingAreaIdAndParentPathIdAndFileTypeAllIgnoreCaseOrderByOriginalPath(String accountId, String stagingAreaId,
@@ -78,8 +78,8 @@ public interface FileHierarchyRepository extends PagingAndSortingRepository<File
      *
      * @return Stream of FileHierarchy object
      */
-    default Stream<FileHierarchy> findAllFilesOrFoldersInParentPathNonRecursive(final String accountId, final String stagingAreaId,
-                                                                                final Long parentId, final FileStructureType fileStructureType) {
+    default Stream<FileHierarchy> findAllFilesOrFoldersInRootPathNonRecursive(final String accountId, final String stagingAreaId,
+                                                                              final Long parentId, final FileStructureType fileStructureType) {
         return findAllByAccountIdAndStagingAreaIdAndParentPathIdAndFileTypeAllIgnoreCaseOrderByOriginalPath(accountId, stagingAreaId,
                 parentId, fileStructureType);
     }
