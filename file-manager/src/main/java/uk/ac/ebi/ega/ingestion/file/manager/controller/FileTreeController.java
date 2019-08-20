@@ -26,13 +26,10 @@ import org.springframework.hateoas.MediaTypes;
 import org.springframework.hateoas.PagedResources;
 import org.springframework.hateoas.Resource;
 import org.springframework.http.MediaType;
-import org.springframework.util.AntPathMatcher;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.HandlerMapping;
 import uk.ac.ebi.ega.ingestion.file.manager.dto.FileTreeDTO;
 import uk.ac.ebi.ega.ingestion.file.manager.dto.FileTreeWrapper;
 import uk.ac.ebi.ega.ingestion.file.manager.dto.resources.assemblers.FileHierarchyResourceAssembler;
@@ -48,6 +45,7 @@ import java.nio.file.Paths;
 import java.util.List;
 
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
+import static uk.ac.ebi.ega.ingestion.file.manager.controller.ControllerUtils.extractVariablePath;
 
 @RequestMapping(value = "/file/tree")
 @RestController
@@ -65,11 +63,11 @@ public class FileTreeController {
                                                       @PathVariable String locationId, HttpServletRequest request) throws FileNotFoundException {
 
         final Link link = linkTo(FileTreeController.class).withSelfRel();
-        final Path path = Paths.get(extractFilePath(request));
+        final Path path = Paths.get(extractVariablePath(request));
         final String baseURI = new StringBuilder(link.getHref()).append("/").append(accountId).append("/")
                 .append(locationId).toString();
         final FileTreeWrapper fileTreeWrapper = new FileTreeWrapper();
-        final List<FileHierarchyModel> fileHierarchyModels = fileManagerService.findAll(path, accountId, locationId);
+        final List<FileHierarchyModel> fileHierarchyModels = fileManagerService.findAllFilesAndFoldersInPathNonRecursive(accountId, locationId, path);
 
         for (FileHierarchyModel fileHierarchyModel : fileHierarchyModels) {
             final Link selfLink = new Link(new StringBuilder(baseURI).
@@ -96,13 +94,6 @@ public class FileTreeController {
                                                    Pageable pageable,
                                                    PagedResourcesAssembler assembler,
                                                    FileHierarchyResourceAssembler fileHierarchyResourceAssembler) throws FileNotFoundException {
-        return assembler.toResource(fileManagerService.findAllFiles(accountId, locationId, predicate, pageable), fileHierarchyResourceAssembler);
-    }
-
-    private String extractFilePath(HttpServletRequest request) {
-        final String path = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
-        final String bestMatchPattern = (String) request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
-        final String variablePath = new AntPathMatcher().extractPathWithinPattern(bestMatchPattern, path);
-        return !StringUtils.isEmpty(variablePath) ? "/" + variablePath : "";
+        return assembler.toResource(fileManagerService.findAllFilesInRootPathRecursive(accountId, locationId, predicate, pageable), fileHierarchyResourceAssembler);
     }
 }

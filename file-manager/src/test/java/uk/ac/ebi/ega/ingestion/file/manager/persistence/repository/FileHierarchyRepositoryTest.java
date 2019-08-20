@@ -33,11 +33,12 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.transaction.annotation.Transactional;
 import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileHierarchyException;
-import uk.ac.ebi.ega.ingestion.file.manager.models.FileHierarchyModel;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileDetails;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileHierarchy;
+import uk.ac.ebi.ega.ingestion.file.manager.utils.FileStructureType;
 
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -125,6 +126,54 @@ public class FileHierarchyRepositoryTest {
         assertNotNull(fileHierarchyAfterChildDeleted.getChildPaths());
         assertTrue(fileHierarchyAfterChildDeleted.getChildPaths().isEmpty());
         TestTransaction.end();
+    }
+
+
+    /**
+     * When pass valid AccountId, StagingAreaId & File as FileStructureType
+     * returns FileHierarchy Stream object.
+     */
+    @Test
+    @Transactional
+    @Sql(scripts = "classpath:cleanDatabase.sql")
+    public void findAll_WhenPassValidArgumentValues_ThenReturnsFileHierarchyAsStream() throws FileHierarchyException {
+        fileHierarchyRepository.saveNewFile("ega-account-01", "ega-staging-01", "/test/test1.bam", createFileDetails());
+        fileHierarchyRepository.saveNewFile("ega-account-01", "ega-staging-01", "/test/test1/test2.bam", createFileDetails());
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+
+        TestTransaction.start();
+        final Stream<FileHierarchy> fileHierarchyStream = fileHierarchyRepository.findAllFilesOrFoldersInRootPathRecursive("ega-account-01", "ega-staging-01", FileStructureType.FILE);
+        assertNotNull(fileHierarchyStream);
+
+        final Object[] fileHierarchyArray = fileHierarchyStream.toArray();
+
+        assertEquals(2, fileHierarchyArray.length);
+
+        final FileHierarchy fileHierarchyFirstValue = (FileHierarchy) fileHierarchyArray[0];
+        assertEquals("ega-account-01", fileHierarchyFirstValue.getAccountId());
+        assertEquals("ega-staging-01", fileHierarchyFirstValue.getStagingAreaId());
+        assertEquals("/test/test1.bam", fileHierarchyFirstValue.getOriginalPath());
+
+        final FileHierarchy fileHierarchySecondValue = (FileHierarchy) fileHierarchyArray[1];
+        assertEquals("ega-account-01", fileHierarchySecondValue.getAccountId());
+        assertEquals("ega-staging-01", fileHierarchySecondValue.getStagingAreaId());
+        assertEquals("/test/test1/test2.bam", fileHierarchySecondValue.getOriginalPath());
+        TestTransaction.end();
+    }
+
+    /**
+     * When pass Invalid AccountId, StagingAreaId & File as FileStructureType
+     * returns Empty Stream object.
+     */
+    @Sql(scripts = "classpath:cleanDatabase.sql")
+    @Transactional
+    @Test
+    public void findAll_WhenPassInValidArgumentValues_ThenReturnsEmptyStream() throws FileHierarchyException {
+        final Stream<FileHierarchy> fileHierarchyStream = fileHierarchyRepository.findAllFilesOrFoldersInRootPathRecursive("ega-account-01", "ega-staging-01",
+                FileStructureType.FILE);
+        assertNotNull(fileHierarchyStream);
+        assertEquals(0, fileHierarchyStream.count());
     }
 
     private FileDetails createFileDetails() {
