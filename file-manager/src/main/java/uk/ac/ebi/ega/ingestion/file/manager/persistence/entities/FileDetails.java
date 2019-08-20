@@ -24,6 +24,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EntityListeners;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -55,8 +57,14 @@ public class FileDetails {
     @Column(nullable = false)
     private String key;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String status;
+    private FileStatus status;
+
+    // This is the "file_id" column in the "file" table
+    // in the "ega-pro-filer.ega_ARCHIVE" database.
+    @Column(nullable = false)
+    private Long fileId;
 
     @CreatedDate
     private LocalDateTime createdDate;
@@ -69,7 +77,7 @@ public class FileDetails {
 
     public FileDetails(final String dosPath, final Long plainSize, final String plainMd5,
                        final Long encryptedSize, final String encryptedMd5,
-                       final String key, final String status) {
+                       final String key, final FileStatus status, final Long fileId) {
         this.dosPath = dosPath;
         this.plainSize = plainSize;
         this.plainMd5 = plainMd5;
@@ -77,6 +85,7 @@ public class FileDetails {
         this.encryptedMd5 = encryptedMd5;
         this.key = key;
         this.status = status;
+        this.fileId = fileId;
     }
 
     public Long getId() {
@@ -107,8 +116,12 @@ public class FileDetails {
         return key;
     }
 
-    public String getStatus() {
+    public FileStatus getStatus() {
         return status;
+    }
+
+    public void setStatus(final FileStatus status) {
+        this.status = status;
     }
 
     public LocalDateTime getCreatedDate() {
@@ -117,5 +130,23 @@ public class FileDetails {
 
     public LocalDateTime getUpdatedDate() {
         return updatedDate;
+    }
+
+    /**
+     * Returns the same value as in the "file_id" column
+     * in the "file" table in the "ega-pro-filer.ega_ARCHIVE" database.
+     * @return fileId
+     */
+    public Long getFileId() {
+        return fileId;
+    }
+
+    @Override
+    public String toString() {
+        return "FileDetails{" +
+                "id=" + id +
+                ", status=" + status +
+                ", fileId=" + fileId +
+                '}';
     }
 }

@@ -1,5 +1,4 @@
 /*
- *
  * Copyright 2019 EMBL - European Bioinformatics Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,18 +12,16 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
-package uk.ac.ebi.ega.ingestion.file.manager.persistence.repository;
+package uk.ac.ebi.ega.ingestion.file.manager.services;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.repository.PagingAndSortingRepository;
-import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileDetails;
-import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileStatus;
+public interface IFileStatusUpdaterService {
 
-public interface FileDetailsRepository extends PagingAndSortingRepository<FileDetails, Long> {
-
-    Page<FileDetails> findByStatus(final FileStatus status, final Pageable pageable);
-
+    /**
+     * Updates the status of the still-being-archived files
+     * in our local database
+     * with the current status of the same files
+     * from the Profiler database.
+     */
+    void updateStatus();
 }

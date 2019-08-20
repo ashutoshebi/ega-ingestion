@@ -5,7 +5,7 @@
 1. Java 8 (OpenJDK)
 1. Maven
 1. SAMLtools
-1. credentials? (TODO bjuhasz)
+1. Credentials
 
 ### Installation of SAMtools
 
@@ -17,7 +17,26 @@ make && sudo make install
 
 ## Credentials
 
-TODO bjuhasz
+We don't store credentials in our `application.properties` files.
+Credentials are instead stored in our `~/.m2/settings.xml` file,
+for example, like this:
+
+```$xml
+<profile>
+  <id>localPostgresDatabase</id>
+  <activation>
+      <activeByDefault>true</activeByDefault>
+  </activation>
+  <properties>
+      <ega.ukbb.temp.ingestion.datasource.re-encrypt.url>jdbc:postgresql://localhost:5432/...</ega.ukbb.temp.ingestion.datasource.re-encrypt.url>
+      <ega.ukbb.temp.ingestion.datasource.re-encrypt.username>...</ega.ukbb.temp.ingestion.datasource.re-encrypt.username>
+      <ega.ukbb.temp.ingestion.datasource.re-encrypt.password>...</ega.ukbb.temp.ingestion.datasource.re-encrypt.password>
+  </properties>
+</profile>
+```
+
+Most of the secret values (for the properties above) can be found in the `credentials.txt` file in the Vault.
+
 
 ## Compile
 

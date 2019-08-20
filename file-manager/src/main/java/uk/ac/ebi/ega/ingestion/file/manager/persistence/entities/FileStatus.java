@@ -1,5 +1,4 @@
 /*
- *
  * Copyright 2019 EMBL - European Bioinformatics Institute
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,18 +12,17 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
-package uk.ac.ebi.ega.ingestion.file.manager.persistence.repository;
+package uk.ac.ebi.ega.ingestion.file.manager.persistence.entities;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.repository.PagingAndSortingRepository;
-import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileDetails;
-import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileStatus;
+public enum FileStatus {
 
-public interface FileDetailsRepository extends PagingAndSortingRepository<FileDetails, Long> {
+    ENCRYPTION_IN_PROGRESS,
 
-    Page<FileDetails> findByStatus(final FileStatus status, final Pageable pageable);
+    ARCHIVE_IN_PROGRESS,
+
+    ARCHIVED_SUCCESSFULLY,
+
+    ERROR
 
 }

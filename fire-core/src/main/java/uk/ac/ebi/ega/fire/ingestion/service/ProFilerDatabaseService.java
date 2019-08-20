@@ -18,6 +18,7 @@ package uk.ac.ebi.ega.fire.ingestion.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -27,6 +28,7 @@ import uk.ac.ebi.ega.fire.utils.FileUtils;
 import java.io.File;
 import java.sql.Timestamp;
 import java.util.Calendar;
+import java.util.List;
 
 public class ProFilerDatabaseService implements IProFilerDatabaseService {
 
@@ -53,6 +55,28 @@ public class ProFilerDatabaseService implements IProFilerDatabaseService {
                 "archiveId: {}, profilerFileId: {}, pathOnFire: {}", archiveId, profilerFileId, pathOnFire);
 
         return archiveId;
+    }
+
+    @Override
+    public List<OldFireFile> findAllByFileId(final List<Long> fileIds) {
+        final String query = "SELECT " +
+                "  f.file_id as file_id" +
+                ", a.fire_exit_code as fire_exit_code" +
+                ", a.fire_exit_reason as fire_exit_reason " +
+                "FROM file f JOIN archive a USING (file_id) " +
+                "WHERE f.file_id in (:file_ids)";
+
+        final MapSqlParameterSource parameters = new MapSqlParameterSource();
+        parameters.addValue("file_ids", fileIds);
+
+        final RowMapper<OldFireFile> rowMapper = (rs, rowNum) -> {
+            final Long fileId = rs.getLong("file_id");
+            final Integer exitCode = rs.getInt("fire_exit_code");
+            final String exitReason = rs.getString("fire_exit_reason");
+            return new OldFireFile(fileId, exitCode, exitReason);
+        };
+
+        return proFilerTemplate.query(query, parameters, rowMapper);
     }
 
     private long insertFile(String egaFileId, File file, String md5) {

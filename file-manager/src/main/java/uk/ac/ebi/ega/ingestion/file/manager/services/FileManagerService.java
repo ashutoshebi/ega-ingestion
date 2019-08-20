@@ -35,6 +35,7 @@ import uk.ac.ebi.ega.ingestion.file.manager.models.ArchivedFile;
 import uk.ac.ebi.ega.ingestion.file.manager.models.FileHierarchyModel;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileDetails;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileHierarchy;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileStatus;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.QFileHierarchy;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.FileHierarchyRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.utils.FileStructureType;
@@ -81,7 +82,7 @@ public class FileManagerService implements IFileManagerService {
                 archiveEvent.getEncryptedMd5(), relativePathInFire.toString());
         Path completePathInFire = relativePathInFire.resolve(new File(archiveEvent.getStagingPath()).getName());
 
-        ArchivedFile archivedFile = new ArchivedFile(
+        ArchivedFile fileToBeArchived = new ArchivedFile(
                 archiveEvent.getAccountId(),
                 archiveEvent.getStagingAreaId(),
                 fireId.get(),
@@ -94,7 +95,7 @@ public class FileManagerService implements IFileManagerService {
                 password
         );
 
-        addFile(archivedFile);
+        addFile(fileToBeArchived);
     }
 
     @Override
@@ -133,7 +134,6 @@ public class FileManagerService implements IFileManagerService {
         }
         return new PageImpl<>(fileHierarchyPage.stream().map(FileHierarchy::toFile).collect(Collectors.toList()));
     }
-
 
     /**
      * {@inheritDoc}
@@ -187,14 +187,16 @@ public class FileManagerService implements IFileManagerService {
         };
     }
 
-    private void addFile(ArchivedFile archivedFile) throws FileHierarchyException {
+    private void addFile(ArchivedFile fileToBeArchived) throws FileHierarchyException {
         try {
-            final FileDetails fileDetails = new FileDetails(archivedFile.getDosPath(),
-                    archivedFile.getPlainSize(), archivedFile.getPlainMd5(),
-                    archivedFile.getEncryptedSize(), archivedFile.getEncryptedMd5(),
-                    new String(archivedFile.getKey()), "Completed");
-            fileHierarchyRepository.saveNewFile(archivedFile.getAccountId(), archivedFile.getStagingAreaId(),
-                    archivedFile.getPath(), fileDetails);
+            final FileDetails fileDetails = new FileDetails(fileToBeArchived.getDosPath(),
+                    fileToBeArchived.getPlainSize(), fileToBeArchived.getPlainMd5(),
+                    fileToBeArchived.getEncryptedSize(), fileToBeArchived.getEncryptedMd5(),
+                    new String(fileToBeArchived.getKey()),
+                    FileStatus.ARCHIVE_IN_PROGRESS,
+                    fileToBeArchived.getFireId());
+            fileHierarchyRepository.saveNewFile(fileToBeArchived.getAccountId(), fileToBeArchived.getStagingAreaId(),
+                    fileToBeArchived.getPath(), fileDetails);
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
             throw new FileHierarchyException("Exception while creating file structure => " +

@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.hateoas.ResourceSupport;
 import uk.ac.ebi.ega.ingestion.file.manager.models.FileHierarchyModel;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileStatus;
 
 import java.time.LocalDateTime;
 
@@ -34,7 +35,7 @@ public class FileTreeDTO extends ResourceSupport {
     private String md5PlainTextFile;
     private Long plainTextFileSize;
     private Long encryptedFileSize;
-    private String status;
+    private FileStatus status;
     private String message;
     private LocalDateTime modifiedDate;
 
@@ -44,7 +45,7 @@ public class FileTreeDTO extends ResourceSupport {
 
     private FileTreeDTO(final String accountId, final String locationId, final Long plainTextFileSize,
                         final Long encryptedFileSize, final String name, final String md5PlainTextFile,
-                        final LocalDateTime modifiedDate, final String status) {
+                        final LocalDateTime modifiedDate, final FileStatus status) {
         super();
         this.accountId = accountId;
         this.locationId = locationId;
@@ -76,7 +77,7 @@ public class FileTreeDTO extends ResourceSupport {
         return md5PlainTextFile;
     }
 
-    public String getStatus() {
+    public FileStatus getStatus() {
         return status;
     }
 
