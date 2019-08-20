@@ -112,7 +112,7 @@ public class FileHierarchyModel {
                 add(getFileDetails().getPlainMd5()).
                 add(getFileDetails().getPlainSize().toString()).
                 add(getFileDetails().getEncryptedSize().toString()).
-                add(getFileDetails().getStatus()).
+                add(getFileDetails().getStatus().toString()).
                 add(getFileDetails().getUpdatedDate().toString()).
                 add("\n").
                 toString();
