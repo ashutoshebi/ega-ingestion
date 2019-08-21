@@ -17,8 +17,14 @@
  */
 package uk.ac.ebi.ega.ingestion.file.manager.persistence.repository;
 
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.repository.PagingAndSortingRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileDetails;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileStatus;
 
-public interface FileDetailsRepository extends CrudRepository<FileDetails, Long> {
+public interface FileDetailsRepository extends PagingAndSortingRepository<FileDetails, Long> {
+
+    Page<FileDetails> findByStatus(final FileStatus status, final Pageable pageable);
+
 }

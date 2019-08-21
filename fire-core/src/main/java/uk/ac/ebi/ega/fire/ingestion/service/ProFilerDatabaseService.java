@@ -18,6 +18,7 @@ package uk.ac.ebi.ega.fire.ingestion.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -27,6 +28,7 @@ import uk.ac.ebi.ega.fire.utils.FileUtils;
 import java.io.File;
 import java.sql.Timestamp;
 import java.util.Calendar;
+import java.util.List;
 
 public class ProFilerDatabaseService implements IProFilerDatabaseService {
 
@@ -53,6 +55,28 @@ public class ProFilerDatabaseService implements IProFilerDatabaseService {
                 "archiveId: {}, profilerFileId: {}, pathOnFire: {}", archiveId, profilerFileId, pathOnFire);
 
         return archiveId;
+    }
+
+    @Override
+    public List<OldFireFile> findAllByFireId(final List<Long> fireIds) {
+        final String query = "SELECT " +
+                "archive_id, " +
+                "fire_exit_code, " +
+                "fire_exit_reason " +
+                "FROM archive " +
+                "WHERE archive_id in (:fire_ids)";
+
+        final MapSqlParameterSource parameters = new MapSqlParameterSource();
+        parameters.addValue("fire_ids", fireIds);
+
+        final RowMapper<OldFireFile> rowMapper = (rs, rowNum) -> {
+            final Long fireId = rs.getLong("archive_id");
+            final Integer exitCode = rs.getInt("fire_exit_code");
+            final String exitReason = rs.getString("fire_exit_reason");
+            return new OldFireFile(fireId, exitCode, exitReason);
+        };
+
+        return proFilerTemplate.query(query, parameters, rowMapper);
     }
 
     private long insertFile(String egaFileId, File file, String md5) {
@@ -133,6 +157,7 @@ public class ProFilerDatabaseService implements IProFilerDatabaseService {
 
         KeyHolder holder = new GeneratedKeyHolder();
         proFilerTemplate.update(query, parameters, holder);
+        // That's the archive_id:
         return holder.getKey().longValue();
     }
 

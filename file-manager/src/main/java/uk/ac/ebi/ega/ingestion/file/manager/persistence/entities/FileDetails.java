@@ -24,6 +24,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EntityListeners;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -55,8 +57,12 @@ public class FileDetails {
     @Column(nullable = false)
     private String key;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String status;
+    private FileStatus status;
+
+    @Column(nullable = false)
+    private Long fireId;
 
     @CreatedDate
     private LocalDateTime createdDate;
@@ -69,7 +75,7 @@ public class FileDetails {
 
     public FileDetails(final String dosPath, final Long plainSize, final String plainMd5,
                        final Long encryptedSize, final String encryptedMd5,
-                       final String key, final String status) {
+                       final String key, final FileStatus status, final Long fireId) {
         this.dosPath = dosPath;
         this.plainSize = plainSize;
         this.plainMd5 = plainMd5;
@@ -77,6 +83,7 @@ public class FileDetails {
         this.encryptedMd5 = encryptedMd5;
         this.key = key;
         this.status = status;
+        this.fireId = fireId;
     }
 
     public Long getId() {
@@ -107,8 +114,12 @@ public class FileDetails {
         return key;
     }
 
-    public String getStatus() {
+    public FileStatus getStatus() {
         return status;
+    }
+
+    public void setStatus(final FileStatus status) {
+        this.status = status;
     }
 
     public LocalDateTime getCreatedDate() {
@@ -117,5 +128,21 @@ public class FileDetails {
 
     public LocalDateTime getUpdatedDate() {
         return updatedDate;
+    }
+
+    /**
+     * @return fireId the value of the "ega-pro-filer.ega_ARCHIVE.archive.archive_id" column.
+     */
+    public Long getFireId() {
+        return fireId;
+    }
+
+    @Override
+    public String toString() {
+        return "FileDetails{" +
+                "id=" + id +
+                ", status=" + status +
+                ", fireId=" + fireId +
+                '}';
     }
 }

@@ -137,6 +137,7 @@ create table FILE_DETAILS
     PLAIN_SIZE      bigint       not null,
     DOS_PATH        varchar(255) not null,
     STATUS          varchar(255) not null,
+    FIRE_ID         bigserial    not null,
     CREATED_DATE    timestamp    not null,
     UPDATED_DATE    timestamp    not null
 );

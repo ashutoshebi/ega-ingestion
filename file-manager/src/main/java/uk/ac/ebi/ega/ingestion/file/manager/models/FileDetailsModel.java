@@ -17,6 +17,8 @@
  */
 package uk.ac.ebi.ega.ingestion.file.manager.models;
 
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileStatus;
+
 import java.time.LocalDateTime;
 import java.util.Objects;
 
@@ -29,13 +31,13 @@ public class FileDetailsModel {
     private Long encryptedSize;
     private String encryptedMd5;
     private String key;
-    private String status;
+    private FileStatus status;
     private LocalDateTime createdDate;
     private LocalDateTime updatedDate;
 
     public FileDetailsModel(final Long id, final String dosPath, final Long plainSize, final String plainMd5,
                             final Long encryptedSize, final String encryptedMd5, final String key,
-                            final String status, final LocalDateTime createdDate, final LocalDateTime updatedDate) {
+                            final FileStatus status, final LocalDateTime createdDate, final LocalDateTime updatedDate) {
         this.id = Objects.requireNonNull(id);
         this.dosPath = Objects.requireNonNull(dosPath);
         this.plainSize = Objects.requireNonNull(plainSize);
@@ -76,7 +78,7 @@ public class FileDetailsModel {
         return key;
     }
 
-    public String getStatus() {
+    public FileStatus getStatus() {
         return status;
     }
 

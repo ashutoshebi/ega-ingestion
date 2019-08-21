@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.rmi.NoSuchObjectException;
+import java.util.List;
 import java.util.Optional;
 
 import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
@@ -57,6 +58,11 @@ public class OldFireService implements IFireService {
             logger.error(e.getMessage(), e);
             return Optional.empty();
         }
+    }
+
+    @Override
+    public List<OldFireFile> findAllByFireId(final List<Long> fireIds) {
+        return proFilerDatabaseService.findAllByFireId(fireIds);
     }
 
     private File moveFileToFireStaging(File file, String pathOnFire) throws IOException {

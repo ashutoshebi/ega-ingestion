@@ -36,6 +36,7 @@ import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileHierarchyE
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileDetails;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileHierarchy;
 import uk.ac.ebi.ega.ingestion.file.manager.utils.FileStructureType;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileStatus;
 
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -50,6 +51,8 @@ import static org.junit.Assert.assertTrue;
 @AutoConfigureTestEntityManager
 @TestPropertySource(locations = "classpath:test.properties")
 public class FileHierarchyRepositoryTest {
+
+    private static final Long FIRE_ID = 12L;
 
     @Autowired
     private FileHierarchyRepository fileHierarchyRepository;
@@ -184,7 +187,8 @@ public class FileHierarchyRepositoryTest {
                 42L,
                 "3C130EA5D8D2D3DACA7F6808CDF0F149",
                 "password",
-                "archiving"
+                FileStatus.ARCHIVE_IN_PROGRESS,
+                FIRE_ID
         );
     }
 

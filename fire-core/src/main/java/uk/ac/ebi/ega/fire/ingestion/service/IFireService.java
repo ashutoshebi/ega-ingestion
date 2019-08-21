@@ -18,10 +18,21 @@
 package uk.ac.ebi.ega.fire.ingestion.service;
 
 import java.io.File;
+import java.util.List;
 import java.util.Optional;
 
 public interface IFireService {
 
     Optional<Long> archiveFile(String egaFileId, File file, String md5, String pathOnFire);
+
+    /**
+     * Returns those rows (as OldFireFile objects)
+     * from the ega-pro-filer.ega_ARCHIVE.archive table
+     * where the archive_id is equal to the given fireIds.
+     *
+     * @param fireIds ega-pro-filer.ega_ARCHIVE.archive.archive_id's
+     * @return the DB-rows as a list of OldFireFile object
+     */
+    List<OldFireFile> findAllByFireId(List<Long> fireIds);
 
 }
