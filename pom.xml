@@ -35,8 +35,6 @@
         <module>file-re-encryption-processor</module>
         <module>job-processor</module>
         <module>ukbb-temp-ingestion</module>
-        <module>cmdline-fire-archiver</module>
-        <module>cmdline-fire-re-archiver</module>
     </modules>
 
     <dependencyManagement>
