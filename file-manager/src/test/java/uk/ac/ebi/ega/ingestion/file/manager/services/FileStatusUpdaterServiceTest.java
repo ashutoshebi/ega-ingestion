@@ -33,7 +33,7 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
 import uk.ac.ebi.ega.fire.ingestion.service.IFireService;
-import uk.ac.ebi.ega.fire.ingestion.service.OldFireFile;
+import uk.ac.ebi.ega.fire.models.OldFireFile;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileDetails;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileStatus;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.FileDetailsRepository;
