@@ -121,4 +121,16 @@ public class IngestionEvent implements Comparable<IngestionEvent> {
         return encryptedFile.compareTo(ingestionEvent.encryptedFile);
     }
 
+    @Override
+    public String toString() {
+        return "IngestionEvent{" +
+                "accountId='" + accountId + '\'' +
+                ", locationId='" + locationId + '\'' +
+                ", rootPath=" + rootPath +
+                ", encryptedFile=" + encryptedFile +
+                ", plainMd5File=" + plainMd5File +
+                ", encryptedMd5File=" + encryptedMd5File +
+                ", timestamp=" + timestamp +
+                '}';
+    }
 }
