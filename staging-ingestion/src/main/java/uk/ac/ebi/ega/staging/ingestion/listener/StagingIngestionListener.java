@@ -17,6 +17,7 @@
  */
 package uk.ac.ebi.ega.staging.ingestion.listener;
 
+import org.apache.kafka.clients.consumer.CommitFailedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -62,17 +63,39 @@ public class StagingIngestionListener {
         try {
             final Optional<NewFileEvent> ingest = service.ingest(key, ingestionEvent);
             if (ingest.isPresent()) {
-                kafkaTemplate.send(newFileTopic, key, ingest.get());
-                acknowledgment.acknowledge();
-                service.cleanMd5Files(ingestionEvent);
-                logger.info("Ingestion completed");
+                success(key, ingestionEvent, acknowledgment, ingest.get());
             } else {
-                logger.info("Ingestion skipped");
-                acknowledgment.acknowledge();
+                skip(acknowledgment);
             }
+        } catch (CommitFailedException e) {
+            error(null, e);
         } catch (Exception e) {
-            // TODO error queue (this is likely a fatal error)
-            logger.error(e.getMessage(), e);
+            error(acknowledgment, e);
+        }
+    }
+
+    private void success(String key, IngestionEvent ingestionEvent, Acknowledgment acknowledgment,
+                         NewFileEvent newFileEvent) {
+        kafkaTemplate.send(newFileTopic, key, newFileEvent);
+        acknowledgment.acknowledge();
+        service.cleanMd5Files(ingestionEvent);
+        logger.info("Ingestion completed");
+    }
+
+    private void skip(Acknowledgment acknowledgment) {
+        acknowledgment.acknowledge();
+        logger.info("Ingestion skipped");
+    }
+
+    private void error(Acknowledgment acknowledgment, Exception e) {
+        // TODO error queue (this is likely a fatal error)
+        logger.error(e.getMessage(), e);
+        if (acknowledgment != null) {
+            try {
+                acknowledgment.acknowledge();
+            } catch (CommitFailedException e2) {
+                logger.error(e.getMessage(), e2);
+            }
         }
     }
 
