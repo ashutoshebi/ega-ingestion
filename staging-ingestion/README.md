@@ -4,23 +4,23 @@ This service is a continuous consumer of a kafka topic that will read messages o
  
 ## What does it do
 
-Once a message is received the service will do the following actions:
+Once a message is received the service will perform the following actions:
 
-- Check that the files referred in the message `plainMd5, encryptedMd5` exist.
+- Check that the files referred to by the message `plainMd5, encryptedMd5` exist.
     - If the files have been modified then END. 
-    - If the files are missing then SKIPPED. No error reported as it is possible to receive messages
-     that have been processed already. 
-- Read both md5 files and normalized the md5 value that contain in uppercase.
+    - If the files are missing then SKIPPED. No error reported as it is not possible to receive messages
+     that have already been processed. 
+- Read both md5 files and normalized the md5 values so that they contain only uppercase characters.
 - Check the file `pgpFile`.
-    - If the file doesn't exist but it exists on `stagingPath` this means that the process was finished previously
-     and it is possible that the acknowledgment signal was not sent. We will generate a `newFileEvent` and sent
+    - If the file doesn't exist in `user staging path` but it exists within the `stagingPath` this means that while the process completed
+     it is possible that the acknowledgement signal was not sent. We will generate a `newFileEvent` and send this
       to the appropriate topic, SUCCESS.
-    - If the file exists and has been modified SKIPPED, the user has modified the file since the emission of the event.
+    - If the file exists and has been modified SKIPPED, the user will have modified the file since the emission of the event.
     - If the file exists and has not been modified, then the file will be moved into `stagingPath` with a name that
      will be a composition of the process key and a timestamp. We will generate a `newFileEvent` and sent to the
       appropriate topic, SUCCESS.
       
-Once the process has finished, the message is acknowledged to the Kafka queue. Depending on how the previous
+Once the process has finished, an acknowledgement message is sent to the Kafka queue. Depending on how the previous
  operation ended the following operations will be done: 
  
 - SUCCESS
