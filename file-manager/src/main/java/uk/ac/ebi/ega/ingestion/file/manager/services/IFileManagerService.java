@@ -21,6 +21,7 @@ import com.querydsl.core.types.Predicate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEvent;
+import uk.ac.ebi.ega.ingestion.commons.messages.NewFileEvent;
 import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileHierarchyException;
 import uk.ac.ebi.ega.ingestion.file.manager.models.FileHierarchyModel;
 
@@ -31,6 +32,12 @@ import java.util.List;
 import java.util.stream.Stream;
 
 public interface IFileManagerService {
+
+    /**
+     * Adds a new file into
+     * @param newFileEvent
+     */
+    void newFile(NewFileEvent newFileEvent);
 
     void archive(ArchiveEvent archiveEvent) throws IOException, FileHierarchyException;
 

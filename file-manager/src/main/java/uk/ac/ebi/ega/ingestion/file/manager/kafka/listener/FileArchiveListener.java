@@ -21,6 +21,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.handler.annotation.Header;
 import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEvent;
 import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileHierarchyException;
 import uk.ac.ebi.ega.ingestion.file.manager.services.IFileManagerService;
@@ -37,9 +39,17 @@ public class FileArchiveListener {
         this.encryptJobService = encryptJobService;
     }
 
-    @KafkaListener(id = "file-manager-archive-listener", topics = "${spring.kafka.file.archive.queue.name}",
-            groupId = "${spring.kafka.consumer.group-id}", containerFactory = "archiveEventListenerContainerFactory")
-    public void listenArchiveEventQueue(ArchiveEvent archiveEvent, Acknowledgment acknowledgment) {
+    @KafkaListener(
+            topics = "${file.archive.queue.name}",
+            groupId = "${file.archive.group-id}",
+            clientIdPrefix = "${file.archive.group-id}",
+            containerFactory = "archiveEventListenerContainerFactory")
+    public void listenArchiveEventQueue(@Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) String key,
+                                        @Header(KafkaHeaders.RECEIVED_PARTITION_ID) int partition,
+                                        @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
+                                        @Header(KafkaHeaders.RECEIVED_TIMESTAMP) long ts,
+                                        ArchiveEvent archiveEvent,
+                                        Acknowledgment acknowledgment) {
         try {
             encryptJobService.archive(archiveEvent);
         } catch (FileHierarchyException | IOException e) {

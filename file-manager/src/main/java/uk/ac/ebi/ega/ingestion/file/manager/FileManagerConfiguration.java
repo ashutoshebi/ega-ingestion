@@ -56,7 +56,7 @@ import java.nio.file.Paths;
 @Configuration
 public class FileManagerConfiguration {
 
-    @Value("${spring.kafka.download-box.queue.name}")
+    @Value("${download-box.queue.name}")
     private String downloadBoxQueueName;
 
     @Value("${file.manager.download.box.password.size}")

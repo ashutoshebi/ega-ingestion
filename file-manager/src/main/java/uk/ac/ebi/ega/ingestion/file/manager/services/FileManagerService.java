@@ -30,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import uk.ac.ebi.ega.encryption.core.utils.io.FileUtils;
 import uk.ac.ebi.ega.fire.ingestion.service.IFireService;
 import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEvent;
+import uk.ac.ebi.ega.ingestion.commons.messages.NewFileEvent;
 import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileHierarchyException;
 import uk.ac.ebi.ega.ingestion.file.manager.models.ArchivedFile;
 import uk.ac.ebi.ega.ingestion.file.manager.models.FileHierarchyModel;
@@ -70,6 +71,11 @@ public class FileManagerService implements IFileManagerService {
         this.fireBoxRelativePath = fireBoxRelativePath;
         this.fileHierarchyRepository = fileHierarchyRepository;
         this.entityManager = entityManager;
+    }
+
+    @Override
+    public void newFile(NewFileEvent newFileEvent) {
+
     }
 
     @Override

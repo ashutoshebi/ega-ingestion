@@ -24,15 +24,22 @@ import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import uk.ac.ebi.ega.ingestion.commons.messages.NewFileEvent;
+import uk.ac.ebi.ega.ingestion.file.manager.services.IFileManagerService;
 
-public class IngestionNewFile {
+public class IngestionNewFileListener {
 
-    private final static Logger logger = LoggerFactory.getLogger(IngestionNewFile.class);
+    private final static Logger logger = LoggerFactory.getLogger(IngestionNewFileListener.class);
+
+    private IFileManagerService fileManagerService;
+
+    private IngestionNewFileListener(IFileManagerService fileManagerService) {
+        this.fileManagerService = fileManagerService;
+    }
 
     @KafkaListener(
-            topics = "${file.archive.queue.name}",
-            groupId = "${file.archive.group-id}",
-            clientIdPrefix = "${file.manager.clientId}",
+            topics = "${new.file.queue.name}",
+            groupId = "${new.file.group-id}",
+            clientIdPrefix = "${new.file.group-id}",
             containerFactory = "ingestionNewFileListenerContainerFactory")
     public void listenIngestionNewFileEventQueue(@Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) String key,
                                                  @Header(KafkaHeaders.RECEIVED_PARTITION_ID) int partition,
@@ -41,6 +48,7 @@ public class IngestionNewFile {
                                                  NewFileEvent newFileEvent,
                                                  Acknowledgment acknowledgment) {
         logger.info("key: {}, event: {}", key, newFileEvent);
+        fileManagerService.newFile(newFileEvent);
         //TODO do not acknowledge it yet
     }
 

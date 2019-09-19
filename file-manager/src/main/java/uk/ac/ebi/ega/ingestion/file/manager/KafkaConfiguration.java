@@ -42,11 +42,14 @@ import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.support.converter.StringJsonMessageConverter;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEvent;
+import uk.ac.ebi.ega.ingestion.commons.messages.NewFileEvent;
 import uk.ac.ebi.ega.ingestion.file.manager.kafka.listener.FileArchiveListener;
+import uk.ac.ebi.ega.ingestion.file.manager.kafka.listener.IngestionNewFileListener;
 import uk.ac.ebi.ega.ingestion.file.manager.kafka.message.DownloadBoxFileProcess;
 import uk.ac.ebi.ega.ingestion.file.manager.kafka.message.ReEncryptComplete;
 import uk.ac.ebi.ega.ingestion.file.manager.services.IFileManagerService;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -56,7 +59,15 @@ public class KafkaConfiguration {
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
 
-    @Bean
+    @Value("${spring.kafka.consumer.auto-offset-reset}")
+    private String consumerAutoOffsetReset;
+
+    @Value("${spring.kafka.consumer.heartbeat-interval}")
+    private Duration heartbeatInterval;
+
+    @Value("${spring.kafka.consumer.session-timeout}")
+    private Duration sessionTimeout;
+
     public Map producerConfigs() {
         Map properties = new HashMap();
         properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
@@ -102,18 +113,17 @@ public class KafkaConfiguration {
 
     @Bean
     public ConsumerFactory<String, ReEncryptComplete> reEncryptCompleteConsumerFactory() {
-        return new DefaultKafkaConsumerFactory<>(consumerConfigs());
+        return new DefaultKafkaConsumerFactory<>(defaultConsumerConfigs());
     }
 
-    @Bean
-    public Map<String, Object> consumerConfigs() {
+    public Map<String, Object> defaultConsumerConfigs() {
         Map<String, Object> properties = new HashMap<>();
         properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        properties.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, 3000);
-        properties.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, 10000);
-        properties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest"); //TODO Change to latest
+        properties.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, (int) heartbeatInterval.toMillis());
+        properties.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, (int) sessionTimeout.toMillis());
+        properties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, consumerAutoOffsetReset);
         return properties;
     }
 
@@ -135,15 +145,8 @@ public class KafkaConfiguration {
         return new DefaultKafkaConsumerFactory<>(manualConsumerConfigs());
     }
 
-    @Bean
     public Map<String, Object> manualConsumerConfigs() {
-        Map<String, Object> properties = new HashMap<>();
-        properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        properties.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, 3000);
-        properties.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, 10000);
-        properties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest"); //TODO Change to latest
+        Map<String, Object> properties = defaultConsumerConfigs();
         properties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
         return properties;
     }
@@ -151,6 +154,24 @@ public class KafkaConfiguration {
     @Bean
     public FileArchiveListener fileArchiveListener(@Autowired IFileManagerService fileManagerService) {
         return new FileArchiveListener(fileManagerService);
+    }
+
+    @Bean
+    public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String, NewFileEvent>>
+    ingestionNewFileListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, NewFileEvent> factory =
+                new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConcurrency(1);
+        factory.setConsumerFactory(new DefaultKafkaConsumerFactory<>(manualConsumerConfigs()));
+        factory.setMessageConverter(new StringJsonMessageConverter(getObjectMapper()));
+        factory.getContainerProperties().setPollTimeout(600000);
+        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
+        return factory;
+    }
+
+    @Bean
+    public IngestionNewFileListener ingestionNewFile() {
+        return new IngestionNewFileListener();
     }
 
 }

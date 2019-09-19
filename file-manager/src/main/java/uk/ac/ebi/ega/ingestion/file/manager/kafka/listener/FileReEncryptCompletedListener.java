@@ -36,9 +36,16 @@ public class FileReEncryptCompletedListener {
     @Autowired
     private IDownloadBoxJobService service;
 
-    @KafkaListener(id = "${spring.kafka.client-id}", topics = "${spring.kafka.download-box.completed.queue.name}",
-            groupId = "${spring.kafka.consumer.group-id}", containerFactory = "kafkaListenerContainerFactory")
-    public void listen(@Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) String key, ReEncryptComplete complete) {
+    @KafkaListener(
+            topics = "${download-box.completed.queue.name}",
+            groupId = "${download-box.completed.group-id}",
+            clientIdPrefix = "${download-box.completed.group-id}",
+            containerFactory = "kafkaListenerContainerFactory")
+    public void listen(@Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) String key,
+                       @Header(KafkaHeaders.RECEIVED_PARTITION_ID) int partition,
+                       @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
+                       @Header(KafkaHeaders.RECEIVED_TIMESTAMP) long ts,
+                       ReEncryptComplete complete) {
         log.info("File re-encryption id: {} completed with status: {}", key, complete.getStatus());
         try {
             service.finishFileJob(key, complete.getMessage(), complete.getStartTime(), complete.getEndTime());
