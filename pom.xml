@@ -32,6 +32,7 @@
         <module>file-manager</module>
         <module>file-re-encryption-processor</module>
         <module>job-processor</module>
+        <module>staging-ingestion</module>
     </modules>
 
     <repositories>

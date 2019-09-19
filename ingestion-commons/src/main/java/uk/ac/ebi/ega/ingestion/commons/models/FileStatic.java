@@ -76,4 +76,14 @@ public class FileStatic implements Comparable<FileStatic> {
         }
         return Long.compare(lastModified, fileStatic.lastModified);
     }
+
+    @Override
+    public String toString() {
+        return "FileStatic{" +
+                "absolutePath='" + absolutePath + '\'' +
+                ", length=" + length +
+                ", lastModified=" + lastModified +
+                '}';
+    }
+
 }

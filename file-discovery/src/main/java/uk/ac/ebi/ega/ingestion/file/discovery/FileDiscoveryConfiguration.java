@@ -54,7 +54,7 @@ public class FileDiscoveryConfiguration {
     @Value("${spring.kafka.file.events.queue.name}")
     private String fileEventQueueName;
 
-    @Value("${spring.kafka.file.ingestion.queue.name}")
+    @Value("${spring.kafka.staging.ingestion.queue.name}")
     private String fileIngestionQueueName;
 
     @Autowired
