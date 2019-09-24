@@ -34,10 +34,13 @@ import java.util.stream.Stream;
 public interface IFileManagerService {
 
     /**
-     * Adds a new file into
+     * Adds a new file into the system. After adding into the database a new event to encrypt the file is sent. If
+     * the same file / version is sent multiple times we will create new events if the file has not been processed yet.
+     *
+     * @param key
      * @param newFileEvent
      */
-    void newFile(NewFileEvent newFileEvent);
+    void newFile(String key, NewFileEvent newFileEvent);
 
     void archive(ArchiveEvent archiveEvent) throws IOException, FileHierarchyException;
 
@@ -48,13 +51,9 @@ public interface IFileManagerService {
      * List is ordered by originalPath.
      * It is a Non Recursive result.
      *
-     * @param accountId
-     *         Account Id
-     * @param stagingAreaId
-     *         Staging Area Id
-     * @param filePath
-     *         File path
-     *
+     * @param accountId     Account Id
+     * @param stagingAreaId Staging Area Id
+     * @param filePath      File path
      * @return List of FileHierarchyModel.
      * @throws FileNotFoundException
      */
@@ -66,15 +65,10 @@ public interface IFileManagerService {
      * Page will have no records if no data found.
      * It is a Recursive result.
      *
-     * @param accountId
-     *         Account Id
-     * @param stagingAreaId
-     *         Staging Area Id
-     * @param predicate
-     *         Predicate
-     * @param pageable
-     *         Pageable
-     *
+     * @param accountId     Account Id
+     * @param stagingAreaId Staging Area Id
+     * @param predicate     Predicate
+     * @param pageable      Pageable
      * @return Page object of FileHierarchyModel.
      * @throws FileNotFoundException
      */
@@ -87,16 +81,11 @@ public interface IFileManagerService {
      * Stream is ordered by originalPath.
      * It is a Non Recursive result.
      *
-     * @param accountId
-     *         Account Id
-     * @param stagingAreaId
-     *         Staging Area Id
-     * @param filePath
-     *         File path
-     *
+     * @param accountId     Account Id
+     * @param stagingAreaId Staging Area Id
+     * @param filePath      File path
      * @return Stream of FileHierarchyModel object.
-     * @throws FileNotFoundException
-     *         throws if path is invalid; Provided path doesn't exists.
+     * @throws FileNotFoundException throws if path is invalid; Provided path doesn't exists.
      */
     Stream<FileHierarchyModel> findAllFilesInPathNonRecursive(String accountId, String stagingAreaId, Path filePath) throws FileNotFoundException;
 
@@ -106,11 +95,8 @@ public interface IFileManagerService {
      * Stream is ordered by originalPath.
      * It is a Recursive result.
      *
-     * @param accountId
-     *         Account Id
-     * @param stagingAreaId
-     *         Staging Area Id
-     *
+     * @param accountId     Account Id
+     * @param stagingAreaId Staging Area Id
      * @return Stream of FileHierarchyModel object.
      */
     Stream<FileHierarchyModel> findAllFilesInRootPathRecursive(String accountId, String stagingAreaId);

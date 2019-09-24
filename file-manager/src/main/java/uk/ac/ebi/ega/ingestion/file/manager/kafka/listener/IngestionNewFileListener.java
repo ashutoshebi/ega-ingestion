@@ -32,7 +32,7 @@ public class IngestionNewFileListener {
 
     private IFileManagerService fileManagerService;
 
-    private IngestionNewFileListener(IFileManagerService fileManagerService) {
+    public IngestionNewFileListener(IFileManagerService fileManagerService) {
         this.fileManagerService = fileManagerService;
     }
 
@@ -48,8 +48,8 @@ public class IngestionNewFileListener {
                                                  NewFileEvent newFileEvent,
                                                  Acknowledgment acknowledgment) {
         logger.info("key: {}, event: {}", key, newFileEvent);
-        fileManagerService.newFile(newFileEvent);
-        //TODO do not acknowledge it yet
+        fileManagerService.newFile(key, newFileEvent);
+        acknowledgment.acknowledge();
     }
 
 }

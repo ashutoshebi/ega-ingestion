@@ -17,6 +17,8 @@ package uk.ac.ebi.ega.ingestion.file.manager.persistence.entities;
 
 public enum FileStatus {
 
+    PROCESSING,
+
     ARCHIVE_IN_PROGRESS,
 
     ARCHIVED_SUCCESSFULLY,

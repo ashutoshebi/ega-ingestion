@@ -42,6 +42,7 @@ import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.support.converter.StringJsonMessageConverter;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEvent;
+import uk.ac.ebi.ega.ingestion.commons.messages.EncryptEvent;
 import uk.ac.ebi.ega.ingestion.commons.messages.NewFileEvent;
 import uk.ac.ebi.ega.ingestion.file.manager.kafka.listener.FileArchiveListener;
 import uk.ac.ebi.ega.ingestion.file.manager.kafka.listener.IngestionNewFileListener;
@@ -98,6 +99,19 @@ public class KafkaConfiguration {
     @Bean
     public KafkaTemplate<String, DownloadBoxFileProcess> kafkaTemplate() {
         return new KafkaTemplate<>(producerFactory());
+    }
+
+    @Bean
+    public ProducerFactory<String, EncryptEvent> encryptEventProducerFactory() {
+        DefaultKafkaProducerFactory<String, EncryptEvent> factory =
+                new DefaultKafkaProducerFactory<>(producerConfigs());
+        factory.setValueSerializer(new JsonSerializer<>(getObjectMapper()));
+        return factory;
+    }
+
+    @Bean
+    public KafkaTemplate<String, EncryptEvent> encryptEventKafkaTemplate() {
+        return new KafkaTemplate<>(encryptEventProducerFactory());
     }
 
     @Bean
@@ -170,8 +184,8 @@ public class KafkaConfiguration {
     }
 
     @Bean
-    public IngestionNewFileListener ingestionNewFile() {
-        return new IngestionNewFileListener();
+    public IngestionNewFileListener ingestionNewFile(@Autowired IFileManagerService fileManagerService) {
+        return new IngestionNewFileListener(fileManagerService);
     }
 
 }
