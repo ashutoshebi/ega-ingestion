@@ -29,6 +29,7 @@ import uk.ac.ebi.ega.ingestion.commons.messages.IngestionEvent;
 import uk.ac.ebi.ega.ingestion.commons.messages.NewFileEvent;
 import uk.ac.ebi.ega.staging.ingestion.service.StagingIngestionService;
 
+import java.time.Duration;
 import java.util.Optional;
 
 public class StagingIngestionListener {

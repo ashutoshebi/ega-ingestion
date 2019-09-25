@@ -10,6 +10,7 @@ drop table if exists DOWNLOAD_BOX_ASSIGNATION cascade;
 drop table if exists DOWNLOAD_BOX cascade;
 drop table if exists FILE_HIERARCHY cascade;
 drop table if exists FILE_DETAILS cascade;
+drop table if exists ENCRYPTED_OBJECT cascade;
 
 drop type if exists JOB_STATUS;
 end transaction;
@@ -127,19 +128,38 @@ create table HISTORIC_DOWNLOAD_BOX_FILE_JOB
         REFERENCES HISTORIC_DOWNLOAD_BOX_JOB (ID)
 );
 
+create table ENCRYPTED_OBJECT
+(
+    ID             bigserial primary key,
+    STAGING_ID     varchar(255)  not null,
+    ACCOUNT_ID     varchar(255)  not null,
+    PATH           varchar(4096) not null,
+    VERSION        bigint        not null,
+    URI            varchar(4096) not null,
+    PLAIN_SIZE     bigint,
+    PLAIN_MD5      varchar(255)  not null,
+    ENCRYPTED_SIZE bigint        not null,
+    ENCRYPTED_MD5  varchar(255)  not null,
+    ENCRYPTION_KEY varchar(255)  not null,
+    STATUS         varchar(255)  not null,
+    FIRE_ID        bigint,
+    CREATED_DATE   timestamp     not null,
+    UPDATED_DATE   timestamp     not null
+);
+
 create table FILE_DETAILS
 (
-    ID              bigserial primary key,
-    ENCRYPTED_MD5   varchar(255) not null,
-    ENCRYPTED_SIZE  bigint       not null,
-    KEY		        varchar(255) not null,
-    PLAIN_MD5       varchar(255) not null,
-    PLAIN_SIZE      bigint       not null,
-    DOS_PATH        varchar(255) not null,
-    STATUS          varchar(255) not null,
-    FIRE_ID         bigserial    not null,
-    CREATED_DATE    timestamp    not null,
-    UPDATED_DATE    timestamp    not null
+    ID             bigserial primary key,
+    ENCRYPTED_MD5  varchar(255) not null,
+    ENCRYPTED_SIZE bigint       not null,
+    KEY            varchar(255) not null,
+    PLAIN_MD5      varchar(255) not null,
+    PLAIN_SIZE     bigint       not null,
+    DOS_PATH       varchar(255) not null,
+    STATUS         varchar(255) not null,
+    FIRE_ID        bigint       not null,
+    CREATED_DATE   timestamp    not null,
+    UPDATED_DATE   timestamp    not null
 );
 
 create table FILE_HIERARCHY

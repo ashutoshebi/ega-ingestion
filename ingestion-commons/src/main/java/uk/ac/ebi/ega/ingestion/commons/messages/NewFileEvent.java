@@ -41,6 +41,9 @@ public class NewFileEvent {
 
     private Encryption encryption;
 
+    public NewFileEvent() {
+    }
+
     public NewFileEvent(String accountId, String locationId, String userPath, long lastModified, Path path,
                         String plainMd5, String encryptedMd5, Encryption encryption) {
         this.accountId = accountId;
@@ -117,4 +120,17 @@ public class NewFileEvent {
         this.encryption = encryption;
     }
 
+    @Override
+    public String toString() {
+        return "NewFileEvent{" +
+                "accountId='" + accountId + '\'' +
+                ", locationId='" + locationId + '\'' +
+                ", userPath='" + userPath + '\'' +
+                ", lastModified=" + lastModified +
+                ", path=" + path +
+                ", plainMd5='" + plainMd5 + '\'' +
+                ", encryptedMd5='" + encryptedMd5 + '\'' +
+                ", encryption=" + encryption +
+                '}';
+    }
 }

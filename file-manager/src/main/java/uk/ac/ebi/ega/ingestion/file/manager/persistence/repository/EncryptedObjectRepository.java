@@ -15,14 +15,15 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.ingestion.commons.models;
+package uk.ac.ebi.ega.ingestion.file.manager.persistence.repository;
 
-public enum Encryption {
+import org.springframework.data.repository.CrudRepository;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.EncryptedObject;
 
-    EGA_AES,
+import java.util.Optional;
 
-    PGP,
+public interface EncryptedObjectRepository extends CrudRepository<EncryptedObject, Long> {
 
-    PLAIN
+    Optional<EncryptedObject> findByPathAndVersion(String path, long version);
 
 }

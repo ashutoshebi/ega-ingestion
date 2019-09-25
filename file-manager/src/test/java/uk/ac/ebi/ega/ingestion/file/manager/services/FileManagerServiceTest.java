@@ -36,6 +36,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.jdbc.Sql;
@@ -45,8 +46,15 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
 import uk.ac.ebi.ega.fire.ingestion.service.IFireService;
 import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEvent;
+import uk.ac.ebi.ega.ingestion.commons.messages.EncryptEvent;
+import uk.ac.ebi.ega.ingestion.commons.messages.NewFileEvent;
+import uk.ac.ebi.ega.ingestion.commons.models.Encryption;
+import uk.ac.ebi.ega.ingestion.commons.services.IEncryptedKeyService;
 import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileHierarchyException;
 import uk.ac.ebi.ega.ingestion.file.manager.models.FileHierarchyModel;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.EncryptedObject;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileStatus;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.EncryptedObjectRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.FileHierarchyRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.utils.FileStructureType;
 
@@ -58,6 +66,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -66,10 +75,15 @@ import java.util.stream.Stream;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @Sql(scripts = "classpath:cleanDatabase.sql")
@@ -83,6 +97,12 @@ public class FileManagerServiceTest {
     private IFileManagerService fileManagerService;
 
     @MockBean
+    private IEncryptedKeyService encryptedKeyService;
+
+    @MockBean
+    private KafkaTemplate<String, EncryptEvent> kafkaTemplate;
+
+    @MockBean
     private IFireService fireService;
 
     @PersistenceContext
@@ -90,6 +110,9 @@ public class FileManagerServiceTest {
 
     @Autowired
     private FileHierarchyRepository fileHierarchyRepository;
+
+    @Autowired
+    private EncryptedObjectRepository encryptedObjectRepository;
 
     @Rule
     public final TemporaryFolder testFolder = new TemporaryFolder();
@@ -108,7 +131,98 @@ public class FileManagerServiceTest {
 
     @Before
     public void init() {
-        fileManagerService = Mockito.spy(new FileManagerService(fireService, Paths.get("/test/path"), fileHierarchyRepository, entityManager));
+        fileManagerService = Mockito.spy(new FileManagerService(fireService, Paths.get("/test/path"),
+                fileHierarchyRepository, entityManager, encryptedObjectRepository, "encrypt-topic",
+                kafkaTemplate, encryptedKeyService));
+    }
+
+    @Sql(scripts = "classpath:cleanDatabase.sql")
+    @Test
+    public void newFile_CreatesDataAndSendsMessageToQueue() {
+        final NewFileEvent fileEvent = new NewFileEvent(
+                "ega-test-account",
+                "ega-test-staging",
+                "test.pgp",
+                new Date().getTime(),
+                Paths.get("/test/test.pgp"),
+                "250CF8B51C773F3F8DC8B4BE867A9A02",
+                "270CF8B51C773F3F8DC8B4BE867A9B03",
+                Encryption.PGP);
+        fileManagerService.newFile("test-01", fileEvent);
+        verify(kafkaTemplate).send(eq("encrypt-topic"), anyString(), argThat(arg -> {
+            assertEquals(Paths.get("/test/test.pgp").toUri(), arg.getUri());
+            assertNull(arg.getDecryptionKey());
+            assertNull(arg.getEncryptionKey());
+            assertEquals(Encryption.PGP, arg.getCurrentEncryption());
+            assertEquals(Encryption.EGA_AES, arg.getNewEncryption());
+            assertEquals("250CF8B51C773F3F8DC8B4BE867A9A02", arg.getPlainMd5());
+            assertEquals("270CF8B51C773F3F8DC8B4BE867A9B03", arg.getEncryptedMd5());
+            return true;
+        }));
+        assertTrue(encryptedObjectRepository.findByPathAndVersion("test.pgp", fileEvent.getLastModified()).isPresent());
+    }
+
+    @Sql(scripts = "classpath:cleanDatabase.sql")
+    @Test
+    public void newFile_DuplicateMessageSendsMessageToQueueTwiceIfItIsStillInProcess() {
+        final NewFileEvent fileEvent = new NewFileEvent(
+                "ega-test-account",
+                "ega-test-staging",
+                "test.pgp",
+                new Date().getTime(),
+                Paths.get("/test/test.pgp"),
+                "250CF8B51C773F3F8DC8B4BE867A9A02",
+                "270CF8B51C773F3F8DC8B4BE867A9B03",
+                Encryption.PGP);
+        fileManagerService.newFile("test-01", fileEvent);
+        fileManagerService.newFile("test-01", fileEvent);
+
+        verify(kafkaTemplate, times(2)).send(eq("encrypt-topic"), anyString(), argThat(arg -> {
+            assertEquals(Paths.get("/test/test.pgp").toUri(), arg.getUri());
+            assertNull(arg.getDecryptionKey());
+            assertNull(arg.getEncryptionKey());
+            assertEquals(Encryption.PGP, arg.getCurrentEncryption());
+            assertEquals(Encryption.EGA_AES, arg.getNewEncryption());
+            assertEquals("250CF8B51C773F3F8DC8B4BE867A9A02", arg.getPlainMd5());
+            assertEquals("270CF8B51C773F3F8DC8B4BE867A9B03", arg.getEncryptedMd5());
+            return true;
+        }));
+
+        assertTrue(encryptedObjectRepository.findByPathAndVersion("test.pgp", fileEvent.getLastModified()).isPresent());
+    }
+
+    @Sql(scripts = "classpath:cleanDatabase.sql")
+    @Test
+    public void newFile_DuplicateMessageDoesNotSendWhenTheObjectHasBeenProcessed() {
+        final NewFileEvent fileEvent = new NewFileEvent(
+                "ega-test-account",
+                "ega-test-staging",
+                "test.pgp",
+                new Date().getTime(),
+                Paths.get("/test/test.pgp"),
+                "250CF8B51C773F3F8DC8B4BE867A9A02",
+                "270CF8B51C773F3F8DC8B4BE867A9B03",
+                Encryption.PGP);
+        fileManagerService.newFile("test-01", fileEvent);
+
+        final EncryptedObject object = encryptedObjectRepository.findByPathAndVersion("test.pgp",
+                fileEvent.getLastModified()).get();
+        object.setStatus(FileStatus.ARCHIVE_IN_PROGRESS);
+        encryptedObjectRepository.save(object);
+
+        fileManagerService.newFile("test-01", fileEvent);
+        verify(kafkaTemplate, times(1)).send(eq("encrypt-topic"), anyString(), argThat(arg -> {
+            assertEquals(Paths.get("/test/test.pgp").toUri(), arg.getUri());
+            assertNull(arg.getDecryptionKey());
+            assertNull(arg.getEncryptionKey());
+            assertEquals(Encryption.PGP, arg.getCurrentEncryption());
+            assertEquals(Encryption.EGA_AES, arg.getNewEncryption());
+            assertEquals("250CF8B51C773F3F8DC8B4BE867A9A02", arg.getPlainMd5());
+            assertEquals("270CF8B51C773F3F8DC8B4BE867A9B03", arg.getEncryptedMd5());
+            return true;
+        }));
+
+        assertTrue(encryptedObjectRepository.findByPathAndVersion("test.pgp", fileEvent.getLastModified()).isPresent());
     }
 
     @Transactional

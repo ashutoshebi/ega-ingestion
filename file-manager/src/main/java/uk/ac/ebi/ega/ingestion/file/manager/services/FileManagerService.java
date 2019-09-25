@@ -26,17 +26,23 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import uk.ac.ebi.ega.encryption.core.utils.io.FileUtils;
 import uk.ac.ebi.ega.fire.ingestion.service.IFireService;
 import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEvent;
+import uk.ac.ebi.ega.ingestion.commons.messages.EncryptEvent;
+import uk.ac.ebi.ega.ingestion.commons.messages.NewFileEvent;
+import uk.ac.ebi.ega.ingestion.commons.services.IEncryptedKeyService;
 import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileHierarchyException;
 import uk.ac.ebi.ega.ingestion.file.manager.models.ArchivedFile;
 import uk.ac.ebi.ega.ingestion.file.manager.models.FileHierarchyModel;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.EncryptedObject;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileDetails;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileHierarchy;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileStatus;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.QFileHierarchy;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.EncryptedObjectRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.FileHierarchyRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.utils.FileStructureType;
 
@@ -61,15 +67,54 @@ public class FileManagerService implements IFileManagerService {
     private final Path fireBoxRelativePath;
     private final FileHierarchyRepository fileHierarchyRepository;
     private final EntityManager entityManager;
+    private final EncryptedObjectRepository encryptedObjectRepository;
+
+    private final String encryptEventTopic;
+    private final KafkaTemplate<String, EncryptEvent> encryptEventKafkaTemplate;
+
+    private final IEncryptedKeyService encryptedKeyService;
 
     public FileManagerService(final IFireService fireService,
                               final Path fireBoxRelativePath,
                               final FileHierarchyRepository fileHierarchyRepository,
-                              final EntityManager entityManager) {
+                              final EntityManager entityManager,
+                              final EncryptedObjectRepository encryptedObjectRepository,
+                              final String encryptEventTopic,
+                              final KafkaTemplate<String, EncryptEvent> encryptEventKafkaTemplate,
+                              final IEncryptedKeyService encryptedKeyService) {
         this.fireService = fireService;
         this.fireBoxRelativePath = fireBoxRelativePath;
         this.fileHierarchyRepository = fileHierarchyRepository;
         this.entityManager = entityManager;
+        this.encryptedObjectRepository = encryptedObjectRepository;
+        this.encryptEventTopic = encryptEventTopic;
+        this.encryptEventKafkaTemplate = encryptEventKafkaTemplate;
+        this.encryptedKeyService = encryptedKeyService;
+    }
+
+    @Override
+    public void newFile(String key, NewFileEvent event) {
+        String encryptionKey = encryptedKeyService.generateNewEncryptedKey();
+        // Find if exists, otherwise create new object and save into database
+        final EncryptedObject encryptedObject = encryptedObjectRepository
+                .findByPathAndVersion(event.getUserPath(), event.getLastModified())
+                .orElseGet(() -> encryptedObjectRepository.save(new EncryptedObject(
+                        event.getAccountId(),
+                        event.getLocationId(),
+                        event.getUserPath(),
+                        event.getLastModified(),
+                        event.getPath().toUri().toString(),
+                        event.getPlainMd5(),
+                        -1,
+                        event.getEncryptedMd5())));
+        if (encryptedObject.getStatus() == FileStatus.PROCESSING) {
+            encryptEventKafkaTemplate.send(encryptEventTopic,
+                    encryptedObject.getId().toString(),
+                    EncryptEvent.ingest(event, encryptionKey));
+            LOGGER.info("New file: {} version: {} has been added.", key, event.getLastModified());
+        } else {
+            LOGGER.info("New file: {} version: {} has already been processed", key, event.getLastModified());
+        }
     }
 
     @Override

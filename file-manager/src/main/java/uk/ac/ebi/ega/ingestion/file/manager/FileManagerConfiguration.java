@@ -24,15 +24,20 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.mail.javamail.JavaMailSender;
+import uk.ac.ebi.ega.encryption.core.encryption.exceptions.AlgorithmInitializationException;
 import uk.ac.ebi.ega.encryption.core.services.IPasswordEncryptionService;
 import uk.ac.ebi.ega.encryption.core.services.PasswordEncryptionService;
 import uk.ac.ebi.ega.fire.ingestion.service.IFireService;
 import uk.ac.ebi.ega.fire.ingestion.service.IProFilerDatabaseService;
 import uk.ac.ebi.ega.fire.ingestion.service.OldFireService;
 import uk.ac.ebi.ega.fire.ingestion.service.ProFilerDatabaseService;
+import uk.ac.ebi.ega.ingestion.commons.messages.EncryptEvent;
+import uk.ac.ebi.ega.ingestion.commons.services.IEncryptedKeyService;
+import uk.ac.ebi.ega.ingestion.commons.services.StaticEncryptedKeyService;
 import uk.ac.ebi.ega.ingestion.file.manager.kafka.message.DownloadBoxFileProcess;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.DownloadBoxFileJobRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.DownloadBoxJobRepository;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.EncryptedObjectRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.FileHierarchyRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.HistoricDownloadBoxFileJobRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.HistoricDownloadBoxJobRepository;
@@ -50,20 +55,27 @@ import uk.ac.ebi.ega.ingestion.file.manager.services.key.RandomKeyGenerator;
 import javax.persistence.EntityManager;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 @Configuration
 public class FileManagerConfiguration {
 
-    @Value("${spring.kafka.download-box.queue.name}")
+    @Value("${download-box.queue.name}")
     private String downloadBoxQueueName;
+
+    @Value("${file.encrypt.queue.name}")
+    private String fileEncryptQueueName;
 
     @Value("${file.manager.download.box.password.size}")
     private int passwordKeySize;
 
     @Value("${file.manager.encryption.password.encryption.key}")
     private char[] passwordEncryptionKey;
+
+    @Value("${file.manager.ega.cip.password.file}")
+    private String cipPasswordFile;
 
     @Value("${file.manager.mail.alert}")
     private String mailAlert;
@@ -119,12 +131,24 @@ public class FileManagerConfiguration {
     @Bean
     public IFileManagerService fileManagerService(IFireService fireIngestion,
                                                   @Value("${file.manager.fire.relative.path}") String fireBoxRelativePath,
-                                                  FileHierarchyRepository fileHierarchyRepository, EntityManager entityManager) {
-        return new FileManagerService(fireIngestion, Paths.get(fireBoxRelativePath), fileHierarchyRepository, entityManager);
+                                                  FileHierarchyRepository fileHierarchyRepository,
+                                                  EntityManager entityManager,
+                                                  EncryptedObjectRepository encryptedObjectRepository,
+                                                  KafkaTemplate<String, EncryptEvent> encryptEventKafkaTemplate)
+            throws IOException, AlgorithmInitializationException {
+        return new FileManagerService(fireIngestion, Paths.get(fireBoxRelativePath), fileHierarchyRepository,
+                entityManager, encryptedObjectRepository, fileEncryptQueueName, encryptEventKafkaTemplate,
+                encryptedKeyService());
     }
 
     @Bean
     public IPasswordEncryptionService passwordEncryptionService() {
         return new PasswordEncryptionService(passwordEncryptionKey);
     }
+
+    @Bean
+    public IEncryptedKeyService encryptedKeyService() throws IOException, AlgorithmInitializationException {
+        return new StaticEncryptedKeyService(passwordEncryptionService(), Paths.get(cipPasswordFile));
+    }
+
 }

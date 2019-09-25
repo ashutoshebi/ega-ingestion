@@ -15,14 +15,14 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.ingestion.commons.models;
+package uk.ac.ebi.ega.ingestion.commons.services;
 
-public enum Encryption {
+import uk.ac.ebi.ega.encryption.core.encryption.exceptions.AlgorithmInitializationException;
 
-    EGA_AES,
+public interface IEncryptedKeyService {
 
-    PGP,
+    String generateNewEncryptedKey();
 
-    PLAIN
+    char[] decryptKey(String encryptedKey);
 
 }
