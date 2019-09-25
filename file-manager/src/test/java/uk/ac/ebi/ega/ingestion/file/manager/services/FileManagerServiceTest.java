@@ -75,6 +75,7 @@ import java.util.stream.Stream;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -150,8 +151,8 @@ public class FileManagerServiceTest {
         fileManagerService.newFile("test-01", fileEvent);
         verify(kafkaTemplate).send(eq("encrypt-topic"), anyString(), argThat(arg -> {
             assertEquals(Paths.get("/test/test.pgp").toUri(), arg.getUri());
-            assertEquals(null, arg.getDecryptionKey());
-            assertEquals(null, arg.getEncryptionKey());
+            assertNull(arg.getDecryptionKey());
+            assertNull(arg.getEncryptionKey());
             assertEquals(Encryption.PGP, arg.getCurrentEncryption());
             assertEquals(Encryption.EGA_AES, arg.getNewEncryption());
             assertEquals("250CF8B51C773F3F8DC8B4BE867A9A02", arg.getPlainMd5());
@@ -178,8 +179,8 @@ public class FileManagerServiceTest {
 
         verify(kafkaTemplate, times(2)).send(eq("encrypt-topic"), anyString(), argThat(arg -> {
             assertEquals(Paths.get("/test/test.pgp").toUri(), arg.getUri());
-            assertEquals(null, arg.getDecryptionKey());
-            assertEquals(null, arg.getEncryptionKey());
+            assertNull(arg.getDecryptionKey());
+            assertNull(arg.getEncryptionKey());
             assertEquals(Encryption.PGP, arg.getCurrentEncryption());
             assertEquals(Encryption.EGA_AES, arg.getNewEncryption());
             assertEquals("250CF8B51C773F3F8DC8B4BE867A9A02", arg.getPlainMd5());
@@ -212,8 +213,8 @@ public class FileManagerServiceTest {
         fileManagerService.newFile("test-01", fileEvent);
         verify(kafkaTemplate, times(1)).send(eq("encrypt-topic"), anyString(), argThat(arg -> {
             assertEquals(Paths.get("/test/test.pgp").toUri(), arg.getUri());
-            assertEquals(null, arg.getDecryptionKey());
-            assertEquals(null, arg.getEncryptionKey());
+            assertNull(arg.getDecryptionKey());
+            assertNull(arg.getEncryptionKey());
             assertEquals(Encryption.PGP, arg.getCurrentEncryption());
             assertEquals(Encryption.EGA_AES, arg.getNewEncryption());
             assertEquals("250CF8B51C773F3F8DC8B4BE867A9A02", arg.getPlainMd5());
