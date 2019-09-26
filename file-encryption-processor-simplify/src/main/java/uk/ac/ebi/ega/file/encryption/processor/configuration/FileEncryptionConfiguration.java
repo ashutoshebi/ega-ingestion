@@ -57,6 +57,10 @@ public class FileEncryptionConfiguration {
         } catch (IOException e) {
             throw new FileSystemException("Unable to write file inside Output folder path ".concat(testFile.getAbsolutePath()));
         }
+
+        if (!testFile.delete()) {
+            throw new FileSystemException("Unable to delete file inside Output folder path ".concat(testFile.getAbsolutePath()));
+        }
         return new FileEncryptionEventListener(fileEncryptionProcessor, kafkaTemplate, completedTopic, outputFolderPath);
     }
 

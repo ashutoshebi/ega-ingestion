@@ -83,34 +83,6 @@ public class KafkaConfiguration {
     }
 
     @Bean
-    public Map<String, Object> consumerConfigs() {
-        Map<String, Object> properties = new HashMap<>();
-        properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        // TODO either use a common package to handle this with versioning, user string + spring or Avro?
-//        properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, new JsonDeserializer<IngestionEvent>().getClass());
-//        properties.put(JsonDeserializer.TRUSTED_PACKAGES, "uk.ac.ebi.ega.ingestion.file.discovery.message");
-        properties.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 1);
-        properties.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, Integer.MAX_VALUE);
-        properties.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, 3000);
-        properties.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, 10000);
-        properties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest"); //TODO Change to latest
-        properties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
-        return properties;
-    }
-
-    @Bean
-    public Map<String, Object> producerConfigs() {
-        Map<String, Object> properties = new HashMap<>();
-        properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        // introduce a delay on the send to allow more messages to accumulate
-        properties.put(ProducerConfig.LINGER_MS_CONFIG, 1);
-        return properties;
-    }
-
-    @Bean
     public ProducerFactory<String, ArchiveEventSimplify> producerFactory() {
         DefaultKafkaProducerFactory<String, ArchiveEventSimplify> factory =
                 new DefaultKafkaProducerFactory<>(producerConfigs());
@@ -121,5 +93,28 @@ public class KafkaConfiguration {
     @Bean
     public KafkaTemplate<String, ArchiveEventSimplify> kafkaTemplate() {
         return new KafkaTemplate<>(producerFactory());
+    }
+
+    private Map<String, Object> producerConfigs() {
+        Map<String, Object> properties = new HashMap<>();
+        properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        // introduce a delay on the send to allow more messages to accumulate
+        properties.put(ProducerConfig.LINGER_MS_CONFIG, 1);
+        return properties;
+    }
+
+    private Map<String, Object> consumerConfigs() {
+        Map<String, Object> properties = new HashMap<>();
+        properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        properties.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 1);
+        properties.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, Integer.MAX_VALUE);
+        properties.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, 3000);
+        properties.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, 10000);
+        properties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest"); //TODO Change to latest
+        properties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
+        return properties;
     }
 }

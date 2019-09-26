@@ -53,7 +53,7 @@ public class FileEncryptionEventListener {
 
     @SuppressWarnings("unchecked")
     @KafkaListener(id = "${spring.kafka.client-id}", topics = "${spring.kafka.staging.ingestion.queue.name}",
-            groupId = "file-ingestion", clientIdPrefix = "executor", autoStartup = "false")
+            groupId = "file-ingestion", clientIdPrefix = "executor", autoStartup = "true")
     public void listen(@Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) String key, IngestionEventSimplify ingestionEventDataSimplify,
                        Acknowledgment acknowledgment) {
         logger.info("Process - key: {} data {}", key, ingestionEventDataSimplify);
@@ -61,10 +61,11 @@ public class FileEncryptionEventListener {
         final IIngestionEventData ingestionEventData = new IngestionEventData(ingestionEventDataSimplify, outputFolderPath);
         final Result<ArchiveEventSimplify> result = fileEncryptionProcessor.encrypt(ingestionEventData);
 
+        reportToFileManager(key, result);
+
         /*Calling acknowledge() in both cases Success & Failure assuming FileManager will resend message
         on kafka for re-encryption in case of failure.*/
         acknowledgment.acknowledge();
-        reportToFileManager(key, result);
     }
 
     private void reportToFileManager(final String key, final Result<ArchiveEventSimplify> result) {
