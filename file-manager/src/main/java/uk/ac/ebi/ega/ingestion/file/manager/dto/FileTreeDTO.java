@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.hateoas.ResourceSupport;
 import uk.ac.ebi.ega.ingestion.file.manager.models.FileHierarchyModel;
-import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileStatus;
+import uk.ac.ebi.ega.ingestion.commons.models.FileStatus;
 
 import java.time.LocalDateTime;
 

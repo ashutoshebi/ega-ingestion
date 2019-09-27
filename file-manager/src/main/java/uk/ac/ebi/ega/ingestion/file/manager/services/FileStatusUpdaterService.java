@@ -22,8 +22,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import uk.ac.ebi.ega.fire.ingestion.service.IFireService;
 import uk.ac.ebi.ega.fire.models.OldFireFile;
+import uk.ac.ebi.ega.ingestion.commons.models.FileStatus;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileDetails;
-import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileStatus;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.FileDetailsRepository;
 
 import java.util.List;
@@ -76,7 +76,7 @@ public class FileStatusUpdaterService implements IFileStatusUpdaterService {
      * @param localFilesBeingArchived files which are in our local FileDetailsRepository
      *                                and which have the FileStatus.ARCHIVE_IN_PROGRESS status.
      *
-     * @see uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileStatus
+     * @see FileStatus
      */
     private void updateStatus(final List<FileDetails> localFilesBeingArchived) {
         final List<OldFireFile> filesInFire = getFilesInFireCorrespondingTo(localFilesBeingArchived);

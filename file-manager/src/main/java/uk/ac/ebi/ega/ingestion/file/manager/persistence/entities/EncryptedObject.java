@@ -20,6 +20,8 @@ package uk.ac.ebi.ega.ingestion.file.manager.persistence.entities;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import uk.ac.ebi.ega.ingestion.commons.models.FileStatus;
+import uk.ac.ebi.ega.ingestion.commons.models.IFileDetails;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -33,7 +35,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @EntityListeners(AuditingEntityListener.class)
-public class EncryptedObject {
+public class EncryptedObject implements IFileDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -104,6 +106,37 @@ public class EncryptedObject {
         this.status = status;
     }
 
+    @Override
+    public String getAccountId() {
+        return accountId;
+    }
+
+    @Override
+    public String getStagingId() {
+        return stagingId;
+    }
+
+    @Override
+    public String getPath() {
+        return path;
+    }
+
+    @Override
+    public long getVersion() {
+        return version;
+    }
+
+    @Override
+    public String getPlainMd5() {
+        return plainMd5;
+    }
+
+    @Override
+    public Long getPlainSize() {
+        return plainSize;
+    }
+
+    @Override
     public FileStatus getStatus() {
         return status;
     }

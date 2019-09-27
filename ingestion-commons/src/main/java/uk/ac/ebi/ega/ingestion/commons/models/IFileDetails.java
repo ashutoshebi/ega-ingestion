@@ -15,18 +15,22 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.ingestion.file.manager.persistence.repository;
+package uk.ac.ebi.ega.ingestion.commons.models;
 
-import org.springframework.data.repository.CrudRepository;
-import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.EncryptedObject;
+public interface IFileDetails {
 
-import java.util.Optional;
-import java.util.stream.Stream;
+    String getAccountId();
 
-public interface EncryptedObjectRepository extends CrudRepository<EncryptedObject, Long> {
+    String getStagingId();
 
-    Optional<EncryptedObject> findByPathAndVersion(String path, long version);
+    String getPath();
 
-    Stream<EncryptedObject> findAllByAccountIdAndStagingId(String accountId, String stagingId);
+    long getVersion();
+
+    String getPlainMd5();
+
+    Long getPlainSize();
+
+    FileStatus getStatus();
 
 }

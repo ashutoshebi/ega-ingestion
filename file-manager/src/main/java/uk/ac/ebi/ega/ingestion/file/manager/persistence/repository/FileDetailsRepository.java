@@ -21,7 +21,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileDetails;
-import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileStatus;
+import uk.ac.ebi.ega.ingestion.commons.models.FileStatus;
 
 public interface FileDetailsRepository extends PagingAndSortingRepository<FileDetails, Long> {
 

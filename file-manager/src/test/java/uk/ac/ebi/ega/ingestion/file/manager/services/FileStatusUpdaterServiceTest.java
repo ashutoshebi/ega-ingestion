@@ -35,7 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 import uk.ac.ebi.ega.fire.ingestion.service.IFireService;
 import uk.ac.ebi.ega.fire.models.OldFireFile;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileDetails;
-import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileStatus;
+import uk.ac.ebi.ega.ingestion.commons.models.FileStatus;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.FileDetailsRepository;
 
 import java.util.Collections;

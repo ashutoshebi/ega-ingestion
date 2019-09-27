@@ -94,6 +94,6 @@ public class FileTreeController {
                                                    Pageable pageable,
                                                    PagedResourcesAssembler assembler,
                                                    FileHierarchyResourceAssembler fileHierarchyResourceAssembler) throws FileNotFoundException {
-        return assembler.toResource(fileManagerService.findAllFilesInRootPathRecursive(accountId, locationId, predicate, pageable), fileHierarchyResourceAssembler);
+        return assembler.toResource(fileManagerService.findAllFiles(accountId, locationId, predicate, pageable), fileHierarchyResourceAssembler);
     }
 }

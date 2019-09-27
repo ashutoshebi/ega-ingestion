@@ -33,6 +33,8 @@ import uk.ac.ebi.ega.fire.ingestion.service.IFireService;
 import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEvent;
 import uk.ac.ebi.ega.ingestion.commons.messages.EncryptEvent;
 import uk.ac.ebi.ega.ingestion.commons.messages.NewFileEvent;
+import uk.ac.ebi.ega.ingestion.commons.models.FileStatus;
+import uk.ac.ebi.ega.ingestion.commons.models.IFileDetails;
 import uk.ac.ebi.ega.ingestion.commons.services.IEncryptedKeyService;
 import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileHierarchyException;
 import uk.ac.ebi.ega.ingestion.file.manager.models.ArchivedFile;
@@ -40,7 +42,6 @@ import uk.ac.ebi.ega.ingestion.file.manager.models.FileHierarchyModel;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.EncryptedObject;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileDetails;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileHierarchy;
-import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileStatus;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.QFileHierarchy;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.EncryptedObjectRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.FileHierarchyRepository;
@@ -167,8 +168,8 @@ public class FileManagerService implements IFileManagerService {
      * {@inheritDoc}
      */
     @Override
-    public Page<FileHierarchyModel> findAllFilesInRootPathRecursive(final String accountId, final String stagingAreaId,
-                                                                    final Predicate predicate, final Pageable pageable) throws FileNotFoundException {
+    public Page<FileHierarchyModel> findAllFiles(final String accountId, final String stagingAreaId,
+                                                 final Predicate predicate, final Pageable pageable) throws FileNotFoundException {
         final Predicate filePredicate = Expressions.allOf(Expressions.predicate(Ops.EQ, QFileHierarchy.fileHierarchy.fileType,
                 Expressions.constant(FileStructureType.FILE))).and(predicate);
 
@@ -203,11 +204,13 @@ public class FileManagerService implements IFileManagerService {
 
     /**
      * {@inheritDoc}
+     *
+     * @return
      */
     @Override
-    public Stream<FileHierarchyModel> findAllFilesInRootPathRecursive(final String accountId, final String stagingAreaId) {
-        return fileHierarchyRepository.findAllFilesOrFoldersInRootPathRecursive(accountId, stagingAreaId, FileStructureType.FILE).
-                map(fileHierarchyFileTypeMapEntityToModel());
+    public Stream<? extends IFileDetails> findAllFiles(final String accountId,
+                                                       final String stagingAreaId) {
+        return encryptedObjectRepository.findAllByAccountIdAndStagingId(accountId, stagingAreaId);
     }
 
     /**

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package uk.ac.ebi.ega.ingestion.file.manager.persistence.entities;
+package uk.ac.ebi.ega.ingestion.commons.models;
 
 public enum FileStatus {
 

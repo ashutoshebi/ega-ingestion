@@ -22,6 +22,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEvent;
 import uk.ac.ebi.ega.ingestion.commons.messages.NewFileEvent;
+import uk.ac.ebi.ega.ingestion.commons.models.IFileDetails;
 import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileHierarchyException;
 import uk.ac.ebi.ega.ingestion.file.manager.models.FileHierarchyModel;
 
@@ -72,7 +73,7 @@ public interface IFileManagerService {
      * @return Page object of FileHierarchyModel.
      * @throws FileNotFoundException
      */
-    Page<FileHierarchyModel> findAllFilesInRootPathRecursive(String accountId, String stagingAreaId, Predicate predicate, Pageable pageable) throws FileNotFoundException;
+    Page<FileHierarchyModel> findAllFiles(String accountId, String stagingAreaId, Predicate predicate, Pageable pageable) throws FileNotFoundException;
 
     /**
      * Returns Stream of FileHierarchyModel for given filePath. If filePath is a file, then file will be returned.
@@ -99,6 +100,7 @@ public interface IFileManagerService {
      * @param stagingAreaId Staging Area Id
      * @return Stream of FileHierarchyModel object.
      */
-    Stream<FileHierarchyModel> findAllFilesInRootPathRecursive(String accountId, String stagingAreaId);
+    Stream<? extends IFileDetails> findAllFiles(String accountId, String stagingAreaId);
+
 }
 

@@ -17,12 +17,16 @@
  */
 package uk.ac.ebi.ega.ingestion.file.manager.controller;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+import uk.ac.ebi.ega.ingestion.commons.models.IFileDetails;
 import uk.ac.ebi.ega.ingestion.file.manager.models.FileHierarchyModel;
+import uk.ac.ebi.ega.ingestion.file.manager.reports.FileDetailsTsv;
 import uk.ac.ebi.ega.ingestion.file.manager.services.IFileManagerService;
 
 import javax.servlet.http.HttpServletRequest;
@@ -38,6 +42,8 @@ import static uk.ac.ebi.ega.ingestion.file.manager.controller.ControllerUtils.ex
 @RequestMapping(value = "/file/report")
 @RestController
 public class FileReportController {
+
+    private final static Logger logger = LoggerFactory.getLogger(FileReportController.class);
 
     private final IFileManagerService fileManagerService;
 
@@ -61,9 +67,10 @@ public class FileReportController {
     @RequestMapping(value = "/tsv/all/{accountId}/{locationId}", method = RequestMethod.GET)
     @Transactional(value = "fileManager_transactionManager", readOnly = true)
     public void generateTSVFileForAllFilesUsingStream(@PathVariable String accountId,
-                                                      @PathVariable String locationId, HttpServletResponse response) throws IOException {
-        try (final Stream<FileHierarchyModel> fileHierarchyModelStream = fileManagerService.findAllFilesInRootPathRecursive(accountId, locationId)) {
-            writeResponse(fileHierarchyModelStream, response);
+                                                      @PathVariable String locationId,
+                                                      HttpServletResponse response) throws IOException {
+        try (final Stream<? extends IFileDetails> stream = fileManagerService.findAllFiles(accountId, locationId)) {
+            new FileDetailsTsv("file_details.tsv").stream(response, stream);
         }
     }
 
@@ -75,9 +82,7 @@ public class FileReportController {
 
         try (final PrintWriter out = response.getWriter()) {
             out.write(FileHierarchyModel.getColumnNames());
-            fileHierarchyModelStream.forEach(fileHierarchyModel -> {
-                out.write(fileHierarchyModel.toStringFileDetails());
-            });
+            fileHierarchyModelStream.forEach(fileHierarchyModel -> out.write(fileHierarchyModel.toStringFileDetails()));
             out.flush();
         }
     }

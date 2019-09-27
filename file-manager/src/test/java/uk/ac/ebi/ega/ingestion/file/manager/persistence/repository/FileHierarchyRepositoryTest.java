@@ -36,7 +36,7 @@ import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileHierarchyE
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileDetails;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileHierarchy;
 import uk.ac.ebi.ega.ingestion.file.manager.utils.FileStructureType;
-import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileStatus;
+import uk.ac.ebi.ega.ingestion.commons.models.FileStatus;
 
 import java.util.Optional;
 import java.util.stream.Stream;
