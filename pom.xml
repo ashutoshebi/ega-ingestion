@@ -33,6 +33,7 @@
         <module>file-re-encryption-processor</module>
         <module>job-processor</module>
         <module>staging-ingestion</module>
+        <module>file-encryption-processor-simplify</module>
     </modules>
 
     <repositories>
