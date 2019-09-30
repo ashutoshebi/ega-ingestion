@@ -17,7 +17,6 @@
  */
 package uk.ac.ebi.ega.file.encryption.processor.pipeline;
 
-import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -63,11 +62,6 @@ public class DefaultIngestionPipelineTest {
 
     @Value("${file.plain.md5.path}")
     private String originalPlainFileMD5Path;
-
-    @After
-    public void cleanTestEnvironment() {
-        temporaryFolder.delete();
-    }
 
     @Test
     public void process_WhenPassValidArguments_ThenSuccessfullyGeneratesEncryptedFile() throws Exception {
