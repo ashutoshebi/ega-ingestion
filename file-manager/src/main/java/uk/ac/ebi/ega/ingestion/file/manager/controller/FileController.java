@@ -55,11 +55,11 @@ import static uk.ac.ebi.ega.ingestion.file.manager.controller.ControllerUtils.ex
 
 @RequestMapping(value = "/files")
 @RestController
-public class FileTreeController {
+public class FileController {
 
     private final IFileManagerService fileManagerService;
 
-    public FileTreeController(final IFileManagerService fileManagerService) {
+    public FileController(final IFileManagerService fileManagerService) {
         this.fileManagerService = fileManagerService;
     }
 
@@ -69,7 +69,7 @@ public class FileTreeController {
             throws FileNotFoundException {
 
         final LinkBuilder linkBuilder =
-                linkTo(FileTreeController.class).slash("tree").slash(accountId).slash(locationId);
+                linkTo(FileController.class).slash("tree").slash(accountId).slash(locationId);
 
         final Optional<Path> path = extractVariablePath(request).map(s -> Paths.get("/" + s));
         final List<FileHierarchyModel> fileHierarchyModels =
@@ -91,10 +91,10 @@ public class FileTreeController {
                                                     @PathVariable String locationId,
                                                     @QuerydslPredicate(root = EncryptedObject.class) Predicate predicate,
                                                     Pageable pageable,
-                                                    PagedResourcesAssembler assembler) throws FileNotFoundException {
+                                                    PagedResourcesAssembler assembler) {
         return assembler.toResource(
                 fileManagerService.findAllFiles(accountId, locationId, predicate, pageable),
-                linkTo(methodOn(FileTreeController.class).getAllFiles(accountId, locationId, predicate,
+                linkTo(methodOn(FileController.class).getAllFiles(accountId, locationId, predicate,
                         pageable, assembler)).withSelfRel());
     }
 

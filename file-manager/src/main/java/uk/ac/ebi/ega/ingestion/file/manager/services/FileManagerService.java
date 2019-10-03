@@ -123,7 +123,7 @@ public class FileManagerService implements IFileManagerService {
 
     @Override
     @Transactional(transactionManager = "fileManagerFireChainedTransactionManager", rollbackFor = Exception.class)
-    public void archive(final ArchiveEvent archiveEvent) throws IOException, FileHierarchyException {
+    public void archive(final ArchiveEvent archiveEvent) throws IOException {
         // TODO EE-888 update this part
         final char[] password = FileUtils.readPasswordFile(Paths.get(archiveEvent.getKeyPath()));
 
@@ -147,9 +147,9 @@ public class FileManagerService implements IFileManagerService {
     }
 
     @Override
-    public List<FileHierarchyModel> findAllFilesAndFoldersInPathNonRecursive(final String accountId,
-                                                                             final String stagingAreaId,
-                                                                             final Optional<Path> filePath)
+    public List<FileHierarchyModel> findAllFilesAndFoldersInPath(final String accountId,
+                                                                 final String stagingAreaId,
+                                                                 final Optional<Path> filePath)
             throws FileNotFoundException {
         final List<FileHierarchyModel> fileHierarchyModels = filePath.map(Path::normalize)
                 .map(Path::toString)
@@ -161,9 +161,12 @@ public class FileManagerService implements IFileManagerService {
                                 return fileHierarchy.getChildPaths().stream().map(FileHierarchy::toModel)
                                         .collect(Collectors.toList());
                             }
-                        }).orElseGet(() -> new ArrayList<>()))
-                .orElseGet(() -> fileHierarchyRepository.findAllFilesAndFoldersInPathNonRecursive(accountId,
-                        stagingAreaId).stream().map(FileHierarchy::toModel).collect(Collectors.toList()));
+                        })
+                        .orElseGet(() -> new ArrayList<>()))
+                .orElseGet(() -> fileHierarchyRepository
+                        .findAllByAccountIdAndStagingAreaIdAndParentPathIsNullAllIgnoreCaseOrderByOriginalPath(
+                                accountId, stagingAreaId)
+                        .stream().map(FileHierarchy::toModel).collect(Collectors.toList()));
         if (!fileHierarchyModels.isEmpty()) {
             return fileHierarchyModels;
         }
@@ -177,7 +180,8 @@ public class FileManagerService implements IFileManagerService {
     }
 
     @Override
-    public Optional<FileHierarchyModel> findParentOfPath(String accountId, String stagingAreaId, Path path) {
+    public Optional<FileHierarchyModel> findParentOfPath(final String accountId, final String stagingAreaId,
+                                                         final Path path) {
         return fileHierarchyRepository.findOne(path.normalize().toString(), accountId, stagingAreaId)
                 .map(FileHierarchy::getParentPath)
                 .map(FileHierarchy::toModel);
@@ -190,39 +194,13 @@ public class FileManagerService implements IFileManagerService {
      */
     @Override
     public Page<? extends IFileDetails> findAllFiles(final String accountId, final String stagingAreaId,
-                                                     final Predicate predicate, final Pageable pageable) throws FileNotFoundException {
+                                                     final Predicate predicate, final Pageable pageable) {
         final QEncryptedObject encryptedObject = QEncryptedObject.encryptedObject;
         final BooleanExpression completePredicate =
                 encryptedObject.accountId.eq(accountId).and(encryptedObject.stagingId.eq(stagingAreaId)).and(predicate);
         Page<? extends IFileDetails> page = encryptedObjectRepository.findAll(completePredicate, pageable);
-
-        if (page.isEmpty()) {
-            throw new FileNotFoundException();
-        }
-
         return page;
     }
-//
-//    /**
-//     * {@inheritDoc}
-//     */
-//    @Override
-//    public Stream<FileHierarchyModel> findAllFilesInPathNonRecursive(final String accountId, final String stagingAreaId,
-//                                                                     final Path filePath) throws FileNotFoundException {
-//        if (StringUtils.isEmpty(filePath.toString())) {
-//            return fileHierarchyRepository.findAllFilesInPathNonRecursive(accountId, stagingAreaId).
-//                    map(fileHierarchyFileTypeMapEntityToModel());
-//        }
-//
-//        final Optional<FileHierarchy> optionalFileHierarchy = fileHierarchyRepository.findOne(filePath.normalize().toString(), accountId, stagingAreaId);
-//        final FileHierarchy fileHierarchy = optionalFileHierarchy.orElseThrow(FileNotFoundException::new);
-//
-//        if (FileStructureType.FILE.equals(fileHierarchy.getFileType())) {
-//            return Stream.of(fileHierarchy.toFile());
-//        }
-//        return fileHierarchyRepository.findAllFilesOrFoldersInRootPathNonRecursive(accountId, stagingAreaId, fileHierarchy.getId(), FileStructureType.FILE).
-//                map(fileHierarchyFileTypeMapEntityToModel());
-//    }
 
     /**
      * {@inheritDoc}
@@ -232,7 +210,7 @@ public class FileManagerService implements IFileManagerService {
     @Override
     public Stream<? extends IFileDetails> findAllFiles(final String accountId,
                                                        final String stagingAreaId,
-                                                       Optional<String> optionalPath) {
+                                                       final Optional<String> optionalPath) {
         if (!optionalPath.isPresent()) {
             return encryptedObjectRepository.findAllByAccountIdAndStagingId(accountId, stagingAreaId);
         } else {

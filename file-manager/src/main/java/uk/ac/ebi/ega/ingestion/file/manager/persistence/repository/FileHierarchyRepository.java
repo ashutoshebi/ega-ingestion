@@ -45,108 +45,7 @@ import static org.hibernate.jpa.QueryHints.HINT_FETCH_SIZE;
 public interface FileHierarchyRepository extends PagingAndSortingRepository<FileHierarchy, Long>,
         QuerydslPredicateExecutor<FileHierarchy>, QuerydslBinderCustomizer<QFileHierarchy> {
 
-    String HINT_FETCH_SIZE_VALUE = "50";
-
-    List<FileHierarchy> findAllByAccountIdAndStagingAreaIdAndParentPath(String accountId, String stagingAreaId,
-                                                                          FileHierarchy parent);
-
-    /**
-     * Method is being called internally.
-     *
-     * @See FileHierarchyRepository#findAllFilesOrFoldersInRootPathNonRecursive(String, String, Long, FileStructureType)
-     */
-    @QueryHints(value = @QueryHint(name = HINT_FETCH_SIZE, value = HINT_FETCH_SIZE_VALUE))
-    Stream<FileHierarchy> findAllByAccountIdAndStagingAreaIdAndParentPathIdAndFileTypeAllIgnoreCaseOrderByOriginalPath(String accountId, String stagingAreaId,
-                                                                                                                       Long parentId, FileStructureType fileStructureType);
-
-    /**
-     * Returns Stream of FileHierarchy object. Condition checks for case insensitive equals AccountId, StagingAreaId,
-     * ParentId & FileStructureType.
-     * All children of given parent will be returned. Returns Files Or Folders based on FileStructureType.
-     * Stream is ordered by originalPath.
-     * It is a Non Recursive result.
-     *
-     * @param accountId         Account Id
-     * @param stagingAreaId     Staging Area Id
-     * @param parentId          Parent Id
-     * @param fileStructureType FileStructureType File type FILE or FOLDER
-     * @return Stream of FileHierarchy object
-     */
-    default Stream<FileHierarchy> findAllFilesOrFoldersInRootPathNonRecursive(final String accountId, final String stagingAreaId,
-                                                                              final Long parentId, final FileStructureType fileStructureType) {
-        return findAllByAccountIdAndStagingAreaIdAndParentPathIdAndFileTypeAllIgnoreCaseOrderByOriginalPath(accountId, stagingAreaId,
-                parentId, fileStructureType);
-    }
-
-    /**
-     * Method is being called internally.
-     *
-     * @See FileHierarchyRepository#findAllFilesOrFoldersInRootPathRecursive(String, String, FileStructureType)
-     */
-    @QueryHints(value = @QueryHint(name = HINT_FETCH_SIZE, value = HINT_FETCH_SIZE_VALUE))
-    Stream<FileHierarchy> findAllByAccountIdAndStagingAreaIdAndFileTypeAllIgnoreCaseOrderByOriginalPath(String accountId, String stagingAreaId,
-                                                                                                        FileStructureType fileStructureType);
-
-    /**
-     * Returns Stream of FileHierarchy object. Check for case insensitive equals AccountId and StagingAreaId
-     * & FileStructureType. All children of root path will be returned recursively. Returns Files Or Folders based on FileStructureType.
-     * Stream is ordered by originalPath.
-     * It is a Recursive result.
-     *
-     * @param accountId         Account Id
-     * @param stagingAreaId     Staging Area Id
-     * @param fileStructureType FileStructureType File type FILE or FOLDER
-     * @return Stream of FileHierarchy object
-     */
-    default Stream<FileHierarchy> findAllFilesOrFoldersInRootPathRecursive(final String accountId, final String stagingAreaId,
-                                                                           final FileStructureType fileStructureType) {
-        return findAllByAccountIdAndStagingAreaIdAndFileTypeAllIgnoreCaseOrderByOriginalPath(accountId, stagingAreaId, fileStructureType);
-    }
-
-    /**
-     * Method is being called internally.
-     *
-     * @See FileHierarchyRepository#findAllFilesAndFoldersInPathNonRecursive(String, String)
-     */
     List<FileHierarchy> findAllByAccountIdAndStagingAreaIdAndParentPathIsNullAllIgnoreCaseOrderByOriginalPath(String accountId, String stagingAreaId);
-
-    /**
-     * Returns List of FileHierarchy. Condition checks for case insensitive equals AccountId, StagingAreaId
-     * & FilePath; Result contains both Files & Folders inside given filePath but no Children.
-     * It Will return empty List if no data found.
-     * List is ordered by originalPath.
-     * It is a Non Recursive result.
-     *
-     * @param accountId     Account Id
-     * @param stagingAreaId Staging Area Id
-     * @return List of FileHierarchy object
-     */
-    default List<FileHierarchy> findAllFilesAndFoldersInPathNonRecursive(final String accountId, final String stagingAreaId) {
-        return findAllByAccountIdAndStagingAreaIdAndParentPathIsNullAllIgnoreCaseOrderByOriginalPath(accountId, stagingAreaId);
-    }
-
-    /**
-     * Method is being called internally.
-     *
-     * @See FileHierarchyRepository#findAllFilesInRootPathRecursive(String, String)
-     */
-    @QueryHints(value = @QueryHint(name = HINT_FETCH_SIZE, value = HINT_FETCH_SIZE_VALUE))
-    Stream<FileHierarchy> findAllByAccountIdAndStagingAreaIdAndFileTypeAndParentPathIsNullAllIgnoreCaseOrderByOriginalPath(String accountId, String stagingAreaId,
-                                                                                                                           FileStructureType fileType);
-
-    /**
-     * Returns List of FileHierarchy object. Check for case insensitive equals AccountId, StagingAreaId
-     * & ParentId is null; All Files present at root path.
-     * Stream is ordered by originalPath.
-     * It is a Non Recursive result.
-     *
-     * @param accountId     Account Id
-     * @param stagingAreaId Staging Area Id
-     * @return Stream of FileHierarchy object
-     */
-    default Stream<FileHierarchy> findAllFilesInPathNonRecursive(final String accountId, final String stagingAreaId) {
-        return findAllByAccountIdAndStagingAreaIdAndFileTypeAndParentPathIsNullAllIgnoreCaseOrderByOriginalPath(accountId, stagingAreaId, FileStructureType.FILE);
-    }
 
     default Optional<FileHierarchy> findOne(final String filePath, final String accountId, final String stagingAreaId) {
         final Predicate predicate = Expressions.allOf(
@@ -215,4 +114,5 @@ public interface FileHierarchyRepository extends PagingAndSortingRepository<File
         bindings.bind(String.class)
                 .first((SingleValueBinding<StringPath, String>) StringExpression::containsIgnoreCase);
     }
+
 }

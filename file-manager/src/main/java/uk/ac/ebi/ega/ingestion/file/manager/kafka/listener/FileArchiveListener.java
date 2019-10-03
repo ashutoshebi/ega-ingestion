@@ -24,7 +24,6 @@ import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEvent;
-import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileHierarchyException;
 import uk.ac.ebi.ega.ingestion.file.manager.services.IFileManagerService;
 
 import java.io.IOException;
@@ -52,7 +51,7 @@ public class FileArchiveListener {
                                         Acknowledgment acknowledgment) {
         try {
             encryptJobService.archive(archiveEvent);
-        } catch (FileHierarchyException | IOException e) {
+        } catch (IOException e) {
             // TODO send a message to dead letter queue
             logger.error(e.getMessage(), e);
         }
