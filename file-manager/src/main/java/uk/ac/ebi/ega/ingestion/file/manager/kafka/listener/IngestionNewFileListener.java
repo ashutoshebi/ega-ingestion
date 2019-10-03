@@ -24,6 +24,7 @@ import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import uk.ac.ebi.ega.ingestion.commons.messages.NewFileEvent;
+import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileHierarchyException;
 import uk.ac.ebi.ega.ingestion.file.manager.services.IFileManagerService;
 
 public class IngestionNewFileListener {
@@ -46,7 +47,7 @@ public class IngestionNewFileListener {
                                                  @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
                                                  @Header(KafkaHeaders.RECEIVED_TIMESTAMP) long ts,
                                                  NewFileEvent newFileEvent,
-                                                 Acknowledgment acknowledgment) {
+                                                 Acknowledgment acknowledgment) throws FileHierarchyException {
         logger.info("key: {}, event: {}", key, newFileEvent);
         fileManagerService.newFile(key, newFileEvent);
         acknowledgment.acknowledge();

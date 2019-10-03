@@ -141,4 +141,21 @@ public class EncryptedObject implements IFileDetails {
         return status;
     }
 
+    @Override
+    public LocalDateTime getCreatedDate() {
+        return createdDate;
+    }
+
+    @Override
+    public LocalDateTime getUpdatedDate() {
+        return updatedDate;
+    }
+
+    public void setFireId(Long fireId) {
+        this.fireId = fireId;
+    }
+
+    public Long getFireId() {
+        return fireId;
+    }
 }

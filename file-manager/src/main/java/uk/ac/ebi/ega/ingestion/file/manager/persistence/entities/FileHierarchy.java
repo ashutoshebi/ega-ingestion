@@ -20,7 +20,6 @@ package uk.ac.ebi.ega.ingestion.file.manager.persistence.entities;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-import uk.ac.ebi.ega.ingestion.file.manager.models.FileDetailsModel;
 import uk.ac.ebi.ega.ingestion.file.manager.models.FileHierarchyModel;
 import uk.ac.ebi.ega.ingestion.file.manager.utils.FileStructureType;
 
@@ -77,8 +76,8 @@ public class FileHierarchy {
     private String stagingAreaId;
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "file_details_id")
-    private FileDetails fileDetails;
+    @JoinColumn(name = "encrypted_object_id")
+    private EncryptedObject encryptedObject;
 
     @CreatedDate
     private LocalDateTime createdDate;
@@ -91,14 +90,14 @@ public class FileHierarchy {
 
     protected FileHierarchy(final String accountId, final String stagingAreaId, final String name,
                             final String originalPath, final FileHierarchy parentPath, final FileStructureType fileType,
-                            final FileDetails fileDetails) {
+                            final EncryptedObject encryptedObject) {
         this.accountId = accountId;
         this.stagingAreaId = stagingAreaId;
         this.name = name;
         this.parentPath = parentPath;
         this.originalPath = originalPath;
         this.fileType = fileType;
-        this.fileDetails = fileDetails;
+        this.encryptedObject = encryptedObject;
     }
 
     public Long getId() {
@@ -141,8 +140,8 @@ public class FileHierarchy {
         return stagingAreaId;
     }
 
-    public FileDetails getFileDetails() {
-        return fileDetails;
+    public EncryptedObject getEncryptedObject() {
+        return encryptedObject;
     }
 
     public static FileHierarchy folder(String accountId, String stagingAreaId, String name, String path,
@@ -151,49 +150,37 @@ public class FileHierarchy {
     }
 
     public static FileHierarchy file(String accountId, String stagingAreaId, String name, String path,
-                                     FileHierarchy parent, FileDetails fileDetails) {
-        return new FileHierarchy(accountId, stagingAreaId, name, path, parent, FileStructureType.FILE, fileDetails);
+                                     FileHierarchy parent, EncryptedObject encryptedObject) {
+        return new FileHierarchy(accountId, stagingAreaId, name, path, parent, FileStructureType.FILE, encryptedObject);
     }
 
-    public FileHierarchyModel toFile() {
-        return FileHierarchyModel.file(
-                getId(),
-                getAccountId(),
-                getStagingAreaId(),
-                getName(),
-                getOriginalPath(),
-                getFileType(),
-                getCreatedDate(),
-                getUpdatedDate(),
-                newFileDetailsModel());
+    public static FileHierarchyModel toModel(FileHierarchy fileHierarchy) {
+        return new FileHierarchyModel(
+                fileHierarchy.getAccountId(),
+                fileHierarchy.getStagingAreaId(),
+                fileHierarchy.getName(),
+                fileHierarchy.getOriginalPath(),
+                fileHierarchy.getFileType(),
+                fileHierarchy.getCreatedDate(),
+                fileHierarchy.getUpdatedDate(),
+                fileHierarchy.getEncryptedObject());
     }
 
-    public FileHierarchyModel toFolder() {
-        return FileHierarchyModel.folder(
-                getId(),
-                getAccountId(),
-                getStagingAreaId(),
-                getName(),
-                getOriginalPath(),
-                getFileType(),
-                getCreatedDate(),
-                getUpdatedDate()
-        );
-    }
-
-    private FileDetailsModel newFileDetailsModel() {
-        return new FileDetailsModel(
-                getFileDetails().getId(),
-                getFileDetails().getDosPath(),
-                getFileDetails().getPlainSize(),
-                getFileDetails().getPlainMd5(),
-                getFileDetails().getEncryptedSize(),
-                getFileDetails().getEncryptedMd5(),
-                getFileDetails().getKey(),
-                getFileDetails().getStatus(),
-                getFileDetails().getCreatedDate(),
-                getFileDetails().getUpdatedDate()
-        );
+    @Override
+    public String toString() {
+        return "FileHierarchy{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", parentPath=" + parentPath +
+                ", childPaths=" + childPaths +
+                ", originalPath='" + originalPath + '\'' +
+                ", fileType=" + fileType +
+                ", accountId='" + accountId + '\'' +
+                ", stagingAreaId='" + stagingAreaId + '\'' +
+                ", encryptedObject=" + encryptedObject +
+                ", createdDate=" + createdDate +
+                ", updatedDate=" + updatedDate +
+                '}';
     }
 }
 

@@ -24,7 +24,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import uk.ac.ebi.ega.fire.ingestion.service.IFireService;
-import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.FileDetailsRepository;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.EncryptedObjectRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.services.FileStatusUpdaterService;
 import uk.ac.ebi.ega.ingestion.file.manager.services.IFileStatusUpdaterService;
 
@@ -36,11 +36,10 @@ public class FileStatusUpdaterConfiguration {
     private IFileStatusUpdaterService fileStatusUpdaterService;
 
     @Bean
-    public IFileStatusUpdaterService fileStatusUpdaterService(final FileDetailsRepository fileDetailsRepository,
+    public IFileStatusUpdaterService fileStatusUpdaterService(final EncryptedObjectRepository encryptedObjectRepository,
                                                               final IFireService fireService,
-                                                              @Value("${file.status.updater.batch.size}")
-                                                              final int batchSize) {
-        return new FileStatusUpdaterService(fileDetailsRepository, fireService, batchSize);
+                                                              @Value("${file.status.updater.batch.size}") final int batchSize) {
+        return new FileStatusUpdaterService(encryptedObjectRepository, fireService, batchSize);
     }
 
     @Scheduled(fixedDelayString = "${file.status.updater.fixed.delay.seconds}000")

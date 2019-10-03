@@ -15,16 +15,7 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.ingestion.file.manager.persistence.repository;
+package uk.ac.ebi.ega.ingestion.file.manager.persistence.service;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.repository.PagingAndSortingRepository;
-import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileDetails;
-import uk.ac.ebi.ega.ingestion.commons.models.FileStatus;
-
-public interface FileDetailsRepository extends PagingAndSortingRepository<FileDetails, Long> {
-
-    Page<FileDetails> findByStatus(final FileStatus status, final Pageable pageable);
-
+public interface FileManagerPersistenceService {
 }

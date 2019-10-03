@@ -21,79 +21,93 @@ import com.querydsl.core.types.Predicate;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.querydsl.binding.QuerydslPredicate;
 import org.springframework.data.web.PagedResourcesAssembler;
-import org.springframework.hateoas.Link;
+import org.springframework.hateoas.LinkBuilder;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.hateoas.PagedResources;
 import org.springframework.hateoas.Resource;
 import org.springframework.http.MediaType;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-import uk.ac.ebi.ega.ingestion.file.manager.dto.FileTreeDTO;
+import uk.ac.ebi.ega.ingestion.commons.models.IFileDetails;
 import uk.ac.ebi.ega.ingestion.file.manager.dto.FileTreeWrapper;
-import uk.ac.ebi.ega.ingestion.file.manager.dto.resources.assemblers.FileHierarchyResourceAssembler;
 import uk.ac.ebi.ega.ingestion.file.manager.models.FileHierarchyModel;
-import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileHierarchy;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.EncryptedObject;
+import uk.ac.ebi.ega.ingestion.file.manager.reports.FileDetailsTsv;
 import uk.ac.ebi.ega.ingestion.file.manager.services.IFileManagerService;
-import uk.ac.ebi.ega.ingestion.file.manager.utils.FileStructureType;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
+import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
 import static uk.ac.ebi.ega.ingestion.file.manager.controller.ControllerUtils.extractVariablePath;
 
-@RequestMapping(value = "/file/tree")
+@RequestMapping(value = "/files")
 @RestController
 public class FileTreeController {
 
-    private static final String REL = "self";
     private final IFileManagerService fileManagerService;
 
     public FileTreeController(final IFileManagerService fileManagerService) {
         this.fileManagerService = fileManagerService;
     }
 
-    @GetMapping(value = "/{accountId}/{locationId}/**", produces = MediaTypes.HAL_JSON_VALUE)
+    @GetMapping(value = "/tree/{accountId}/{locationId}/**", produces = MediaTypes.HAL_JSON_VALUE)
     public Resource<FileTreeWrapper> getFileHierarchy(@PathVariable String accountId,
-                                                      @PathVariable String locationId, HttpServletRequest request) throws FileNotFoundException {
+                                                      @PathVariable String locationId, HttpServletRequest request)
+            throws FileNotFoundException {
 
-        final Link link = linkTo(FileTreeController.class).withSelfRel();
-        final Path path = Paths.get(extractVariablePath(request));
-        final String baseURI = new StringBuilder(link.getHref()).append("/").append(accountId).append("/")
-                .append(locationId).toString();
-        final FileTreeWrapper fileTreeWrapper = new FileTreeWrapper();
-        final List<FileHierarchyModel> fileHierarchyModels = fileManagerService.findAllFilesAndFoldersInPathNonRecursive(accountId, locationId, path);
+        final LinkBuilder linkBuilder =
+                linkTo(FileTreeController.class).slash("tree").slash(accountId).slash(locationId);
 
-        for (FileHierarchyModel fileHierarchyModel : fileHierarchyModels) {
-            final Link selfLink = new Link(new StringBuilder(baseURI).
-                    append(fileHierarchyModel.getOriginalPath()).toString(), REL);
+        final Optional<Path> path = extractVariablePath(request).map(s -> Paths.get("/" + s));
+        final List<FileHierarchyModel> fileHierarchyModels =
+                fileManagerService.findAllFilesAndFoldersInPathNonRecursive(accountId, locationId, path);
+        final Resource<FileTreeWrapper> resource =
+                new Resource<>(FileTreeWrapper.create(fileHierarchyModels, linkBuilder),
+                        path.map(path1 -> linkBuilder.slash(path1)).orElse(linkBuilder).withSelfRel());
 
-            if (FileStructureType.FILE.equals(fileHierarchyModel.getFileType())) {
-                final FileTreeDTO fileTreeDTO = FileTreeDTO.file(fileHierarchyModel);
-                fileTreeDTO.add(selfLink);
-                fileTreeWrapper.addFile(fileTreeDTO);
-            } else {
-                final FileTreeDTO fileTreeDTO = FileTreeDTO.folder(fileHierarchyModel);
-                fileTreeDTO.add(selfLink);
-                fileTreeWrapper.addFolder(fileTreeDTO);
-            }
-        }
-        return new Resource<>(fileTreeWrapper, new Link(baseURI, REL));
+        path.map(path1 -> fileManagerService.findParentOfPath(accountId, locationId, path1)
+                .map(fileHierarchyModel -> linkBuilder.slash(fileHierarchyModel.getOriginalPath()))
+                .orElse(linkBuilder))
+                .ifPresent(link -> resource.add(link.withRel("parent")));
+
+        return resource;
     }
 
     @GetMapping(value = "/list/{accountId}/{locationId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public PagedResources<FileTreeDTO> getAllFiles(@PathVariable String accountId,
-                                                   @PathVariable String locationId,
-                                                   @QuerydslPredicate(root = FileHierarchy.class)
-                                                           Predicate predicate,
-                                                   Pageable pageable,
-                                                   PagedResourcesAssembler assembler,
-                                                   FileHierarchyResourceAssembler fileHierarchyResourceAssembler) throws FileNotFoundException {
-        return assembler.toResource(fileManagerService.findAllFiles(accountId, locationId, predicate, pageable), fileHierarchyResourceAssembler);
+    public PagedResources<IFileDetails> getAllFiles(@PathVariable String accountId,
+                                                    @PathVariable String locationId,
+                                                    @QuerydslPredicate(root = EncryptedObject.class) Predicate predicate,
+                                                    Pageable pageable,
+                                                    PagedResourcesAssembler assembler) throws FileNotFoundException {
+        return assembler.toResource(
+                fileManagerService.findAllFiles(accountId, locationId, predicate, pageable),
+                linkTo(methodOn(FileTreeController.class).getAllFiles(accountId, locationId, predicate,
+                        pageable, assembler)).withSelfRel());
     }
+
+    @RequestMapping(value = "/tsv/{accountId}/{locationId}/**", method = RequestMethod.GET)
+    @Transactional(value = "fileManager_transactionManager", readOnly = true)
+    public void tsvReport(@PathVariable String accountId,
+                          @PathVariable String locationId,
+                          HttpServletRequest request,
+                          HttpServletResponse response) throws IOException {
+        try (final Stream<? extends IFileDetails> stream = fileManagerService
+                .findAllFiles(accountId, locationId, extractVariablePath(request))) {
+            new FileDetailsTsv("file_details.tsv").stream(response, stream);
+        }
+    }
+
 }

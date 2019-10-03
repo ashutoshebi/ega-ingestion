@@ -22,17 +22,13 @@ import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.StringExpression;
 import com.querydsl.core.types.dsl.StringPath;
-import io.micrometer.core.instrument.util.StringUtils;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 import org.springframework.data.querydsl.binding.QuerydslBinderCustomizer;
 import org.springframework.data.querydsl.binding.QuerydslBindings;
 import org.springframework.data.querydsl.binding.SingleValueBinding;
 import org.springframework.data.repository.PagingAndSortingRepository;
-import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileHierarchyException;
-import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileDetails;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.EncryptedObject;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileHierarchy;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.QFileHierarchy;
 import uk.ac.ebi.ega.ingestion.file.manager.utils.FileStructureType;
@@ -51,6 +47,9 @@ public interface FileHierarchyRepository extends PagingAndSortingRepository<File
 
     String HINT_FETCH_SIZE_VALUE = "50";
 
+    List<FileHierarchy> findAllByAccountIdAndStagingAreaIdAndParentPath(String accountId, String stagingAreaId,
+                                                                          FileHierarchy parent);
+
     /**
      * Method is being called internally.
      *
@@ -67,15 +66,10 @@ public interface FileHierarchyRepository extends PagingAndSortingRepository<File
      * Stream is ordered by originalPath.
      * It is a Non Recursive result.
      *
-     * @param accountId
-     *         Account Id
-     * @param stagingAreaId
-     *         Staging Area Id
-     * @param parentId
-     *         Parent Id
-     * @param fileStructureType
-     *         FileStructureType File type FILE or FOLDER
-     *
+     * @param accountId         Account Id
+     * @param stagingAreaId     Staging Area Id
+     * @param parentId          Parent Id
+     * @param fileStructureType FileStructureType File type FILE or FOLDER
      * @return Stream of FileHierarchy object
      */
     default Stream<FileHierarchy> findAllFilesOrFoldersInRootPathNonRecursive(final String accountId, final String stagingAreaId,
@@ -99,13 +93,9 @@ public interface FileHierarchyRepository extends PagingAndSortingRepository<File
      * Stream is ordered by originalPath.
      * It is a Recursive result.
      *
-     * @param accountId
-     *         Account Id
-     * @param stagingAreaId
-     *         Staging Area Id
-     * @param fileStructureType
-     *         FileStructureType File type FILE or FOLDER
-     *
+     * @param accountId         Account Id
+     * @param stagingAreaId     Staging Area Id
+     * @param fileStructureType FileStructureType File type FILE or FOLDER
      * @return Stream of FileHierarchy object
      */
     default Stream<FileHierarchy> findAllFilesOrFoldersInRootPathRecursive(final String accountId, final String stagingAreaId,
@@ -127,11 +117,8 @@ public interface FileHierarchyRepository extends PagingAndSortingRepository<File
      * List is ordered by originalPath.
      * It is a Non Recursive result.
      *
-     * @param accountId
-     *         Account Id
-     * @param stagingAreaId
-     *         Staging Area Id
-     *
+     * @param accountId     Account Id
+     * @param stagingAreaId Staging Area Id
      * @return List of FileHierarchy object
      */
     default List<FileHierarchy> findAllFilesAndFoldersInPathNonRecursive(final String accountId, final String stagingAreaId) {
@@ -153,11 +140,8 @@ public interface FileHierarchyRepository extends PagingAndSortingRepository<File
      * Stream is ordered by originalPath.
      * It is a Non Recursive result.
      *
-     * @param accountId
-     *         Account Id
-     * @param stagingAreaId
-     *         Staging Area Id
-     *
+     * @param accountId     Account Id
+     * @param stagingAreaId Staging Area Id
      * @return Stream of FileHierarchy object
      */
     default Stream<FileHierarchy> findAllFilesInPathNonRecursive(final String accountId, final String stagingAreaId) {
@@ -175,75 +159,41 @@ public interface FileHierarchyRepository extends PagingAndSortingRepository<File
         return findOne(predicate);
     }
 
-    /**
-     * Returns Page object of FileHierarchy. Condition checks for case insensitive equals AccountId, StagingAreaId
-     * and Predicate given. Result contains all Files inside root path & not Folders.
-     * Page will have no records if no data found.
-     * It is a Recursive result.
-     *
-     * @param accountId
-     *         Account Id
-     * @param stagingAreaId
-     *         Staging Area Id
-     * @param predicate
-     *         Predicate
-     * @param pageable
-     *         Pageable
-     *
-     * @return Page<FileHierarchy> Page object having FileHierarchy records.
-     */
-    default Page<FileHierarchy> findAllFilesInRootPathRecursive(final String accountId, final String stagingAreaId, final Predicate predicate,
-                                                                final Pageable pageable) {
-        final Predicate predefinedPredicate = Expressions.allOf(
-                Expressions.predicate(Ops.EQ_IGNORE_CASE, QFileHierarchy.fileHierarchy.accountId,
-                        Expressions.constant(accountId)),
-                Expressions.predicate(Ops.EQ_IGNORE_CASE, QFileHierarchy.fileHierarchy.stagingAreaId,
-                        Expressions.constant(stagingAreaId))).and(predicate);
-        return findAll(predefinedPredicate, pageable);
-    }
-
     default FileHierarchy saveNewFolder(final String accountId, final String stagingAreaId, final String name,
                                         final String path, final FileHierarchy parent) {
         return save(FileHierarchy.folder(accountId, stagingAreaId, name, path, parent));
     }
 
-    default FileHierarchy saveNewFile(String accountId, String stagingAreaId, String path, FileDetails fileDetails) throws FileHierarchyException {
-        return save(createHierarchy(accountId, stagingAreaId, path, fileDetails));
+    default FileHierarchy saveNewFile(EncryptedObject encryptedObject) {
+        return save(createHierarchy(encryptedObject));
     }
 
-    default FileHierarchy createHierarchy(final String accountId, final String stagingAreaId, final String originalPath,
-                                          final FileDetails fileDetails) throws FileHierarchyException {
-        /* More checks can be added if file/folder name has some restrictions.
-           Regex checks for filenames, paths etc.
-         */
-        if (StringUtils.isEmpty(originalPath)) {
-            throw new FileHierarchyException("Error in FileHierarchyRepository::createHierarchy(String,String,String,FileDetails) => file path is invalid");
-        }
-
+    default FileHierarchy createHierarchy(final EncryptedObject encryptedObject) {
+        String originalPath = encryptedObject.getPath();
         final String path = originalPath.startsWith("/") ? originalPath : "/" + originalPath;
         final Path resolvedOriginalPath = Paths.get(path).normalize();
 
-        final Optional<FileHierarchy> fileHierarchy = findOne(resolvedOriginalPath.toString(), accountId, stagingAreaId);
+        final Optional<FileHierarchy> fileHierarchy = findOne(resolvedOriginalPath.toString(),
+                encryptedObject.getAccountId(), encryptedObject.getStagingId());
 
         if (!fileHierarchy.isPresent()) {
-            final FileHierarchy parentFileHierarchy = fileHierarchyRecursion(resolvedOriginalPath.getParent(), accountId, stagingAreaId);
-            return FileHierarchy.file(accountId, stagingAreaId, resolvedOriginalPath.getFileName().toString(), resolvedOriginalPath.toString(), parentFileHierarchy,
-                    fileDetails);
+            final FileHierarchy parentFileHierarchy = fileHierarchyRecursion(resolvedOriginalPath.getParent(),
+                    encryptedObject.getAccountId(), encryptedObject.getStagingId());
+            return FileHierarchy.file(encryptedObject.getAccountId(), encryptedObject.getStagingId(),
+                    resolvedOriginalPath.getFileName().toString(), resolvedOriginalPath.toString(), parentFileHierarchy,
+                    encryptedObject);
         }
         return fileHierarchy.get();
     }
 
     /**
-     * @param path
-     *         Original file path
-     * @param accountId
-     *         account id
-     * @param stagingAreaId
-     *         staging area id
-     *
+     * @param path          Original file path
+     * @param accountId     account id
+     * @param stagingAreaId staging area id
      * @return FileHierarchy Parent FileHierarchy object
      */
-    default FileHierarchy fileHierarchyRecursion(final Path path, final String accountId, final String stagingAreaId) {//TODO Need to make as private method. Supported in java 9
+    default FileHierarchy fileHierarchyRecursion(final Path path, final String accountId, final String stagingAreaId) {
+        //TODO Need to make as private method. Supported in java 9
 
         if (path != null && path.getFileName() != null) {
 

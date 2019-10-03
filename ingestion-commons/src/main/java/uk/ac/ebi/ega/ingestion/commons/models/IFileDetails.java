@@ -17,6 +17,8 @@
  */
 package uk.ac.ebi.ega.ingestion.commons.models;
 
+import java.time.LocalDateTime;
+
 public interface IFileDetails {
 
     String getAccountId();
@@ -33,4 +35,7 @@ public interface IFileDetails {
 
     FileStatus getStatus();
 
+    LocalDateTime getCreatedDate();
+
+    LocalDateTime getUpdatedDate();
 }

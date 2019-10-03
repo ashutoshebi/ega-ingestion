@@ -132,13 +132,11 @@ public class FileManagerConfiguration {
     public IFileManagerService fileManagerService(IFireService fireIngestion,
                                                   @Value("${file.manager.fire.relative.path}") String fireBoxRelativePath,
                                                   FileHierarchyRepository fileHierarchyRepository,
-                                                  EntityManager entityManager,
                                                   EncryptedObjectRepository encryptedObjectRepository,
                                                   KafkaTemplate<String, EncryptEvent> encryptEventKafkaTemplate)
             throws IOException, AlgorithmInitializationException {
         return new FileManagerService(fireIngestion, Paths.get(fireBoxRelativePath), fileHierarchyRepository,
-                entityManager, encryptedObjectRepository, fileEncryptQueueName, encryptEventKafkaTemplate,
-                encryptedKeyService());
+                encryptedObjectRepository, fileEncryptQueueName, encryptEventKafkaTemplate, encryptedKeyService());
     }
 
     @Bean

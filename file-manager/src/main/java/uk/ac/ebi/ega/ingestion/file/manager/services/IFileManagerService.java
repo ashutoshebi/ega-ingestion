@@ -30,6 +30,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 public interface IFileManagerService {
@@ -41,7 +42,7 @@ public interface IFileManagerService {
      * @param key
      * @param newFileEvent
      */
-    void newFile(String key, NewFileEvent newFileEvent);
+    void newFile(String key, NewFileEvent newFileEvent) throws FileHierarchyException;
 
     void archive(ArchiveEvent archiveEvent) throws IOException, FileHierarchyException;
 
@@ -58,7 +59,8 @@ public interface IFileManagerService {
      * @return List of FileHierarchyModel.
      * @throws FileNotFoundException
      */
-    List<FileHierarchyModel> findAllFilesAndFoldersInPathNonRecursive(String accountId, String stagingAreaId, Path filePath) throws FileNotFoundException;
+    List<FileHierarchyModel> findAllFilesAndFoldersInPathNonRecursive(String accountId, String stagingAreaId,
+                                                                      Optional<Path> filePath) throws FileNotFoundException;
 
     /**
      * Returns Page object of FileHierarchyModel. Condition checks for case insensitive equals AccountId, StagingAreaId
@@ -73,34 +75,35 @@ public interface IFileManagerService {
      * @return Page object of FileHierarchyModel.
      * @throws FileNotFoundException
      */
-    Page<FileHierarchyModel> findAllFiles(String accountId, String stagingAreaId, Predicate predicate, Pageable pageable) throws FileNotFoundException;
+    Page<? extends IFileDetails> findAllFiles(String accountId, String stagingAreaId, Predicate predicate, Pageable pageable) throws FileNotFoundException;
+    //TODO
+//
+//    /**
+//     * Returns Stream of FileHierarchyModel for given filePath. If filePath is a file, then file will be returned.
+//     * If filePath is a Folder path then all files under this folder will be returned. In case if Path is null then files at
+//     * in root path will be returned whereas if no file present will return empty Stream.
+//     * Stream is ordered by originalPath.
+//     * It is a Non Recursive result.
+//     *
+//     * @param accountId     Account Id
+//     * @param stagingAreaId Staging Area Id
+//     * @param filePath      File path
+//     * @return Stream of FileHierarchyModel object.
+//     * @throws FileNotFoundException throws if path is invalid; Provided path doesn't exists.
+//     */
+//    Stream<FileHierarchyModel> findAllFilesInPathNonRecursive(String accountId, String stagingAreaId, Path filePath) throws FileNotFoundException;
 
-    /**
-     * Returns Stream of FileHierarchyModel for given filePath. If filePath is a file, then file will be returned.
-     * If filePath is a Folder path then all files under this folder will be returned. In case if Path is null then files at
-     * in root path will be returned whereas if no file present will return empty Stream.
-     * Stream is ordered by originalPath.
-     * It is a Non Recursive result.
-     *
-     * @param accountId     Account Id
-     * @param stagingAreaId Staging Area Id
-     * @param filePath      File path
-     * @return Stream of FileHierarchyModel object.
-     * @throws FileNotFoundException throws if path is invalid; Provided path doesn't exists.
-     */
-    Stream<FileHierarchyModel> findAllFilesInPathNonRecursive(String accountId, String stagingAreaId, Path filePath) throws FileNotFoundException;
+    Optional<FileHierarchyModel> findParentOfPath(String accountId, String locationId, Path path);
 
     /**
      * Returns all files in root path OR
      * will return empty Stream if no file exists under this path.
      * Stream is ordered by originalPath.
-     * It is a Recursive result.
      *
      * @param accountId     Account Id
      * @param stagingAreaId Staging Area Id
      * @return Stream of FileHierarchyModel object.
      */
-    Stream<? extends IFileDetails> findAllFiles(String accountId, String stagingAreaId);
-
+    Stream<? extends IFileDetails> findAllFiles(String accountId, String stagingAreaId, Optional<String> optionalPath);
 }
 

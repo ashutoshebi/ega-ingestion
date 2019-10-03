@@ -18,16 +18,16 @@
 package uk.ac.ebi.ega.ingestion.file.manager.controller;
 
 import org.springframework.util.AntPathMatcher;
-import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.HandlerMapping;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.Optional;
 
 public class ControllerUtils {
-    public static String extractVariablePath(final HttpServletRequest request) {
+    public static Optional<String> extractVariablePath(final HttpServletRequest request) {
         final String path = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
         final String bestMatchPattern = (String) request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
-        final String variablePath = new AntPathMatcher().extractPathWithinPattern(bestMatchPattern, path);
-        return !StringUtils.isEmpty(variablePath) ? "/" + variablePath : "";
+        String match = new AntPathMatcher().extractPathWithinPattern(bestMatchPattern, path);
+        return (match == null || match.isEmpty()) ? Optional.empty() : Optional.of(match);
     }
 }
