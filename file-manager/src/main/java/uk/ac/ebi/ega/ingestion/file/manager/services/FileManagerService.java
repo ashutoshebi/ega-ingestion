@@ -211,12 +211,12 @@ public class FileManagerService implements IFileManagerService {
     public Stream<? extends IFileDetails> findAllFiles(final String accountId,
                                                        final String stagingAreaId,
                                                        final Optional<String> optionalPath) {
-        if (!optionalPath.isPresent()) {
-            return encryptedObjectRepository.findAllByAccountIdAndStagingId(accountId, stagingAreaId);
-        } else {
-            return encryptedObjectRepository.findAllByAccountIdAndStagingIdAndPathStartingWith(
-                    accountId, stagingAreaId, optionalPath.get());
-        }
+        return optionalPath.map(path ->
+                encryptedObjectRepository.findAllByAccountIdAndStagingIdAndPathStartingWithOrderByPath(
+                        accountId, stagingAreaId, optionalPath.get()))
+                .orElseGet(() ->
+                        encryptedObjectRepository.findAllByAccountIdAndStagingIdOrderByPath(accountId, stagingAreaId)
+                );
     }
 
 }

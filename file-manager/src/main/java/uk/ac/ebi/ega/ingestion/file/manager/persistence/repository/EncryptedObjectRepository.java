@@ -32,10 +32,11 @@ public interface EncryptedObjectRepository extends PagingAndSortingRepository<En
 
     Optional<EncryptedObject> findByPathAndVersion(String path, long version);
 
-    Stream<EncryptedObject> findAllByAccountIdAndStagingId(String accountId, String stagingId);
+    Stream<EncryptedObject> findAllByAccountIdAndStagingIdOrderByPath(String accountId, String stagingId);
 
-    Stream<EncryptedObject> findAllByAccountIdAndStagingIdAndPathStartingWith(String accountId, String stagingId,
-                                                                              String pathExpresion);
+    Stream<EncryptedObject> findAllByAccountIdAndStagingIdAndPathStartingWithOrderByPath(String accountId,
+                                                                                         String stagingId,
+                                                                                         String pathExpresion);
 
     Page<EncryptedObject> findByStatus(FileStatus archiveInProgress, Pageable pageRequest);
 
