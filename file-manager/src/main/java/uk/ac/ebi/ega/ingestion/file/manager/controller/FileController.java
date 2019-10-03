@@ -73,7 +73,7 @@ public class FileTreeController {
 
         final Optional<Path> path = extractVariablePath(request).map(s -> Paths.get("/" + s));
         final List<FileHierarchyModel> fileHierarchyModels =
-                fileManagerService.findAllFilesAndFoldersInPathNonRecursive(accountId, locationId, path);
+                fileManagerService.findAllFilesAndFoldersInPath(accountId, locationId, path);
         final Resource<FileTreeWrapper> resource =
                 new Resource<>(FileTreeWrapper.create(fileHierarchyModels, linkBuilder),
                         path.map(path1 -> linkBuilder.slash(path1)).orElse(linkBuilder).withSelfRel());
