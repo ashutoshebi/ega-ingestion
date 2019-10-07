@@ -15,6 +15,8 @@
  */
 package uk.ac.ebi.ega.ingestion.file.manager.services;
 
+import java.net.URISyntaxException;
+
 public interface IFileStatusUpdaterService {
 
     /**

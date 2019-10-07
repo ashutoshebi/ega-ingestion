@@ -107,13 +107,20 @@ public class FileStatusUpdaterService implements IFileStatusUpdaterService {
             if (optionalFileStatus.isPresent()) {
                 final FileStatus fileStatusOfFileInFire = optionalFileStatus.get();
 
-                if (FileStatus.ERROR.equals(fileStatusOfFileInFire)) {
-                    LOGGER.error("The file in Fire with ega-pro-filer.ega_ARCHIVE.archive.archive_id={} is in an erroneous state.", fireId);
+                switch (fileStatusOfFileInFire){
+                    case ERROR:
+                        LOGGER.error("The file in Fire with ega-pro-filer.ega_ARCHIVE.archive.archive_id={} is in an " +
+                                "erroneous state.", fireId);
+                        object.error();
+                        encryptedObjectRepository.save(object);
+                        break;
+                    case ARCHIVED_SUCCESSFULLY:
+                        //TODO we need to change the uri to the appropriate fire uri, for this we need to update the
+                        // fire-core library :(
+                        object.archived("fire://change");
+                        encryptedObjectRepository.save(object);
+                        break;
                 }
-
-                LOGGER.trace("Local file {} will be updated with status {}", object, optionalFileStatus);
-                object.setStatus(fileStatusOfFileInFire);
-                encryptedObjectRepository.save(object);
             } else {
                 final String message = String.format("The status of %s was not updated because " +
                         "the new status could not be determined.", object);

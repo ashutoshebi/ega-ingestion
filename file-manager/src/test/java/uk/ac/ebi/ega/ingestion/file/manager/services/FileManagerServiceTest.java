@@ -127,7 +127,7 @@ public class FileManagerServiceTest {
     public void init() {
         fileManagerService = Mockito.spy(new FileManagerService(fireService, Paths.get("/test/path"),
                 fileHierarchyRepository, encryptedObjectRepository, "encrypt-topic",
-                kafkaTemplate, encryptedKeyService));
+                kafkaTemplate, encryptedKeyService, "NUPD"));
     }
 
     @Sql(scripts = "classpath:cleanDatabase.sql")
@@ -189,7 +189,8 @@ public class FileManagerServiceTest {
 
         final EncryptedObject object = encryptedObjectRepository.findByPathAndVersion("/test/test.pgp",
                 fileEvent.getLastModified()).get();
-        object.setStatus(FileStatus.ARCHIVE_IN_PROGRESS);
+        object.archive("file://temp/test.pgp", 0L, "270CF8B51C773F3F8DC8B4BE867A9B03", 0L, 0L,
+                Encryption.EGA_AES, "test");
         encryptedObjectRepository.save(object);
 
         fileManagerService.newFile("test-01", fileEvent);

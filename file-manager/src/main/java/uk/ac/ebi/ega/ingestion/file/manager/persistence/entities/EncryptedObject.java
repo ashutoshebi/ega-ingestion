@@ -20,6 +20,7 @@ package uk.ac.ebi.ega.ingestion.file.manager.persistence.entities;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import uk.ac.ebi.ega.ingestion.commons.models.Encryption;
 import uk.ac.ebi.ega.ingestion.commons.models.FileStatus;
 import uk.ac.ebi.ega.ingestion.commons.models.IFileDetails;
 
@@ -67,6 +68,9 @@ public class EncryptedObject implements IFileDetails {
     private String encryptedMd5;
 
     @Column(nullable = false)
+    private Encryption encryptionType;
+
+    @Column(nullable = false)
     private String encryptionKey;
 
     @Enumerated(EnumType.STRING)
@@ -94,16 +98,13 @@ public class EncryptedObject implements IFileDetails {
         this.plainMd5 = plainMd5;
         this.encryptedSize = encryptedSize;
         this.encryptedMd5 = encryptedMd5;
+        this.encryptionType = Encryption.PGP;
         this.encryptionKey = "EGA_PGP_ENCRYPTION_KEY";
         this.status = FileStatus.PROCESSING;
     }
 
     public Long getId() {
         return id;
-    }
-
-    public void setStatus(FileStatus status) {
-        this.status = status;
     }
 
     @Override
@@ -151,11 +152,32 @@ public class EncryptedObject implements IFileDetails {
         return updatedDate;
     }
 
-    public void setFireId(Long fireId) {
-        this.fireId = fireId;
-    }
-
     public Long getFireId() {
         return fireId;
+    }
+
+    public String toFirePath() {
+        return stagingId + "/" + path + "." + version;
+    }
+
+    public void archive(String newUri, Long fireId, String encryptedMD5, long plainSize, long encryptedSize,
+                        Encryption encryptionType, String encryptionKey) {
+        this.uri = newUri;
+        this.fireId = fireId;
+        this.encryptedMd5 = encryptedMD5;
+        this.plainSize = plainSize;
+        this.encryptedSize = encryptedSize;
+        this.encryptionType = encryptionType;
+        this.encryptionKey = encryptionKey;
+        this.status = FileStatus.ARCHIVE_IN_PROGRESS;
+    }
+
+    public void archived(String fireUri) {
+        this.uri = fireUri;
+        this.status = FileStatus.ARCHIVED_SUCCESSFULLY;
+    }
+
+    public void error() {
+        this.status = FileStatus.ERROR;
     }
 }

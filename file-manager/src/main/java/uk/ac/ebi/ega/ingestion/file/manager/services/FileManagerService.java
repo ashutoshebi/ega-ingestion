@@ -26,16 +26,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.transaction.annotation.Transactional;
-import uk.ac.ebi.ega.encryption.core.utils.io.FileUtils;
 import uk.ac.ebi.ega.fire.ingestion.service.IFireService;
-import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEvent;
+import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEventSimplify;
 import uk.ac.ebi.ega.ingestion.commons.messages.EncryptEvent;
 import uk.ac.ebi.ega.ingestion.commons.messages.NewFileEvent;
 import uk.ac.ebi.ega.ingestion.commons.models.FileStatus;
 import uk.ac.ebi.ega.ingestion.commons.models.IFileDetails;
 import uk.ac.ebi.ega.ingestion.commons.services.IEncryptedKeyService;
 import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileHierarchyException;
-import uk.ac.ebi.ega.ingestion.file.manager.models.ArchivedFile;
 import uk.ac.ebi.ega.ingestion.file.manager.models.FileHierarchyModel;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.EncryptedObject;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileHierarchy;
@@ -46,9 +44,7 @@ import uk.ac.ebi.ega.ingestion.file.manager.utils.FileStructureType;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -70,13 +66,16 @@ public class FileManagerService implements IFileManagerService {
 
     private final IEncryptedKeyService encryptedKeyService;
 
+    private final String oldFireEgaIdPrefix;
+
     public FileManagerService(final IFireService fireService,
                               final Path fireBoxRelativePath,
                               final FileHierarchyRepository fileHierarchyRepository,
                               final EncryptedObjectRepository encryptedObjectRepository,
                               final String encryptEventTopic,
                               final KafkaTemplate<String, EncryptEvent> encryptEventKafkaTemplate,
-                              final IEncryptedKeyService encryptedKeyService) {
+                              final IEncryptedKeyService encryptedKeyService,
+                              final String oldFireEgaIdPrefix) {
         this.fireService = fireService;
         this.fireBoxRelativePath = fireBoxRelativePath;
         this.fileHierarchyRepository = fileHierarchyRepository;
@@ -84,6 +83,7 @@ public class FileManagerService implements IFileManagerService {
         this.encryptEventTopic = encryptEventTopic;
         this.encryptEventKafkaTemplate = encryptEventKafkaTemplate;
         this.encryptedKeyService = encryptedKeyService;
+        this.oldFireEgaIdPrefix = oldFireEgaIdPrefix;
     }
 
     @Override
@@ -106,7 +106,7 @@ public class FileManagerService implements IFileManagerService {
                                 event.getLocationId(),
                                 event.getUserPath(),
                                 event.getLastModified(),
-                                event.getPath().toUri().toString(),
+                                fireBoxRelativePath.resolve(event.getPath().toUri().toString()).toString(),
                                 event.getPlainMd5(),
                                 -1,
                                 event.getEncryptedMd5())).getEncryptedObject());
@@ -123,27 +123,28 @@ public class FileManagerService implements IFileManagerService {
 
     @Override
     @Transactional(transactionManager = "fileManagerFireChainedTransactionManager", rollbackFor = Exception.class)
-    public void archive(final ArchiveEvent archiveEvent) throws IOException {
-        // TODO EE-888 update this part
-        final char[] password = FileUtils.readPasswordFile(Paths.get(archiveEvent.getKeyPath()));
+    public void archive(String key, final ArchiveEventSimplify archiveEvent) {
+        EncryptedObject encryptedObject = encryptedObjectRepository.findById(Long.parseLong(key)).get();
+        if (encryptedObject.getStatus() == FileStatus.PROCESSING) {
+            final Long fireId = fireService.archiveFile(
+                    oldFireEgaIdPrefix + key,
+                    new File(archiveEvent.getUri()), archiveEvent.getEncryptedMD5(),
+                    encryptedObject.toFirePath()
+            ).get();
 
-        Path relativePathInFire = fireBoxRelativePath.resolve(archiveEvent.getStagingAreaId());
-        final Optional<Long> fireId = fireService.archiveFile(null, new File(archiveEvent.getStagingPath()),
-                archiveEvent.getEncryptedMd5(), relativePathInFire.toString());
-        Path completePathInFire = relativePathInFire.resolve(new File(archiveEvent.getStagingPath()).getName());
-
-        ArchivedFile fileToBeArchived = new ArchivedFile(
-                archiveEvent.getAccountId(),
-                archiveEvent.getStagingAreaId(),
-                fireId.get(),
-                completePathInFire.toString(),
-                archiveEvent.getOriginalPath(),
-                archiveEvent.getPlainSize(),
-                archiveEvent.getPlainMd5(),
-                archiveEvent.getEncryptedSize(),
-                archiveEvent.getEncryptedMd5(),
-                password
-        );
+            encryptedObject.archive(
+                    archiveEvent.getUri().toString(),
+                    fireId,
+                    archiveEvent.getEncryptedMD5(),
+                    archiveEvent.getPlainSize(),
+                    archiveEvent.getEncryptedSize(),
+                    archiveEvent.getEncryptionType(),
+                    archiveEvent.getEncryptionKey());
+            encryptedObjectRepository.save(encryptedObject);
+            LOGGER.info("File: {} archiving started", key);
+        } else {
+            LOGGER.info("File: {} has been processed already", key);
+        }
     }
 
     @Override

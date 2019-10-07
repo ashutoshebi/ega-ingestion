@@ -23,10 +23,8 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
-import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEvent;
+import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEventSimplify;
 import uk.ac.ebi.ega.ingestion.file.manager.services.IFileManagerService;
-
-import java.io.IOException;
 
 public class FileArchiveListener {
 
@@ -47,14 +45,10 @@ public class FileArchiveListener {
                                         @Header(KafkaHeaders.RECEIVED_PARTITION_ID) int partition,
                                         @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
                                         @Header(KafkaHeaders.RECEIVED_TIMESTAMP) long ts,
-                                        ArchiveEvent archiveEvent,
+                                        ArchiveEventSimplify archiveEvent,
                                         Acknowledgment acknowledgment) {
-        try {
-            encryptJobService.archive(archiveEvent);
-        } catch (IOException e) {
-            // TODO send a message to dead letter queue
-            logger.error(e.getMessage(), e);
-        }
+        logger.info("File archive event: {} data: {}", key, archiveEvent);
+        encryptJobService.archive(key, archiveEvent);
         acknowledgment.acknowledge();
     }
 }
