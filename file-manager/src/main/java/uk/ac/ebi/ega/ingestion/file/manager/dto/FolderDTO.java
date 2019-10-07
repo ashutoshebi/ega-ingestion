@@ -15,10 +15,23 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.ingestion.file.manager.utils;
+package uk.ac.ebi.ega.ingestion.file.manager.dto;
 
-public enum FileStructureType {
+import org.springframework.hateoas.ResourceSupport;
 
-    FILE, FOLDER
+public class FolderDTO extends ResourceSupport {
+    
+    private String name;
 
+    FolderDTO() {
+    }
+
+    public FolderDTO(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
+    
 }

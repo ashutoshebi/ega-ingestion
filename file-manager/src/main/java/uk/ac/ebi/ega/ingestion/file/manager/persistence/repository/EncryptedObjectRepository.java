@@ -17,13 +17,27 @@
  */
 package uk.ac.ebi.ega.ingestion.file.manager.persistence.repository;
 
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.querydsl.QuerydslPredicateExecutor;
+import org.springframework.data.repository.PagingAndSortingRepository;
+import uk.ac.ebi.ega.ingestion.commons.models.FileStatus;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.EncryptedObject;
 
 import java.util.Optional;
+import java.util.stream.Stream;
 
-public interface EncryptedObjectRepository extends CrudRepository<EncryptedObject, Long> {
+public interface EncryptedObjectRepository extends PagingAndSortingRepository<EncryptedObject, Long>,
+        QuerydslPredicateExecutor<EncryptedObject> {
 
     Optional<EncryptedObject> findByPathAndVersion(String path, long version);
+
+    Stream<EncryptedObject> findAllByAccountIdAndStagingIdOrderByPath(String accountId, String stagingId);
+
+    Stream<EncryptedObject> findAllByAccountIdAndStagingIdAndPathStartingWithOrderByPath(String accountId,
+                                                                                         String stagingId,
+                                                                                         String pathExpresion);
+
+    Page<EncryptedObject> findByStatus(FileStatus archiveInProgress, Pageable pageRequest);
 
 }

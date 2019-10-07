@@ -22,9 +22,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import uk.ac.ebi.ega.fire.ingestion.service.IFireService;
 import uk.ac.ebi.ega.fire.models.OldFireFile;
-import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileDetails;
-import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileStatus;
-import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.FileDetailsRepository;
+import uk.ac.ebi.ega.ingestion.commons.models.FileStatus;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.EncryptedObject;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.EncryptedObjectRepository;
 
 import java.util.List;
 import java.util.Map;
@@ -35,14 +35,14 @@ public class FileStatusUpdaterService implements IFileStatusUpdaterService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FileStatusUpdaterService.class);
 
-    private final FileDetailsRepository fileDetailsRepository;
+    private final EncryptedObjectRepository encryptedObjectRepository;
     private final IFireService fireService;
     private final int batchSize;
 
-    public FileStatusUpdaterService(final FileDetailsRepository fileDetailsRepository,
+    public FileStatusUpdaterService(final EncryptedObjectRepository encryptedObjectRepository,
                                     final IFireService fireService,
                                     final int batchSize) {
-        this.fileDetailsRepository = fileDetailsRepository;
+        this.encryptedObjectRepository = encryptedObjectRepository;
         this.fireService = fireService;
         this.batchSize = batchSize;
     }
@@ -51,16 +51,16 @@ public class FileStatusUpdaterService implements IFileStatusUpdaterService {
     public void updateStatus() {
         LOGGER.trace("FileStatusUpdaterService.updateStatus was called.");
 
-        Page<FileDetails> pageContainingLocalFilesBeingArchived;
+        Page<EncryptedObject> pageContainingLocalFilesBeingArchived;
         Pageable pageRequest = PageRequest.of(0, batchSize);
 
         do {
             LOGGER.trace("Processing PageRequest: {}...", pageRequest);
 
-            pageContainingLocalFilesBeingArchived = fileDetailsRepository
+            pageContainingLocalFilesBeingArchived = encryptedObjectRepository
                     .findByStatus(FileStatus.ARCHIVE_IN_PROGRESS, pageRequest);
 
-            final List<FileDetails> localFilesBeingArchived = pageContainingLocalFilesBeingArchived.getContent();
+            final List<EncryptedObject> localFilesBeingArchived = pageContainingLocalFilesBeingArchived.getContent();
             LOGGER.trace("Local files which are being archived and whose status should be updated: {}",
                     localFilesBeingArchived);
 
@@ -73,35 +73,34 @@ public class FileStatusUpdaterService implements IFileStatusUpdaterService {
     }
 
     /**
-     * @param localFilesBeingArchived files which are in our local FileDetailsRepository
-     *                                and which have the FileStatus.ARCHIVE_IN_PROGRESS status.
-     *
-     * @see uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileStatus
+     * @param encryptedObjects files which are in our local FileDetailsRepository
+     *                         and which have the FileStatus.ARCHIVE_IN_PROGRESS status.
+     * @see FileStatus
      */
-    private void updateStatus(final List<FileDetails> localFilesBeingArchived) {
-        final List<OldFireFile> filesInFire = getFilesInFireCorrespondingTo(localFilesBeingArchived);
+    private void updateStatus(final List<EncryptedObject> encryptedObjects) {
+        final List<OldFireFile> filesInFire = getFilesInFireCorrespondingTo(encryptedObjects);
         LOGGER.trace("The files in Fire, whose status will be used to update the local files which are being archived: {}",
                 filesInFire);
-        updateStatusesBasedOn(filesInFire, localFilesBeingArchived);
+        updateStatusesBasedOn(filesInFire, encryptedObjects);
     }
 
-    private List<OldFireFile> getFilesInFireCorrespondingTo(final List<FileDetails> localFilesBeingArchived) {
-        final List<Long> fireIdsOfLocalFilesBeingArchived = localFilesBeingArchived.stream()
-                .map(FileDetails::getFireId)
+    private List<OldFireFile> getFilesInFireCorrespondingTo(final List<EncryptedObject> encryptedObjects) {
+        final List<Long> fireIdsOfLocalFilesBeingArchived = encryptedObjects.stream()
+                .map(EncryptedObject::getFireId)
                 .collect(Collectors.toList());
 
         return fireService.findAllByFireId(fireIdsOfLocalFilesBeingArchived);
     }
 
     private void updateStatusesBasedOn(final List<OldFireFile> filesInFire,
-                                       final List<FileDetails> localFilesBeingArchived) {
+                                       final List<EncryptedObject> objects) {
 
         // FireId => current FileStatus in Fire
         final Map<Long, Optional<FileStatus>> fireIdsToFileStatuses = getFireIdsAndFileStatusesOf(filesInFire);
         LOGGER.trace("Map<\"FireId in Fire\", \"current FileStatus in Fire\">: {}", fireIdsToFileStatuses);
 
-        for (final FileDetails localFileBeingArchived : localFilesBeingArchived) {
-            final Long fireIdOfLocalFileBeingArchived = localFileBeingArchived.getFireId();
+        for (final EncryptedObject object : objects) {
+            final Long fireIdOfLocalFileBeingArchived = object.getFireId();
             final Long fireId = fireIdOfLocalFileBeingArchived;
             final Optional<FileStatus> optionalFileStatus = fireIdsToFileStatuses.get(fireId);
 
@@ -112,12 +111,12 @@ public class FileStatusUpdaterService implements IFileStatusUpdaterService {
                     LOGGER.error("The file in Fire with ega-pro-filer.ega_ARCHIVE.archive.archive_id={} is in an erroneous state.", fireId);
                 }
 
-                LOGGER.trace("Local file {} will be updated with status {}", localFileBeingArchived, optionalFileStatus);
-                localFileBeingArchived.setStatus(fileStatusOfFileInFire);
-                fileDetailsRepository.save(localFileBeingArchived);
+                LOGGER.trace("Local file {} will be updated with status {}", object, optionalFileStatus);
+                object.setStatus(fileStatusOfFileInFire);
+                encryptedObjectRepository.save(object);
             } else {
                 final String message = String.format("The status of %s was not updated because " +
-                                "the new status could not be determined.", localFileBeingArchived);
+                        "the new status could not be determined.", object);
                 LOGGER.error(message);
             }
         }
@@ -125,6 +124,7 @@ public class FileStatusUpdaterService implements IFileStatusUpdaterService {
 
     /**
      * Returns a map mapping the FireId to FileStatus of the given files.
+     *
      * @param fireFiles list of files which are in Fire
      * @return a map: FireId => current FileStatus in Fire
      */
@@ -138,14 +138,11 @@ public class FileStatusUpdaterService implements IFileStatusUpdaterService {
 
         if (fireFile.getExitCode() == null && fireFile.getExitReason() == null) {
             return Optional.of(FileStatus.ARCHIVE_IN_PROGRESS);
-        }
-        else if (fireFile.getExitCode() != null && fireFile.getExitCode() == 0 && fireFile.getExitReason() == null) {
+        } else if (fireFile.getExitCode() != null && fireFile.getExitCode() == 0 && fireFile.getExitReason() == null) {
             return Optional.of(FileStatus.ARCHIVED_SUCCESSFULLY);
-        }
-        else if (fireFile.getExitCode() != null && fireFile.getExitCode() != 0) {
+        } else if (fireFile.getExitCode() != null && fireFile.getExitCode() != 0) {
             return Optional.of(FileStatus.ERROR);
-        }
-        else {
+        } else {
             final String message = String.format("Unable to determine the status of the file " +
                     "based on its exitCode and exitReason: %s", fireFile);
             LOGGER.error(message);

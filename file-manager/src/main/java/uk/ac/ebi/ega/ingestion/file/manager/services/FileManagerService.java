@@ -17,14 +17,12 @@
  */
 package uk.ac.ebi.ega.ingestion.file.manager.services;
 
-import com.querydsl.core.types.Ops;
 import com.querydsl.core.types.Predicate;
-import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import io.micrometer.core.instrument.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,29 +31,28 @@ import uk.ac.ebi.ega.fire.ingestion.service.IFireService;
 import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEvent;
 import uk.ac.ebi.ega.ingestion.commons.messages.EncryptEvent;
 import uk.ac.ebi.ega.ingestion.commons.messages.NewFileEvent;
+import uk.ac.ebi.ega.ingestion.commons.models.FileStatus;
+import uk.ac.ebi.ega.ingestion.commons.models.IFileDetails;
 import uk.ac.ebi.ega.ingestion.commons.services.IEncryptedKeyService;
 import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileHierarchyException;
 import uk.ac.ebi.ega.ingestion.file.manager.models.ArchivedFile;
 import uk.ac.ebi.ega.ingestion.file.manager.models.FileHierarchyModel;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.EncryptedObject;
-import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileDetails;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileHierarchy;
-import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileStatus;
-import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.QFileHierarchy;
+import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.QEncryptedObject;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.EncryptedObjectRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.FileHierarchyRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.utils.FileStructureType;
 
-import javax.persistence.EntityManager;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -66,7 +63,6 @@ public class FileManagerService implements IFileManagerService {
     private final IFireService fireService;
     private final Path fireBoxRelativePath;
     private final FileHierarchyRepository fileHierarchyRepository;
-    private final EntityManager entityManager;
     private final EncryptedObjectRepository encryptedObjectRepository;
 
     private final String encryptEventTopic;
@@ -77,7 +73,6 @@ public class FileManagerService implements IFileManagerService {
     public FileManagerService(final IFireService fireService,
                               final Path fireBoxRelativePath,
                               final FileHierarchyRepository fileHierarchyRepository,
-                              final EntityManager entityManager,
                               final EncryptedObjectRepository encryptedObjectRepository,
                               final String encryptEventTopic,
                               final KafkaTemplate<String, EncryptEvent> encryptEventKafkaTemplate,
@@ -85,7 +80,6 @@ public class FileManagerService implements IFileManagerService {
         this.fireService = fireService;
         this.fireBoxRelativePath = fireBoxRelativePath;
         this.fileHierarchyRepository = fileHierarchyRepository;
-        this.entityManager = entityManager;
         this.encryptedObjectRepository = encryptedObjectRepository;
         this.encryptEventTopic = encryptEventTopic;
         this.encryptEventKafkaTemplate = encryptEventKafkaTemplate;
@@ -93,20 +87,30 @@ public class FileManagerService implements IFileManagerService {
     }
 
     @Override
-    public void newFile(String key, NewFileEvent event) {
+    @Transactional(transactionManager = "fileManager_transactionManager", rollbackFor = Exception.class)
+    public void newFile(String key, NewFileEvent event) throws FileHierarchyException {
+        /* More checks can be added if file/folder name has some restrictions.
+           Regex checks for filenames, paths etc.
+         */
+        if (StringUtils.isEmpty(event.getUserPath())) {
+            throw new FileHierarchyException("File path is invalid");
+        }
+
         String encryptionKey = encryptedKeyService.generateNewEncryptedKey();
         // Find if exists, otherwise create new object and save into database
         final EncryptedObject encryptedObject = encryptedObjectRepository
                 .findByPathAndVersion(event.getUserPath(), event.getLastModified())
-                .orElseGet(() -> encryptedObjectRepository.save(new EncryptedObject(
-                        event.getAccountId(),
-                        event.getLocationId(),
-                        event.getUserPath(),
-                        event.getLastModified(),
-                        event.getPath().toUri().toString(),
-                        event.getPlainMd5(),
-                        -1,
-                        event.getEncryptedMd5())));
+                .orElseGet(() -> fileHierarchyRepository.saveNewFile(
+                        new EncryptedObject(
+                                event.getAccountId(),
+                                event.getLocationId(),
+                                event.getUserPath(),
+                                event.getLastModified(),
+                                event.getPath().toUri().toString(),
+                                event.getPlainMd5(),
+                                -1,
+                                event.getEncryptedMd5())).getEncryptedObject());
+
         if (encryptedObject.getStatus() == FileStatus.PROCESSING) {
             encryptEventKafkaTemplate.send(encryptEventTopic,
                     encryptedObject.getId().toString(),
@@ -119,7 +123,8 @@ public class FileManagerService implements IFileManagerService {
 
     @Override
     @Transactional(transactionManager = "fileManagerFireChainedTransactionManager", rollbackFor = Exception.class)
-    public void archive(final ArchiveEvent archiveEvent) throws IOException, FileHierarchyException {
+    public void archive(final ArchiveEvent archiveEvent) throws IOException {
+        // TODO EE-888 update this part
         final char[] password = FileUtils.readPasswordFile(Paths.get(archiveEvent.getKeyPath()));
 
         Path relativePathInFire = fireBoxRelativePath.resolve(archiveEvent.getStagingAreaId());
@@ -139,113 +144,79 @@ public class FileManagerService implements IFileManagerService {
                 archiveEvent.getEncryptedMd5(),
                 password
         );
-
-        addFile(fileToBeArchived);
     }
 
     @Override
-    public List<FileHierarchyModel> findAllFilesAndFoldersInPathNonRecursive(final String accountId, final String stagingAreaId,
-                                                                             final Path filePath) throws FileNotFoundException {
-        if (StringUtils.isEmpty(filePath.toString())) {
-            return fileHierarchyRepository.findAllFilesAndFoldersInPathNonRecursive(accountId, stagingAreaId).stream().
-                    map(fileHierarchyFileAndFolderTypeMapEntityToModel()).
-                    collect(Collectors.toList());
+    public List<FileHierarchyModel> findAllFilesAndFoldersInPath(final String accountId,
+                                                                 final String stagingAreaId,
+                                                                 final Optional<Path> filePath)
+            throws FileNotFoundException {
+        final List<FileHierarchyModel> fileHierarchyModels = filePath.map(Path::normalize)
+                .map(Path::toString)
+                .map(s -> fileHierarchyRepository.findOne(s, accountId, stagingAreaId)
+                        .map(fileHierarchy -> {
+                            if (fileHierarchy.getFileType() == FileStructureType.FILE) {
+                                return Collections.singletonList(FileHierarchy.toModel(fileHierarchy));
+                            } else {
+                                return fileHierarchy.getChildPaths().stream().map(FileHierarchy::toModel)
+                                        .collect(Collectors.toList());
+                            }
+                        })
+                        .orElseGet(() -> new ArrayList<>()))
+                .orElseGet(() -> fileHierarchyRepository
+                        .findAllByAccountIdAndStagingAreaIdAndParentPathIsNullAllIgnoreCaseOrderByOriginalPath(
+                                accountId, stagingAreaId)
+                        .stream().map(FileHierarchy::toModel).collect(Collectors.toList()));
+        if (!fileHierarchyModels.isEmpty()) {
+            return fileHierarchyModels;
         }
 
-        final Optional<FileHierarchy> optionalFileHierarchy = fileHierarchyRepository.findOne(filePath.normalize().toString(),
-                accountId, stagingAreaId);
-        final FileHierarchy fileHierarchy = optionalFileHierarchy.orElseThrow(FileNotFoundException::new);
-
-        if (FileStructureType.FILE.equals(fileHierarchy.getFileType())) {
-            return Collections.singletonList(fileHierarchy.toFile());
+        String stringPath = new String();
+        if (filePath.isPresent()) {
+            stringPath = filePath.toString();
         }
-        return fileHierarchy.getChildPaths().stream().map(fileHierarchyFileAndFolderTypeMapEntityToModel()).
-                collect(Collectors.toList());
+        throw new FileNotFoundException("/" + accountId + "/" + stagingAreaId + stringPath);
+
+    }
+
+    @Override
+    public Optional<FileHierarchyModel> findParentOfPath(final String accountId, final String stagingAreaId,
+                                                         final Path path) {
+        return fileHierarchyRepository.findOne(path.normalize().toString(), accountId, stagingAreaId)
+                .map(FileHierarchy::getParentPath)
+                .map(FileHierarchy::toModel);
     }
 
     /**
      * {@inheritDoc}
-     */
-    @Override
-    public Page<FileHierarchyModel> findAllFilesInRootPathRecursive(final String accountId, final String stagingAreaId,
-                                                                    final Predicate predicate, final Pageable pageable) throws FileNotFoundException {
-        final Predicate filePredicate = Expressions.allOf(Expressions.predicate(Ops.EQ, QFileHierarchy.fileHierarchy.fileType,
-                Expressions.constant(FileStructureType.FILE))).and(predicate);
-
-        final Page<FileHierarchy> fileHierarchyPage = fileHierarchyRepository.findAllFilesInRootPathRecursive(accountId, stagingAreaId, filePredicate, pageable);
-
-        if (!fileHierarchyPage.hasContent()) {
-            throw new FileNotFoundException();
-        }
-        return new PageImpl<>(fileHierarchyPage.stream().map(FileHierarchy::toFile).collect(Collectors.toList()));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Stream<FileHierarchyModel> findAllFilesInPathNonRecursive(final String accountId, final String stagingAreaId,
-                                                                     final Path filePath) throws FileNotFoundException {
-        if (StringUtils.isEmpty(filePath.toString())) {
-            return fileHierarchyRepository.findAllFilesInPathNonRecursive(accountId, stagingAreaId).
-                    map(fileHierarchyFileTypeMapEntityToModel());
-        }
-
-        final Optional<FileHierarchy> optionalFileHierarchy = fileHierarchyRepository.findOne(filePath.normalize().toString(), accountId, stagingAreaId);
-        final FileHierarchy fileHierarchy = optionalFileHierarchy.orElseThrow(FileNotFoundException::new);
-
-        if (FileStructureType.FILE.equals(fileHierarchy.getFileType())) {
-            return Stream.of(fileHierarchy.toFile());
-        }
-        return fileHierarchyRepository.findAllFilesOrFoldersInRootPathNonRecursive(accountId, stagingAreaId, fileHierarchy.getId(), FileStructureType.FILE).
-                map(fileHierarchyFileTypeMapEntityToModel());
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Stream<FileHierarchyModel> findAllFilesInRootPathRecursive(final String accountId, final String stagingAreaId) {
-        return fileHierarchyRepository.findAllFilesOrFoldersInRootPathRecursive(accountId, stagingAreaId, FileStructureType.FILE).
-                map(fileHierarchyFileTypeMapEntityToModel());
-    }
-
-    /**
-     * After each mapping FileHierarchy object is being detached from current Hibernate session.
      *
-     * @return Entity to Model mapping function.
+     * @return
      */
-    private Function<FileHierarchy, FileHierarchyModel> fileHierarchyFileTypeMapEntityToModel() {
-        return fileHierarchy -> {
-            final FileHierarchyModel fileHierarchyModel = fileHierarchy.toFile();
-            entityManager.detach(fileHierarchy);
-            return fileHierarchyModel;
-        };
+    @Override
+    public Page<? extends IFileDetails> findAllFiles(final String accountId, final String stagingAreaId,
+                                                     final Predicate predicate, final Pageable pageable) {
+        final QEncryptedObject encryptedObject = QEncryptedObject.encryptedObject;
+        final BooleanExpression completePredicate =
+                encryptedObject.accountId.eq(accountId).and(encryptedObject.stagingId.eq(stagingAreaId)).and(predicate);
+        Page<? extends IFileDetails> page = encryptedObjectRepository.findAll(completePredicate, pageable);
+        return page;
     }
 
-    private Function<FileHierarchy, FileHierarchyModel> fileHierarchyFileAndFolderTypeMapEntityToModel() {
-        return fileHierarchyLocal -> {
-            if (FileStructureType.FILE.equals(fileHierarchyLocal.getFileType())) {
-                return fileHierarchyLocal.toFile();
-            }
-            return fileHierarchyLocal.toFolder();
-        };
+    /**
+     * {@inheritDoc}
+     *
+     * @return
+     */
+    @Override
+    public Stream<? extends IFileDetails> findAllFiles(final String accountId,
+                                                       final String stagingAreaId,
+                                                       final Optional<String> optionalPath) {
+        return optionalPath.map(path ->
+                encryptedObjectRepository.findAllByAccountIdAndStagingIdAndPathStartingWithOrderByPath(
+                        accountId, stagingAreaId, optionalPath.get()))
+                .orElseGet(() ->
+                        encryptedObjectRepository.findAllByAccountIdAndStagingIdOrderByPath(accountId, stagingAreaId)
+                );
     }
 
-    private void addFile(ArchivedFile fileToBeArchived) throws FileHierarchyException {
-        try {
-            final FileDetails fileDetails = new FileDetails(fileToBeArchived.getDosPath(),
-                    fileToBeArchived.getPlainSize(), fileToBeArchived.getPlainMd5(),
-                    fileToBeArchived.getEncryptedSize(), fileToBeArchived.getEncryptedMd5(),
-                    new String(fileToBeArchived.getKey()),
-                    FileStatus.ARCHIVE_IN_PROGRESS,
-                    fileToBeArchived.getFireId());
-            fileHierarchyRepository.saveNewFile(fileToBeArchived.getAccountId(), fileToBeArchived.getStagingAreaId(),
-                    fileToBeArchived.getPath(), fileDetails);
-        } catch (Exception e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new FileHierarchyException("Exception while creating file structure => " +
-                    "FileManagerService::createFileHierarchy(EncryptComplete) " + e.getMessage(), e);
-        }
-    }
 }

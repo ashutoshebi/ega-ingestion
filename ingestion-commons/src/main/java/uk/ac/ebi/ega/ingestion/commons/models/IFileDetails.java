@@ -15,10 +15,27 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.ingestion.file.manager.utils;
+package uk.ac.ebi.ega.ingestion.commons.models;
 
-public enum FileStructureType {
+import java.time.LocalDateTime;
 
-    FILE, FOLDER
+public interface IFileDetails {
 
+    String getAccountId();
+
+    String getStagingId();
+
+    String getPath();
+
+    long getVersion();
+
+    String getPlainMd5();
+
+    Long getPlainSize();
+
+    FileStatus getStatus();
+
+    LocalDateTime getCreatedDate();
+
+    LocalDateTime getUpdatedDate();
 }

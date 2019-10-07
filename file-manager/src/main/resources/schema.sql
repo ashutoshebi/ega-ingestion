@@ -147,35 +147,20 @@ create table ENCRYPTED_OBJECT
     UPDATED_DATE   timestamp     not null
 );
 
-create table FILE_DETAILS
-(
-    ID             bigserial primary key,
-    ENCRYPTED_MD5  varchar(255) not null,
-    ENCRYPTED_SIZE bigint       not null,
-    KEY            varchar(255) not null,
-    PLAIN_MD5      varchar(255) not null,
-    PLAIN_SIZE     bigint       not null,
-    DOS_PATH       varchar(255) not null,
-    STATUS         varchar(255) not null,
-    FIRE_ID        bigint       not null,
-    CREATED_DATE   timestamp    not null,
-    UPDATED_DATE   timestamp    not null
-);
-
 create table FILE_HIERARCHY
 (
-    ID              bigserial primary key,
-    ACCOUNT_ID      varchar(255)  not null,
-    CREATED_DATE    timestamp     not null,
-    FILE_TYPE       varchar(255)  not null,
-    NAME            varchar(255)  not null,
-    ORIGINAL_PATH   varchar(4096) not null,
-    STAGING_AREA_ID varchar(255)  not null,
-    UPDATED_DATE    timestamp     not null,
-    FILE_DETAILS_ID bigint,
-    PARENT_ID       bigint,
+    ID                  bigserial primary key,
+    ACCOUNT_ID          varchar(255)  not null,
+    CREATED_DATE        timestamp     not null,
+    FILE_TYPE           varchar(255)  not null,
+    NAME                varchar(255)  not null,
+    ORIGINAL_PATH       varchar(4096) not null,
+    STAGING_AREA_ID     varchar(255)  not null,
+    UPDATED_DATE        timestamp     not null,
+    ENCRYPTED_OBJECT_ID bigint,
+    PARENT_ID           bigint,
     CONSTRAINT UK_ORIGINAL_PATH unique (ORIGINAL_PATH),
-    CONSTRAINT FK_FILE_DETAILS FOREIGN KEY (FILE_DETAILS_ID) REFERENCES FILE_DETAILS (ID),
+    CONSTRAINT FK_ENCRYPTED_OBJECT FOREIGN KEY (ENCRYPTED_OBJECT_ID) REFERENCES ENCRYPTED_OBJECT (ID),
     CONSTRAINT FK_PARENT_ID FOREIGN KEY (PARENT_ID) REFERENCES FILE_HIERARCHY (ID)
 );
 

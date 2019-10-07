@@ -17,7 +17,7 @@
  */
 package uk.ac.ebi.ega.ingestion.file.manager.models;
 
-import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileStatus;
+import uk.ac.ebi.ega.ingestion.commons.models.FileStatus;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
