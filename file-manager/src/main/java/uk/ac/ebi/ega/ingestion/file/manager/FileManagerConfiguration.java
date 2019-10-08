@@ -80,6 +80,9 @@ public class FileManagerConfiguration {
     @Value("${file.manager.mail.alert}")
     private String mailAlert;
 
+    @Value("${file.manager.old.fire.ega.id.prefix}")
+    private String oldFireEgaIdPrefix;
+
     @Bean
     public IKeyGenerator keyGenerator() {
         return new RandomKeyGenerator(passwordKeySize);
@@ -136,7 +139,8 @@ public class FileManagerConfiguration {
                                                   KafkaTemplate<String, EncryptEvent> encryptEventKafkaTemplate)
             throws IOException, AlgorithmInitializationException {
         return new FileManagerService(fireIngestion, Paths.get(fireBoxRelativePath), fileHierarchyRepository,
-                encryptedObjectRepository, fileEncryptQueueName, encryptEventKafkaTemplate, encryptedKeyService());
+                encryptedObjectRepository, fileEncryptQueueName, encryptEventKafkaTemplate, encryptedKeyService(),
+                oldFireEgaIdPrefix);
     }
 
     @Bean

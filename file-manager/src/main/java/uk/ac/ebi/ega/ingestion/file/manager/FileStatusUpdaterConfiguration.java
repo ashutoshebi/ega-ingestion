@@ -28,6 +28,8 @@ import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.EncryptedObje
 import uk.ac.ebi.ega.ingestion.file.manager.services.FileStatusUpdaterService;
 import uk.ac.ebi.ega.ingestion.file.manager.services.IFileStatusUpdaterService;
 
+import java.net.URISyntaxException;
+
 @Configuration
 @EnableScheduling
 public class FileStatusUpdaterConfiguration {

@@ -34,10 +34,13 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
 import uk.ac.ebi.ega.fire.ingestion.service.IFireService;
 import uk.ac.ebi.ega.fire.models.OldFireFile;
+import uk.ac.ebi.ega.ingestion.commons.models.Encryption;
 import uk.ac.ebi.ega.ingestion.commons.models.FileStatus;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.EncryptedObject;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.EncryptedObjectRepository;
 
+import java.net.URI;
+import java.nio.file.Paths;
 import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
@@ -64,22 +67,20 @@ public class FileStatusUpdaterServiceTest {
     public void setUp() {
         fileStatusUpdaterService = new FileStatusUpdaterService(encryptedObjectRepository, fireService, 20);
     }
-//
-//    @Test
-//    @Transactional
-//    @Sql(scripts = "classpath:cleanDatabase.sql")
-//    public void whenTheFileIsArchivedInFireThenTheLocalFileIsUpdatedToBeArchivedToo() {
-//        createFileInLocalDBWhichIsBeingArchived();
-//        createArchivedFileInFire();
-//
-//        fileStatusUpdaterService.updateStatus();
-//
-//        final FileDetails updatedFileDetails = fileDetailsRepository.findAll().iterator().next();
-//        assertEquals(FileStatus.ARCHIVED_SUCCESSFULLY, updatedFileDetails.getStatus());
-//    }
 
     @Test
-    @Transactional
+    @Sql(scripts = "classpath:cleanDatabase.sql")
+    public void whenTheFileIsArchivedInFireThenTheLocalFileIsUpdatedToBeArchivedToo() {
+        createFileInLocalDBWhichIsBeingArchived();
+        createArchivedFileInFire();
+
+        fileStatusUpdaterService.updateStatus();
+
+        final EncryptedObject updatedFileDetails = encryptedObjectRepository.findAll().iterator().next();
+        assertEquals(FileStatus.ARCHIVED_SUCCESSFULLY, updatedFileDetails.getStatus());
+    }
+
+    @Test
     @Sql(scripts = "classpath:cleanDatabase.sql")
     public void whenTheFileHasErrorInFireThenTheLocalFileIsUpdatedToHaveErrorToo() {
         createFileInLocalDBWhichIsBeingArchived();
@@ -91,18 +92,17 @@ public class FileStatusUpdaterServiceTest {
         assertEquals(FileStatus.ERROR, encryptedObject.getStatus());
     }
 
-//    @Test
-//    @Transactional
-//    @Sql(scripts = "classpath:cleanDatabase.sql")
-//    public void whenTheFileInFireIsStillBeingArchivedThenTheLocalFileIsUpdatedToBeingArchivedToo() {
-//        createFileInLocalDBWhichIsBeingArchived();
-//        createFileInFireWhichIsStillBeingArchived();
-//
-//        fileStatusUpdaterService.updateStatus();
-//
-//        final FileDetails updatedFileDetails = fileDetailsRepository.findAll().iterator().next();
-//        assertEquals(FileStatus.ARCHIVE_IN_PROGRESS, updatedFileDetails.getStatus());
-//    }
+    @Test
+    @Sql(scripts = "classpath:cleanDatabase.sql")
+    public void whenTheFileInFireIsStillBeingArchivedThenTheLocalFileIsUpdatedToBeingArchivedToo() {
+        createFileInLocalDBWhichIsBeingArchived();
+        createFileInFireWhichIsStillBeingArchived();
+
+        fileStatusUpdaterService.updateStatus();
+
+        final EncryptedObject updatedFileDetails = encryptedObjectRepository.findAll().iterator().next();
+        assertEquals(FileStatus.ARCHIVE_IN_PROGRESS, updatedFileDetails.getStatus());
+    }
 
     @Test
     @Transactional
@@ -144,8 +144,7 @@ public class FileStatusUpdaterServiceTest {
 
     private EncryptedObject createFileDetails() {
         final EncryptedObject encryptedObject = new EncryptedObject("", "", "", 0L, "", "", 0L, "");
-        encryptedObject.setStatus(FileStatus.ARCHIVE_IN_PROGRESS);
-        encryptedObject.setFireId(FIRE_ID);
+        encryptedObject.archive("file://test", FIRE_ID, "", 0L, 0L, Encryption.EGA_AES, "");
         return encryptedObject;
     }
 

@@ -17,34 +17,41 @@
  */
 package uk.ac.ebi.ega.ingestion.commons.messages;
 
+import uk.ac.ebi.ega.ingestion.commons.models.Encryption;
+
+import java.net.URI;
 import java.util.Objects;
 
 public class ArchiveEventSimplify {
 
-    //Temporary class. Will be replaced with ArchiveEvent.
+    private URI uri;
 
     private long plainSize;
-    private String encryptedFilePath;
+
     private String encryptedMD5;
+
     private long encryptedSize;
 
-    protected ArchiveEventSimplify() {
-    }
+    private Encryption encryptionType;
 
-    public ArchiveEventSimplify(final long plainSize, final String encryptedFilePath,
-                                final String encryptedMD5, final long encryptedSize) {
+    private String encryptionKey;
+
+    public ArchiveEventSimplify(final long plainSize, final URI uri, final String encryptedMD5,
+                                final long encryptedSize, final String encryptionKey, final Encryption encryptionType) {
         this.plainSize = plainSize;
-        this.encryptedFilePath = Objects.requireNonNull(encryptedFilePath);
+        this.uri = Objects.requireNonNull(uri);
         this.encryptedMD5 = Objects.requireNonNull(encryptedMD5);
         this.encryptedSize = encryptedSize;
+        this.encryptionKey = encryptionKey;
+        this.encryptionType = encryptionType;
     }
 
     public long getPlainSize() {
         return plainSize;
     }
 
-    public String getEncryptedFilePath() {
-        return encryptedFilePath;
+    public URI getUri() {
+        return uri;
     }
 
     public String getEncryptedMD5() {
@@ -55,13 +62,24 @@ public class ArchiveEventSimplify {
         return encryptedSize;
     }
 
+    public String getEncryptionKey() {
+        return encryptionKey;
+    }
+
+    public Encryption getEncryptionType() {
+        return encryptionType;
+    }
+
     @Override
     public String toString() {
         return "ArchiveEventSimplify{" +
-                "plainSize=" + plainSize +
-                ", encryptedFilePath='" + encryptedFilePath + '\'' +
+                "uri=" + uri +
+                ", plainSize=" + plainSize +
                 ", encryptedMD5='" + encryptedMD5 + '\'' +
                 ", encryptedSize=" + encryptedSize +
+                ", encryptionKey='**********'" +
+                ", newEncryption=" + encryptionType +
                 '}';
     }
+
 }
