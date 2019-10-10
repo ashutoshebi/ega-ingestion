@@ -33,18 +33,18 @@ import uk.ac.ebi.ega.ingestion.commons.messages.EncryptEvent;
 
 import java.nio.file.Path;
 
-public class FileEncryptionEventListener {
+public class EncryptEventListener {
 
-    private final Logger logger = LoggerFactory.getLogger(FileEncryptionEventListener.class);
+    private final Logger logger = LoggerFactory.getLogger(EncryptEventListener.class);
 
     private final IFileEncryptionProcessor<IIngestionEventData> fileEncryptionProcessor;
     private final KafkaTemplate<String, ArchiveEvent> kafkaTemplate;
     private final String completeJobTopic;
     private final Path outputFolderPath;
 
-    public FileEncryptionEventListener(final IFileEncryptionProcessor<IIngestionEventData> fileEncryptionProcessor,
-                                       final KafkaTemplate<String, ArchiveEvent> kafkaTemplate, final String completeJobTopic,
-                                       final Path outputFolderPath) {
+    public EncryptEventListener(final IFileEncryptionProcessor<IIngestionEventData> fileEncryptionProcessor,
+                                final KafkaTemplate<String, ArchiveEvent> kafkaTemplate, final String completeJobTopic,
+                                final Path outputFolderPath) {
         this.fileEncryptionProcessor = fileEncryptionProcessor;
         this.kafkaTemplate = kafkaTemplate;
         this.completeJobTopic = completeJobTopic;

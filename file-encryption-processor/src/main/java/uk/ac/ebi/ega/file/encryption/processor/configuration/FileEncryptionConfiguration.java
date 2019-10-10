@@ -21,7 +21,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.core.KafkaTemplate;
-import uk.ac.ebi.ega.file.encryption.processor.listener.FileEncryptionEventListener;
+import uk.ac.ebi.ega.file.encryption.processor.listener.EncryptEventListener;
 import uk.ac.ebi.ega.file.encryption.processor.model.IIngestionEventData;
 import uk.ac.ebi.ega.file.encryption.processor.service.FileEncryptionProcessor;
 import uk.ac.ebi.ega.file.encryption.processor.service.IFileEncryptionProcessor;
@@ -40,16 +40,21 @@ import java.util.UUID;
 public class FileEncryptionConfiguration {
 
     @Bean
-    public FileEncryptionEventListener initFileEncryptionEventListener(final IFileEncryptionProcessor<IIngestionEventData> fileEncryptionProcessor,
-                                                                       final KafkaTemplate<String, ArchiveEvent> kafkaTemplate,
-                                                                       @Value("${file.encryption.output.path}") String outputFolderPathString,
-                                                                       @Value("${spring.kafka.file.archive.queue.name}") String completedTopic) throws FileNotFoundException, FileSystemException {
-        final Path outputFolderPath = Paths.get(outputFolderPathString);
+    public EncryptEventListener initFileEncryptionEventListener(final IFileEncryptionProcessor<IIngestionEventData> fileEncryptionProcessor,
+                                                                final KafkaTemplate<String, ArchiveEvent> kafkaTemplate,
+                                                                @Value("${file.encryption.output.path}") String outputFolder,
+                                                                @Value("${spring.kafka.file.archive.queue.name}") String completedTopic)
+            throws FileNotFoundException, FileSystemException {
+        final Path outputFolderPath = Paths.get(outputFolder);
+        assertWritePermissionsInOutputFolder(outputFolderPath);
+        return new EncryptEventListener(fileEncryptionProcessor, kafkaTemplate, completedTopic, outputFolderPath);
+    }
+
+    private void assertWritePermissionsInOutputFolder(Path outputFolderPath) throws FileNotFoundException, FileSystemException {
         if (!outputFolderPath.toFile().exists()) {
             throw new FileNotFoundException("Output file path ".
                     concat(outputFolderPath.toAbsolutePath().toString()).concat(" doesn't not exists!"));
         }
-
         final File testFile = new File(outputFolderPath.resolve(UUID.randomUUID().toString()).toAbsolutePath().toString());
         try (final FileOutputStream fileOutputStream = new FileOutputStream(testFile)) {
             fileOutputStream.write("Data can be written to File".getBytes());
@@ -61,23 +66,24 @@ public class FileEncryptionConfiguration {
         if (!testFile.delete()) {
             throw new FileSystemException("Unable to delete file inside Output folder path ".concat(testFile.getAbsolutePath()));
         }
-        return new FileEncryptionEventListener(fileEncryptionProcessor, kafkaTemplate, completedTopic, outputFolderPath);
     }
 
     @Bean
     public IFileEncryptionProcessor initFileEncryptionProcessor(@Value("${file.encryption.keyring.private}") String privateKeyRing,
                                                                 @Value("${file.encryption.keyring.private.key}") String privateKeyRingPassword) throws IOException {
         final File privateKeyRingFile = new File(privateKeyRing);
+        final File privateKeyRingPasswordFile = new File(privateKeyRingPassword);
+        assertFiles(privateKeyRingFile, privateKeyRingPasswordFile);
+        return new FileEncryptionProcessor(privateKeyRingFile, privateKeyRingPasswordFile);
+    }
 
+    private void assertFiles(File privateKeyRingFile, File privateKeyRingPasswordFile) throws FileNotFoundException {
         if (!privateKeyRingFile.exists()) {
             throw new FileNotFoundException("Private key ring file could not be found");
         }
 
-        final File privateKeyRingPasswordFile = new File(privateKeyRingPassword);
-
         if (!privateKeyRingPasswordFile.exists()) {
             throw new FileNotFoundException("Password file for private key ring could not be found");
         }
-        return new FileEncryptionProcessor(privateKeyRingFile, privateKeyRingPasswordFile);
     }
 }
