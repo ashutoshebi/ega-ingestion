@@ -28,12 +28,11 @@
     <modules>
         <module>ingestion-commons</module>
         <module>file-discovery</module>
-        <module>file-encryption-processor</module>
+        <module>file-encryption-processor-simplify</module>
         <module>file-manager</module>
         <module>file-re-encryption-processor</module>
         <module>job-processor</module>
         <module>staging-ingestion</module>
-        <module>file-encryption-processor-simplify</module>
         <module>fire-handler</module>
     </modules>
 

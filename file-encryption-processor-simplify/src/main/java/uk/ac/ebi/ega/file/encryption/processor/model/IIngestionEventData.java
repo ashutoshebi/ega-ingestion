@@ -17,20 +17,22 @@
  */
 package uk.ac.ebi.ega.file.encryption.processor.model;
 
+import uk.ac.ebi.ega.ingestion.commons.models.Encryption;
+
 import java.io.File;
 
 public interface IIngestionEventData {
     File getEncryptedFile();
 
-    String getCurrentEncryption();
+    Encryption getCurrentEncryption();
 
-    String getPlainMD5();
+    String getPlainMd5();
 
-    String getEncryptedMD5();
+    String getEncryptedMd5();
 
     char[] getDecryptionKey();
 
-    String getNewEncryption();
+    Encryption getNewEncryption();
 
     char[] getEncryptionKey();
 

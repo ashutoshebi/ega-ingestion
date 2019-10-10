@@ -41,8 +41,8 @@ import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
 import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.support.converter.StringJsonMessageConverter;
 import org.springframework.kafka.support.serializer.JsonSerializer;
-import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEventSimplify;
-import uk.ac.ebi.ega.ingestion.commons.messages.IngestionEventSimplify;
+import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEvent;
+import uk.ac.ebi.ega.ingestion.commons.messages.EncryptEvent;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -55,9 +55,9 @@ public class KafkaConfiguration {
     private String bootstrapServers;
 
     @Bean
-    public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String, IngestionEventSimplify>>
+    public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String, EncryptEvent>>
     kafkaListenerContainerFactory() {
-        ConcurrentKafkaListenerContainerFactory<String, IngestionEventSimplify> factory =
+        ConcurrentKafkaListenerContainerFactory<String, EncryptEvent> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
         factory.setConcurrency(1);
@@ -78,20 +78,20 @@ public class KafkaConfiguration {
     }
 
     @Bean
-    public ConsumerFactory<String, IngestionEventSimplify> consumerFactory() {
+    public ConsumerFactory<String, EncryptEvent> consumerFactory() {
         return new DefaultKafkaConsumerFactory<>(consumerConfigs());
     }
 
     @Bean
-    public ProducerFactory<String, ArchiveEventSimplify> producerFactory() {
-        DefaultKafkaProducerFactory<String, ArchiveEventSimplify> factory =
+    public ProducerFactory<String, ArchiveEvent> producerFactory() {
+        DefaultKafkaProducerFactory<String, ArchiveEvent> factory =
                 new DefaultKafkaProducerFactory<>(producerConfigs());
         factory.setValueSerializer(new JsonSerializer<>(getObjectMapper()));
         return factory;
     }
 
     @Bean
-    public KafkaTemplate<String, ArchiveEventSimplify> kafkaTemplate() {
+    public KafkaTemplate<String, ArchiveEvent> kafkaTemplate() {
         return new KafkaTemplate<>(producerFactory());
     }
 

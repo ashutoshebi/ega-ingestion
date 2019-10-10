@@ -17,7 +17,7 @@
  */
 package uk.ac.ebi.ega.file.encryption.processor.pipeline;
 
-import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEventSimplify;
+import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEvent;
 import uk.ac.ebi.ega.ingestion.commons.models.Encryption;
 
 public class IngestionPipelineResult {
@@ -73,9 +73,9 @@ public class IngestionPipelineResult {
         return encryptedIndexFile;
     }
 
-    public ArchiveEventSimplify toArchiveEvent() {
+    public ArchiveEvent toArchiveEvent() {
         //TODO refactorise this so that it returns the proper key
-        return new ArchiveEventSimplify(getBytesTransferred(),
+        return new ArchiveEvent(getBytesTransferred(),
                 getEncryptedFile().getFile().toURI(),
                 getEncryptedFile().getMd5(),
                 getEncryptedFile().getFileSize(), "TEST", Encryption.EGA_AES);

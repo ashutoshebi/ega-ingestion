@@ -17,98 +17,69 @@
  */
 package uk.ac.ebi.ega.ingestion.commons.messages;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import uk.ac.ebi.ega.ingestion.commons.models.Encryption;
 
-import java.time.LocalDateTime;
+import java.net.URI;
 import java.util.Objects;
 
 public class ArchiveEvent {
 
-    private String accountId;
+    private URI uri;
 
-    private String stagingAreaId;
-
-    private String originalPath;
-
-    private String stagingPath;
-
-    @JsonProperty
     private long plainSize;
 
-    private String plainMd5;
+    private String encryptedMD5;
 
-    @JsonProperty
     private long encryptedSize;
 
-    private String encryptedMd5;
+    private Encryption encryptionType;
 
-    private String keyPath;
+    private String encryptionKey;
 
-    private LocalDateTime startDateTime;
-
-    private LocalDateTime endDateTime;
-
-    protected ArchiveEvent() {
-    }
-
-    public ArchiveEvent(final String accountId, final String stagingAreaId, final String originalPath,
-                        final String stagingPath, final long plainSize, final String plainMd5,
-                        final long encryptedSize, final String encryptedMd5, String keyPath,
-                        final LocalDateTime startDateTime, final LocalDateTime endDateTime) {
-        this.accountId = Objects.requireNonNull(accountId);
-        this.stagingAreaId = Objects.requireNonNull(stagingAreaId);
-        this.originalPath = Objects.requireNonNull(originalPath);
-        this.stagingPath = Objects.requireNonNull(stagingPath);
-        this.plainSize = Objects.requireNonNull(plainSize);
-        this.plainMd5 = Objects.requireNonNull(plainMd5);
-        this.encryptedSize = Objects.requireNonNull(encryptedSize);
-        this.encryptedMd5 = Objects.requireNonNull(encryptedMd5);
-        this.keyPath = Objects.requireNonNull(keyPath);
-        this.startDateTime = Objects.requireNonNull(startDateTime);
-        this.endDateTime = Objects.requireNonNull(endDateTime);
-    }
-
-    public String getAccountId() {
-        return accountId;
-    }
-
-    public String getStagingAreaId() {
-        return stagingAreaId;
-    }
-
-    public String getOriginalPath() {
-        return originalPath;
-    }
-
-    public String getStagingPath() {
-        return stagingPath;
+    public ArchiveEvent(final long plainSize, final URI uri, final String encryptedMD5,
+                        final long encryptedSize, final String encryptionKey, final Encryption encryptionType) {
+        this.plainSize = plainSize;
+        this.uri = Objects.requireNonNull(uri);
+        this.encryptedMD5 = Objects.requireNonNull(encryptedMD5);
+        this.encryptedSize = encryptedSize;
+        this.encryptionKey = encryptionKey;
+        this.encryptionType = encryptionType;
     }
 
     public long getPlainSize() {
         return plainSize;
     }
 
-    public String getPlainMd5() {
-        return plainMd5;
+    public URI getUri() {
+        return uri;
+    }
+
+    public String getEncryptedMD5() {
+        return encryptedMD5;
     }
 
     public long getEncryptedSize() {
         return encryptedSize;
     }
 
-    public String getEncryptedMd5() {
-        return encryptedMd5;
+    public String getEncryptionKey() {
+        return encryptionKey;
     }
 
-    public String getKeyPath() {
-        return keyPath;
+    public Encryption getEncryptionType() {
+        return encryptionType;
     }
 
-    public LocalDateTime getStartDateTime() {
-        return startDateTime;
+    @Override
+    public String toString() {
+        return "ArchiveEventSimplify{" +
+                "uri=" + uri +
+                ", plainSize=" + plainSize +
+                ", encryptedMD5='" + encryptedMD5 + '\'' +
+                ", encryptedSize=" + encryptedSize +
+                ", encryptionKey='**********'" +
+                ", newEncryption=" + encryptionType +
+                '}';
     }
 
-    public LocalDateTime getEndDateTime() {
-        return endDateTime;
-    }
 }

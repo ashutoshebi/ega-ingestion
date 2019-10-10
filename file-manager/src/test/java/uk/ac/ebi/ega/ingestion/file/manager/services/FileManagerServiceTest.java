@@ -45,11 +45,9 @@ import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
 import uk.ac.ebi.ega.fire.ingestion.service.IFireService;
-import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEvent;
 import uk.ac.ebi.ega.ingestion.commons.messages.EncryptEvent;
 import uk.ac.ebi.ega.ingestion.commons.messages.NewFileEvent;
 import uk.ac.ebi.ega.ingestion.commons.models.Encryption;
-import uk.ac.ebi.ega.ingestion.commons.models.FileStatus;
 import uk.ac.ebi.ega.ingestion.commons.models.IFileDetails;
 import uk.ac.ebi.ega.ingestion.commons.services.IEncryptedKeyService;
 import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileHierarchyException;
@@ -61,13 +59,10 @@ import uk.ac.ebi.ega.ingestion.file.manager.utils.FileStructureType;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
@@ -500,24 +495,6 @@ public class FileManagerServiceTest {
     public void findAllFiles_WhenPassInvalidFilePath_ThenThrowsException() throws FileNotFoundException {
         fileManagerService.findAllFilesAndFoldersInPath(TEST_ACCOUNT, TEST_STAGING,
                 Optional.of(Paths.get("/nfs/ega/public/ega-box-01-012345677890.cip")));
-    }
-
-    private ArchiveEvent createArchiveEvent(final String path) throws IOException {
-
-        final UUID uuid = UUID.randomUUID();
-        final Path keyPath = Paths.get(testFolder.newFile("keyPath_" + uuid.toString()).getAbsolutePath());
-
-        return new ArchiveEvent(
-                "user-ega-box-1130",
-                "ega-box-1130",
-                path,
-                "/staging/path",
-                26L,
-                "3C130EA5D8D2D3DACA7F6808CDF0F148",
-                42L,
-                "3C130EA5D8D2D3DACA7F6808CDF0F149",
-                keyPath.toString(), LocalDateTime.now(), LocalDateTime.now()
-        );
     }
 
 }

@@ -25,7 +25,7 @@ import uk.ac.ebi.ega.file.encryption.processor.listener.FileEncryptionEventListe
 import uk.ac.ebi.ega.file.encryption.processor.model.IIngestionEventData;
 import uk.ac.ebi.ega.file.encryption.processor.service.FileEncryptionProcessor;
 import uk.ac.ebi.ega.file.encryption.processor.service.IFileEncryptionProcessor;
-import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEventSimplify;
+import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEvent;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -41,7 +41,7 @@ public class FileEncryptionConfiguration {
 
     @Bean
     public FileEncryptionEventListener initFileEncryptionEventListener(final IFileEncryptionProcessor<IIngestionEventData> fileEncryptionProcessor,
-                                                                       final KafkaTemplate<String, ArchiveEventSimplify> kafkaTemplate,
+                                                                       final KafkaTemplate<String, ArchiveEvent> kafkaTemplate,
                                                                        @Value("${file.encryption.output.path}") String outputFolderPathString,
                                                                        @Value("${spring.kafka.file.archive.queue.name}") String completedTopic) throws FileNotFoundException, FileSystemException {
         final Path outputFolderPath = Paths.get(outputFolderPathString);

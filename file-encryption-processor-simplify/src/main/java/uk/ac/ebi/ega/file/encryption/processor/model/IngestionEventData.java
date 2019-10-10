@@ -17,7 +17,8 @@
  */
 package uk.ac.ebi.ega.file.encryption.processor.model;
 
-import uk.ac.ebi.ega.ingestion.commons.messages.IngestionEventSimplify;
+import uk.ac.ebi.ega.ingestion.commons.messages.EncryptEvent;
+import uk.ac.ebi.ega.ingestion.commons.models.Encryption;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -27,22 +28,22 @@ import java.util.UUID;
 public class IngestionEventData implements IIngestionEventData {
 
     private final Path encryptedFilePath;
-    private final String currentEncryption;
-    private final String plainMD5;
-    private final String encryptedMD5;
+    private final Encryption currentEncryption;
+    private final String plainMd5;
+    private final String encryptedMd5;
     private final char[] decryptionKey;
-    private final String newEncryption;
+    private final Encryption newEncryption;
     private final char[] encryptionKey;
     private final Path outputFolderPath;
 
-    public IngestionEventData(final IngestionEventSimplify ingestionEventData, final Path outputFolderPath) {
-        this.encryptedFilePath = Paths.get(ingestionEventData.getUri());
-        this.currentEncryption = ingestionEventData.getCurrentEncryption();
-        this.plainMD5 = ingestionEventData.getPlainMD5();
-        this.encryptedMD5 = ingestionEventData.getEncryptedMD5();
-        this.decryptionKey = ingestionEventData.getDecryptionKey().toCharArray();
-        this.newEncryption = ingestionEventData.getNewEncryption();
-        this.encryptionKey = ingestionEventData.getEncryptionKey().toCharArray();
+    public IngestionEventData(final EncryptEvent encryptEvent, final Path outputFolderPath) {
+        this.encryptedFilePath = Paths.get(encryptEvent.getUri());
+        this.currentEncryption = encryptEvent.getCurrentEncryption();
+        this.plainMd5 = encryptEvent.getPlainMd5();
+        this.encryptedMd5 = encryptEvent.getEncryptedMd5();
+        this.decryptionKey = encryptEvent.getDecryptionKey().toCharArray();
+        this.newEncryption = encryptEvent.getNewEncryption();
+        this.encryptionKey = encryptEvent.getEncryptionKey().toCharArray();
         this.outputFolderPath = outputFolderPath;
     }
 
@@ -52,18 +53,18 @@ public class IngestionEventData implements IIngestionEventData {
     }
 
     @Override
-    public String getCurrentEncryption() {
+    public Encryption getCurrentEncryption() {
         return currentEncryption;
     }
 
     @Override
-    public String getPlainMD5() {
-        return plainMD5;
+    public String getPlainMd5() {
+        return plainMd5;
     }
 
     @Override
-    public String getEncryptedMD5() {
-        return encryptedMD5;
+    public String getEncryptedMd5() {
+        return encryptedMd5;
     }
 
     @Override
@@ -72,7 +73,7 @@ public class IngestionEventData implements IIngestionEventData {
     }
 
     @Override
-    public String getNewEncryption() {
+    public Encryption getNewEncryption() {
         return newEncryption;
     }
 

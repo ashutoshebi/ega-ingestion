@@ -63,10 +63,10 @@ public class FileEncryptionProcessor implements IFileEncryptionProcessor<IIngest
     }
 
     private void assertChecksum(final IIngestionEventData data, IngestionPipelineResult result) throws Md5Mismatch {
-        String userEncryptedMd5 = data.getEncryptedMD5();
+        String userEncryptedMd5 = data.getEncryptedMd5();
         String calculatedEncryptedMd5 = result.getOriginalFile().getMd5();
         assertChecksum(data, "Encrypted file md5 mismatch", userEncryptedMd5, calculatedEncryptedMd5);
-        String userPlainMd5 = data.getPlainMD5();
+        String userPlainMd5 = data.getPlainMd5();
         String calculatedPlainMd5 = result.getMd5();
         assertChecksum(data, "Decrypted file md5 mismatch", userPlainMd5, calculatedPlainMd5);
         logger.info("File {} gpgMd5:{} plainMd5:{} cipMd5:{}", data.getEncryptedFile().getAbsolutePath(),

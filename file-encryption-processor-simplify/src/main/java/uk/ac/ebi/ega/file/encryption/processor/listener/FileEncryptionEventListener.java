@@ -28,8 +28,8 @@ import uk.ac.ebi.ega.file.encryption.processor.model.IIngestionEventData;
 import uk.ac.ebi.ega.file.encryption.processor.model.IngestionEventData;
 import uk.ac.ebi.ega.file.encryption.processor.model.Result;
 import uk.ac.ebi.ega.file.encryption.processor.service.IFileEncryptionProcessor;
-import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEventSimplify;
-import uk.ac.ebi.ega.ingestion.commons.messages.IngestionEventSimplify;
+import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEvent;
+import uk.ac.ebi.ega.ingestion.commons.messages.EncryptEvent;
 
 import java.nio.file.Path;
 
@@ -38,12 +38,12 @@ public class FileEncryptionEventListener {
     private final Logger logger = LoggerFactory.getLogger(FileEncryptionEventListener.class);
 
     private final IFileEncryptionProcessor<IIngestionEventData> fileEncryptionProcessor;
-    private final KafkaTemplate<String, ArchiveEventSimplify> kafkaTemplate;
+    private final KafkaTemplate<String, ArchiveEvent> kafkaTemplate;
     private final String completeJobTopic;
     private final Path outputFolderPath;
 
     public FileEncryptionEventListener(final IFileEncryptionProcessor<IIngestionEventData> fileEncryptionProcessor,
-                                       final KafkaTemplate<String, ArchiveEventSimplify> kafkaTemplate, final String completeJobTopic,
+                                       final KafkaTemplate<String, ArchiveEvent> kafkaTemplate, final String completeJobTopic,
                                        final Path outputFolderPath) {
         this.fileEncryptionProcessor = fileEncryptionProcessor;
         this.kafkaTemplate = kafkaTemplate;
@@ -54,12 +54,12 @@ public class FileEncryptionEventListener {
     @SuppressWarnings("unchecked")
     @KafkaListener(id = "${spring.kafka.client-id}", topics = "${spring.kafka.staging.ingestion.queue.name}",
             groupId = "file-ingestion", clientIdPrefix = "executor", autoStartup = "true")
-    public void listen(@Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) String key, IngestionEventSimplify ingestionEventDataSimplify,
+    public void listen(@Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) String key, EncryptEvent encryptEvent,
                        Acknowledgment acknowledgment) {
-        logger.info("Process - key: {} data {}", key, ingestionEventDataSimplify);
+        logger.info("Process - key: {} data {}", key, encryptEvent);
 
-        final IIngestionEventData ingestionEventData = new IngestionEventData(ingestionEventDataSimplify, outputFolderPath);
-        final Result<ArchiveEventSimplify> result = fileEncryptionProcessor.encrypt(ingestionEventData);
+        final IIngestionEventData ingestionEventData = new IngestionEventData(encryptEvent, outputFolderPath);
+        final Result<ArchiveEvent> result = fileEncryptionProcessor.encrypt(ingestionEventData);
 
         reportToFileManager(key, result);
 
@@ -68,7 +68,7 @@ public class FileEncryptionEventListener {
         acknowledgment.acknowledge();
     }
 
-    private void reportToFileManager(final String key, final Result<ArchiveEventSimplify> result) {
+    private void reportToFileManager(final String key, final Result<ArchiveEvent> result) {
         logger.info("Data sent to kafka topic={}, key={}, data={}", completeJobTopic, key, result.getData());
         kafkaTemplate.send(completeJobTopic, key, result.getData());
     }
