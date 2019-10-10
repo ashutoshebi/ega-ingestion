@@ -18,5 +18,7 @@
 package uk.ac.ebi.ega.file.encryption.processor.pipeline;
 
 public interface IngestionPipeline {
+
     IngestionPipelineResult process() throws Exception;
+
 }

@@ -32,21 +32,13 @@ public class IngestionPipelineResult {
 
     private IngestionPipelineFile encryptedFile;
 
-    private IngestionPipelineFile encryptedIndexFile;
-
     public IngestionPipelineResult(IngestionPipelineFile originalFile, String md5, long bytesTransferred, char[] key,
                                    IngestionPipelineFile encryptedFile) {
-        this(originalFile, md5, bytesTransferred, key, encryptedFile, null);
-    }
-
-    public IngestionPipelineResult(IngestionPipelineFile originalFile, String md5, long bytesTransferred, char[] key,
-                                   IngestionPipelineFile encryptedFile, IngestionPipelineFile encryptedIndexFile) {
         this.originalFile = originalFile;
         this.md5 = md5;
         this.bytesTransferred = bytesTransferred;
         this.key = key;
         this.encryptedFile = encryptedFile;
-        this.encryptedIndexFile = encryptedIndexFile;
     }
 
     public IngestionPipelineFile getOriginalFile() {
@@ -67,10 +59,6 @@ public class IngestionPipelineResult {
 
     public IngestionPipelineFile getEncryptedFile() {
         return encryptedFile;
-    }
-
-    public IngestionPipelineFile getEncryptedIndexFile() {
-        return encryptedIndexFile;
     }
 
     public ArchiveEvent toArchiveEvent() {

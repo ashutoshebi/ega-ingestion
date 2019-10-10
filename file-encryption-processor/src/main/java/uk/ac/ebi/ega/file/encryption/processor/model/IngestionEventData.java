@@ -86,4 +86,5 @@ public class IngestionEventData implements IIngestionEventData {
     public File getOutputFile() {
         return outputFolderPath.resolve(UUID.randomUUID().toString()).toFile();
     }
+
 }

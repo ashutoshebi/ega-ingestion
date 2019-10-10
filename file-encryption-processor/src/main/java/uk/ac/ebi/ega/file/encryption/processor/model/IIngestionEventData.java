@@ -22,6 +22,7 @@ import uk.ac.ebi.ega.ingestion.commons.models.Encryption;
 import java.io.File;
 
 public interface IIngestionEventData {
+
     File getEncryptedFile();
 
     Encryption getCurrentEncryption();
@@ -37,4 +38,5 @@ public interface IIngestionEventData {
     char[] getEncryptionKey();
 
     File getOutputFile();
+
 }

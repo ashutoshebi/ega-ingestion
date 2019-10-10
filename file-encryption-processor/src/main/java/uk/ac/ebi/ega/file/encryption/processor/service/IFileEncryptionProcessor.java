@@ -21,5 +21,7 @@ import uk.ac.ebi.ega.file.encryption.processor.model.IIngestionEventData;
 import uk.ac.ebi.ega.file.encryption.processor.model.Result;
 
 public interface IFileEncryptionProcessor<T extends IIngestionEventData> {
+
     Result encrypt(T data);
+
 }

@@ -51,7 +51,6 @@ public class FileEncryptionEventListener {
         this.outputFolderPath = outputFolderPath;
     }
 
-    @SuppressWarnings("unchecked")
     @KafkaListener(id = "${spring.kafka.client-id}", topics = "${spring.kafka.staging.ingestion.queue.name}",
             groupId = "file-ingestion", clientIdPrefix = "executor", autoStartup = "true")
     public void listen(@Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) String key, EncryptEvent encryptEvent,
