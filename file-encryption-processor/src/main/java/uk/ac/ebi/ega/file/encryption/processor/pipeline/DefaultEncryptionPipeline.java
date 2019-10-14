@@ -33,7 +33,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DefaultIngestionPipeline implements IngestionPipeline {
+public class DefaultEncryptionPipeline {
 
     private final List<File> outputFiles;
     private File secretRing;
@@ -42,8 +42,8 @@ public class DefaultIngestionPipeline implements IngestionPipeline {
     protected File output;
     protected char[] newEncryptionKey;
 
-    public DefaultIngestionPipeline(final File origin, final File secretRing, final File secretRingKey,
-                                    final File output, final char[] newEncryptionKey) {
+    public DefaultEncryptionPipeline(final File origin, final File secretRing, final File secretRingKey,
+                                     final File output, final char[] newEncryptionKey) {
         this.outputFiles = new ArrayList<>();
         this.origin = origin;
         this.secretRing = secretRing;
@@ -52,8 +52,7 @@ public class DefaultIngestionPipeline implements IngestionPipeline {
         this.newEncryptionKey = newEncryptionKey;
     }
 
-    @Override
-    public final IngestionPipelineResult process() throws Exception {
+    public final IngestionPipelineResult process() throws IOException, AlgorithmInitializationException {
         try (
                 final DecryptInputStream decryptInputStream = getDecryptionInputStream();
                 final EncryptOutputStream encryptOutputStream = getEncryptionOutputStream(output);
@@ -67,7 +66,6 @@ public class DefaultIngestionPipeline implements IngestionPipeline {
                     new IngestionPipelineFile(origin, decryptInputStream.getMd5(), decryptInputStream.available()),
                     decryptInputStream.getUnencryptedMd5(),
                     bytesTransferred,
-                    newEncryptionKey,
                     new IngestionPipelineFile(output, encryptOutputStream.getMd5(), output.length())
             );
         }

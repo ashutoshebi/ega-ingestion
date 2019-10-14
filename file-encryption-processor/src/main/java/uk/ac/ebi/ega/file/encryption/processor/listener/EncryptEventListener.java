@@ -24,31 +24,25 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
-import uk.ac.ebi.ega.file.encryption.processor.model.IIngestionEventData;
-import uk.ac.ebi.ega.file.encryption.processor.model.IngestionEventData;
-import uk.ac.ebi.ega.file.encryption.processor.model.Result;
-import uk.ac.ebi.ega.file.encryption.processor.service.IFileEncryptionProcessor;
-import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEvent;
+import uk.ac.ebi.ega.ingestion.commons.messages.FileEncryptionResult;
+import uk.ac.ebi.ega.file.encryption.processor.service.IFileEncryptionService;
+import uk.ac.ebi.ega.ingestion.commons.messages.FileEncryptionData;
 import uk.ac.ebi.ega.ingestion.commons.messages.EncryptEvent;
-
-import java.nio.file.Path;
 
 public class EncryptEventListener {
 
     private final Logger logger = LoggerFactory.getLogger(EncryptEventListener.class);
 
-    private final IFileEncryptionProcessor<IIngestionEventData> fileEncryptionProcessor;
-    private final KafkaTemplate<String, ArchiveEvent> kafkaTemplate;
+    private final IFileEncryptionService fileEncryptionProcessor;
+    private final KafkaTemplate<String, FileEncryptionData> kafkaTemplate;
     private final String completeJobTopic;
-    private final Path outputFolderPath;
 
-    public EncryptEventListener(final IFileEncryptionProcessor<IIngestionEventData> fileEncryptionProcessor,
-                                final KafkaTemplate<String, ArchiveEvent> kafkaTemplate, final String completeJobTopic,
-                                final Path outputFolderPath) {
+    public EncryptEventListener(final IFileEncryptionService fileEncryptionProcessor,
+                                final KafkaTemplate<String, FileEncryptionData> kafkaTemplate,
+                                final String completeJobTopic) {
         this.fileEncryptionProcessor = fileEncryptionProcessor;
         this.kafkaTemplate = kafkaTemplate;
         this.completeJobTopic = completeJobTopic;
-        this.outputFolderPath = outputFolderPath;
     }
 
     @KafkaListener(id = "${spring.kafka.client-id}", topics = "${spring.kafka.staging.ingestion.queue.name}",
@@ -57,18 +51,13 @@ public class EncryptEventListener {
                        Acknowledgment acknowledgment) {
         logger.info("Process - key: {} data {}", key, encryptEvent);
 
-        final IIngestionEventData ingestionEventData = new IngestionEventData(encryptEvent, outputFolderPath);
-        final Result<ArchiveEvent> result = fileEncryptionProcessor.encrypt(ingestionEventData);
-
-        reportToFileManager(key, result);
-
-        /*Calling acknowledge() in both cases Success & Failure assuming FileManager will resend message
-        on kafka for re-encryption in case of failure.*/
+        final FileEncryptionResult<FileEncryptionData> fileEncryptionResult = fileEncryptionProcessor.encrypt(encryptEvent);
+        reportToFileManager(key, fileEncryptionResult);
         acknowledgment.acknowledge();
     }
 
-    private void reportToFileManager(final String key, final Result<ArchiveEvent> result) {
-        logger.info("Data sent to kafka topic={}, key={}, data={}", completeJobTopic, key, result.getData());
-        kafkaTemplate.send(completeJobTopic, key, result.getData());
+    private void reportToFileManager(final String key, final FileEncryptionResult<FileEncryptionData> fileEncryptionResult) {
+        logger.info("Data sent to kafka topic={}, key={}, data={}", completeJobTopic, key, fileEncryptionResult.getData());
+        kafkaTemplate.send(completeJobTopic, key, fileEncryptionResult.getData());
     }
 }

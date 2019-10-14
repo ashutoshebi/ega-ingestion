@@ -15,10 +15,13 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.file.encryption.processor.pipeline;
+package uk.ac.ebi.ega.file.encryption.processor.service;
 
-public interface IngestionPipeline {
+import uk.ac.ebi.ega.ingestion.commons.messages.FileEncryptionResult;
+import uk.ac.ebi.ega.ingestion.commons.messages.EncryptEvent;
 
-    IngestionPipelineResult process() throws Exception;
+public interface IFileEncryptionService {
+
+    FileEncryptionResult encrypt(EncryptEvent data);
 
 }

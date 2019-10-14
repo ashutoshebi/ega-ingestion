@@ -17,27 +17,21 @@
  */
 package uk.ac.ebi.ega.file.encryption.processor.pipeline;
 
-import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEvent;
-import uk.ac.ebi.ega.ingestion.commons.models.Encryption;
-
 public class IngestionPipelineResult {
 
     private IngestionPipelineFile originalFile;
 
-    private String md5;
+    private String plainMd5;
 
-    private long bytesTransferred;
-
-    private char[] key;
+    private long plainSize;
 
     private IngestionPipelineFile encryptedFile;
 
-    public IngestionPipelineResult(IngestionPipelineFile originalFile, String md5, long bytesTransferred, char[] key,
+    public IngestionPipelineResult(IngestionPipelineFile originalFile, String plainMd5, long plainSize,
                                    IngestionPipelineFile encryptedFile) {
         this.originalFile = originalFile;
-        this.md5 = md5;
-        this.bytesTransferred = bytesTransferred;
-        this.key = key;
+        this.plainMd5 = plainMd5;
+        this.plainSize = plainSize;
         this.encryptedFile = encryptedFile;
     }
 
@@ -45,27 +39,16 @@ public class IngestionPipelineResult {
         return originalFile;
     }
 
-    public String getMd5() {
-        return md5;
+    public String getPlainMd5() {
+        return plainMd5;
     }
 
-    public long getBytesTransferred() {
-        return bytesTransferred;
-    }
-
-    public char[] getKey() {
-        return key;
+    public long getPlainSize() {
+        return plainSize;
     }
 
     public IngestionPipelineFile getEncryptedFile() {
         return encryptedFile;
     }
 
-    public ArchiveEvent toArchiveEvent() {
-        //TODO refactorise this so that it returns the proper key
-        return new ArchiveEvent(getBytesTransferred(),
-                getEncryptedFile().getFile().toURI(),
-                getEncryptedFile().getMd5(),
-                getEncryptedFile().getFileSize(), "TEST", Encryption.EGA_AES);
-    }
 }

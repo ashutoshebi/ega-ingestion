@@ -43,7 +43,7 @@ import static org.junit.Assert.assertNotNull;
 
 @TestPropertySource("classpath:application-test.properties")
 @RunWith(SpringRunner.class)
-public class DefaultIngestionPipelineTest {
+public class DefaultEncryptionPipelineTest {
 
     @Rule
     public TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -69,7 +69,7 @@ public class DefaultIngestionPipelineTest {
         final File origin = ResourceUtils.getFile(fileToEncryptPath);
         final File secretRing = ResourceUtils.getFile(secretRingPath);
         final File secretRingKey = ResourceUtils.getFile(secretRingKeyPath);
-        final IngestionPipeline ingestionPipeline = initNewDefaultIngestionPipeline(origin, secretRing, secretRingKey);
+        final DefaultEncryptionPipeline ingestionPipeline = initNewDefaultIngestionPipeline(origin, secretRing, secretRingKey);
 
         final List<String> originalFileMD5 = Files.readAllLines(ResourceUtils.getFile(originalPlainFileMD5Path).toPath());
         final IngestionPipelineResult ingestionPipelineResult = ingestionPipeline.process();
@@ -77,9 +77,8 @@ public class DefaultIngestionPipelineTest {
         assertNotNull(ingestionPipelineResult);
         assertNotNull(originalFileMD5);
         assertFalse(originalFileMD5.isEmpty());
-        assertEquals(originalFileMD5.get(0), ingestionPipelineResult.getMd5());
-        assertNotNull(ingestionPipelineResult.getKey());
-        assertTrue(ingestionPipelineResult.getBytesTransferred() > 0);
+        assertEquals(originalFileMD5.get(0), ingestionPipelineResult.getPlainMd5());
+        assertTrue(ingestionPipelineResult.getPlainSize() > 0);
 
         assertNotNull(ingestionPipelineResult.getEncryptedFile());
         assertNotNull(ingestionPipelineResult.getEncryptedFile().getMd5());
@@ -99,7 +98,7 @@ public class DefaultIngestionPipelineTest {
         final File origin = ResourceUtils.getFile(originalPlainFileMD5Path);
         final File secretRing = ResourceUtils.getFile(secretRingPath);
         final File secretRingKey = ResourceUtils.getFile(secretRingKeyPath);
-        final IngestionPipeline ingestionPipeline = initNewDefaultIngestionPipeline(origin, secretRing, secretRingKey);
+        final DefaultEncryptionPipeline ingestionPipeline = initNewDefaultIngestionPipeline(origin, secretRing, secretRingKey);
         ingestionPipeline.process();
     }
 
@@ -113,15 +112,15 @@ public class DefaultIngestionPipelineTest {
         final File origin = ResourceUtils.getFile(fileToEncryptPath);
         final File secretRing = ResourceUtils.getFile(secretRingPath);
         //Pass wrong secret key
-        final IngestionPipeline ingestionPipeline = initNewDefaultIngestionPipeline(origin, secretRing, wrongSecretRingKey);
+        final DefaultEncryptionPipeline ingestionPipeline = initNewDefaultIngestionPipeline(origin, secretRing, wrongSecretRingKey);
         ingestionPipeline.process();
     }
 
-    private IngestionPipeline initNewDefaultIngestionPipeline(final File origin, final File secretRing,
+    private DefaultEncryptionPipeline initNewDefaultIngestionPipeline(final File origin, final File secretRing,
                                                               final File secretRingKey) throws IOException {
         final File outputFolder = temporaryFolder.newFolder(outputFolderPath);
         final File createdOutputFile = new File(outputFolder, UUID.randomUUID().toString());
         final char[] newEncryptionKey = "new_encryption_key_test".toCharArray();
-        return new DefaultIngestionPipeline(origin, secretRing, secretRingKey, createdOutputFile, newEncryptionKey);
+        return new DefaultEncryptionPipeline(origin, secretRing, secretRingKey, createdOutputFile, newEncryptionKey);
     }
 }

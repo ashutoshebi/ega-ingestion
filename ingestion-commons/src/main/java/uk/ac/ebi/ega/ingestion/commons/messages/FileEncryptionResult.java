@@ -15,17 +15,18 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.file.encryption.processor.model;
+package uk.ac.ebi.ega.ingestion.commons.messages;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-public class Result<T> {
+public class FileEncryptionResult<T> {
 
     public enum Status {
 
         SUCCESS(1),
-        FAILURE(2);
+        MD5_ERROR(2),
+        FAILURE(3);
 
         private int enumValue;
 
@@ -50,33 +51,27 @@ public class Result<T> {
     private T data;
     private Status status;
     private String message;
-    private Exception exception;
 
-    private Result(final Status status, final String message, final Exception exception) {
+    private FileEncryptionResult(final Status status, final String message, final Exception exception) {
         this.status = status;
-        this.message = message;
-        this.exception = exception;
+        this.message = formatMessageAndException(message, exception);
     }
 
-    private Result(final Status status, final T data) {
+    private FileEncryptionResult(final Status status, final T data) {
         this.status = status;
         this.data = data;
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> Result success(final T data) {
-        return new Result(Status.SUCCESS, data);
+    public static <T> FileEncryptionResult success(final T data) {
+        return new FileEncryptionResult(Status.SUCCESS, data);
     }
 
-    public static Result failure(String msg, Exception e) {
-        return new Result(Status.FAILURE, msg, e);
+    public static FileEncryptionResult failure(String msg, Exception e) {
+        return new FileEncryptionResult(Status.FAILURE, msg, e);
     }
 
-    public String getMessageAndException() {
-        if (message == null && exception == null) {
-            return null;
-        }
-
+    private static String formatMessageAndException(String message, Exception exception) {
         StringBuilder stringBuilder = new StringBuilder();
         if (message != null) {
             stringBuilder.append(message);
@@ -104,7 +99,4 @@ public class Result<T> {
         return message;
     }
 
-    public Exception getException() {
-        return exception;
-    }
 }

@@ -41,8 +41,8 @@ import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
 import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.support.converter.StringJsonMessageConverter;
 import org.springframework.kafka.support.serializer.JsonSerializer;
-import uk.ac.ebi.ega.file.encryption.processor.model.Result;
-import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEvent;
+import uk.ac.ebi.ega.ingestion.commons.messages.FileEncryptionResult;
+import uk.ac.ebi.ega.ingestion.commons.messages.FileEncryptionData;
 import uk.ac.ebi.ega.ingestion.commons.messages.EncryptEvent;
 
 import java.util.HashMap;
@@ -56,9 +56,9 @@ public class KafkaConfiguration {
     private String bootstrapServers;
 
     @Bean
-    public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String, Result<EncryptEvent>>>
+    public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String, FileEncryptionResult<EncryptEvent>>>
     kafkaListenerContainerFactory() {
-        ConcurrentKafkaListenerContainerFactory<String, Result<EncryptEvent>> factory =
+        ConcurrentKafkaListenerContainerFactory<String, FileEncryptionResult<EncryptEvent>> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
         factory.setConcurrency(1);
@@ -79,20 +79,20 @@ public class KafkaConfiguration {
     }
 
     @Bean
-    public ConsumerFactory<String, Result<EncryptEvent>> consumerFactory() {
+    public ConsumerFactory<String, FileEncryptionResult<EncryptEvent>> consumerFactory() {
         return new DefaultKafkaConsumerFactory<>(consumerConfigs());
     }
 
     @Bean
-    public ProducerFactory<String, ArchiveEvent> producerFactory() {
-        DefaultKafkaProducerFactory<String, ArchiveEvent> factory =
+    public ProducerFactory<String, FileEncryptionData> producerFactory() {
+        DefaultKafkaProducerFactory<String, FileEncryptionData> factory =
                 new DefaultKafkaProducerFactory<>(producerConfigs());
         factory.setValueSerializer(new JsonSerializer<>(getObjectMapper()));
         return factory;
     }
 
     @Bean
-    public KafkaTemplate<String, ArchiveEvent> kafkaTemplate() {
+    public KafkaTemplate<String, FileEncryptionData> kafkaTemplate() {
         return new KafkaTemplate<>(producerFactory());
     }
 

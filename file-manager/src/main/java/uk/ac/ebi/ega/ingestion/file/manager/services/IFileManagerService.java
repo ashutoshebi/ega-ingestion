@@ -20,7 +20,7 @@ package uk.ac.ebi.ega.ingestion.file.manager.services;
 import com.querydsl.core.types.Predicate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEvent;
+import uk.ac.ebi.ega.ingestion.commons.messages.FileEncryptionData;
 import uk.ac.ebi.ega.ingestion.commons.messages.NewFileEvent;
 import uk.ac.ebi.ega.ingestion.commons.models.IFileDetails;
 import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileHierarchyException;
@@ -49,10 +49,10 @@ public interface IFileManagerService {
      * encryption md5 and plain size, modifies current encrypted file size and sets the new encryption format.
      *
      * @param key
-     * @param archiveEvent
+     * @param fileEncryptionData
      * @throws IOException
      */
-    void archive(String key, ArchiveEvent archiveEvent);
+    void archive(String key, FileEncryptionData fileEncryptionData);
 
     /**
      * Returns List of FileHierarchyModel. Condition checks for case insensitive equals AccountId, StagingAreaId

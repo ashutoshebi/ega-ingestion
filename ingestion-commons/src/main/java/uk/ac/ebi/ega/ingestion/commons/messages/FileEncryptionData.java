@@ -22,7 +22,7 @@ import uk.ac.ebi.ega.ingestion.commons.models.Encryption;
 import java.net.URI;
 import java.util.Objects;
 
-public class ArchiveEvent {
+public class FileEncryptionData {
 
     private URI uri;
 
@@ -36,8 +36,8 @@ public class ArchiveEvent {
 
     private String encryptionKey;
 
-    public ArchiveEvent(final long plainSize, final URI uri, final String encryptedMD5,
-                        final long encryptedSize, final String encryptionKey, final Encryption encryptionType) {
+    public FileEncryptionData(final long plainSize, final URI uri, final String encryptedMD5,
+                              final long encryptedSize, final String encryptionKey, final Encryption encryptionType) {
         this.plainSize = plainSize;
         this.uri = Objects.requireNonNull(uri);
         this.encryptedMD5 = Objects.requireNonNull(encryptedMD5);

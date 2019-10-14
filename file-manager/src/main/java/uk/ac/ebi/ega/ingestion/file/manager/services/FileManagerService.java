@@ -27,7 +27,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import uk.ac.ebi.ega.fire.ingestion.service.IFireService;
-import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEvent;
+import uk.ac.ebi.ega.ingestion.commons.messages.FileEncryptionData;
 import uk.ac.ebi.ega.ingestion.commons.messages.EncryptEvent;
 import uk.ac.ebi.ega.ingestion.commons.messages.NewFileEvent;
 import uk.ac.ebi.ega.ingestion.commons.models.FileStatus;
@@ -123,23 +123,23 @@ public class FileManagerService implements IFileManagerService {
 
     @Override
     @Transactional(transactionManager = "fileManagerFireChainedTransactionManager", rollbackFor = Exception.class)
-    public void archive(String key, final ArchiveEvent archiveEvent) {
+    public void archive(String key, final FileEncryptionData fileEncryptionData) {
         EncryptedObject encryptedObject = encryptedObjectRepository.findById(Long.parseLong(key)).get();
         if (encryptedObject.getStatus() == FileStatus.PROCESSING) {
             final Long fireId = fireService.archiveFile(
                     oldFireEgaIdPrefix + key,
-                    new File(archiveEvent.getUri()), archiveEvent.getEncryptedMD5(),
+                    new File(fileEncryptionData.getUri()), fileEncryptionData.getEncryptedMD5(),
                     encryptedObject.toFirePath()
             ).get();
 
             encryptedObject.archive(
-                    archiveEvent.getUri().toString(),
+                    fileEncryptionData.getUri().toString(),
                     fireId,
-                    archiveEvent.getEncryptedMD5(),
-                    archiveEvent.getPlainSize(),
-                    archiveEvent.getEncryptedSize(),
-                    archiveEvent.getEncryptionType(),
-                    archiveEvent.getEncryptionKey());
+                    fileEncryptionData.getEncryptedMD5(),
+                    fileEncryptionData.getPlainSize(),
+                    fileEncryptionData.getEncryptedSize(),
+                    fileEncryptionData.getEncryptionType(),
+                    fileEncryptionData.getEncryptionKey());
             encryptedObjectRepository.save(encryptedObject);
             LOGGER.info("File: {} archiving started", key);
         } else {

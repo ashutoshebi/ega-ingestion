@@ -17,8 +17,6 @@
  */
 package uk.ac.ebi.ega.ingestion.commons.services;
 
-import uk.ac.ebi.ega.encryption.core.encryption.exceptions.AlgorithmInitializationException;
-
 public interface IEncryptedKeyService {
 
     String generateNewEncryptedKey();
