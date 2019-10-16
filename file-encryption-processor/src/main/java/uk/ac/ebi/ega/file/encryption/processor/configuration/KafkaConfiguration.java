@@ -56,9 +56,9 @@ public class KafkaConfiguration {
     private String bootstrapServers;
 
     @Bean
-    public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String, FileEncryptionResult<EncryptEvent>>>
+    public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String, FileEncryptionResult>>
     kafkaListenerContainerFactory() {
-        ConcurrentKafkaListenerContainerFactory<String, FileEncryptionResult<EncryptEvent>> factory =
+        ConcurrentKafkaListenerContainerFactory<String, FileEncryptionResult> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
         factory.setConcurrency(1);
@@ -79,7 +79,7 @@ public class KafkaConfiguration {
     }
 
     @Bean
-    public ConsumerFactory<String, FileEncryptionResult<EncryptEvent>> consumerFactory() {
+    public ConsumerFactory<String, FileEncryptionResult> consumerFactory() {
         return new DefaultKafkaConsumerFactory<>(consumerConfigs());
     }
 

@@ -20,12 +20,14 @@ package uk.ac.ebi.ega.ingestion.commons.messages;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-public class FileEncryptionResult<T> {
+public class FileEncryptionResult {
 
     public enum Status {
 
         SUCCESS(1),
+
         MD5_ERROR(2),
+
         FAILURE(3);
 
         private int enumValue;
@@ -48,27 +50,35 @@ public class FileEncryptionResult<T> {
         }
     }
 
-    private T data;
     private Status status;
+
     private String message;
+
+    private FileEncryptionData data;
+
+    FileEncryptionResult() {
+    }
 
     private FileEncryptionResult(final Status status, final String message, final Exception exception) {
         this.status = status;
         this.message = formatMessageAndException(message, exception);
     }
 
-    private FileEncryptionResult(final Status status, final T data) {
+    private FileEncryptionResult(final Status status, final FileEncryptionData data) {
         this.status = status;
         this.data = data;
     }
 
-    @SuppressWarnings("unchecked")
-    public static <T> FileEncryptionResult success(final T data) {
+    public static FileEncryptionResult success(final FileEncryptionData data) {
         return new FileEncryptionResult(Status.SUCCESS, data);
     }
 
     public static FileEncryptionResult failure(String msg, Exception e) {
         return new FileEncryptionResult(Status.FAILURE, msg, e);
+    }
+
+    public static FileEncryptionResult md5Failure(String msg, Exception e) {
+        return new FileEncryptionResult(Status.MD5_ERROR, msg, e);
     }
 
     private static String formatMessageAndException(String message, Exception exception) {
@@ -87,7 +97,7 @@ public class FileEncryptionResult<T> {
         return stringBuilder.toString();
     }
 
-    public T getData() {
+    public FileEncryptionData getData() {
         return data;
     }
 

@@ -24,8 +24,8 @@ import uk.ac.ebi.ega.encryption.core.services.IPasswordEncryptionService;
 import uk.ac.ebi.ega.file.encryption.processor.exception.Md5Mismatch;
 import uk.ac.ebi.ega.file.encryption.processor.pipeline.DefaultEncryptionPipeline;
 import uk.ac.ebi.ega.file.encryption.processor.pipeline.IngestionPipelineResult;
-import uk.ac.ebi.ega.ingestion.commons.messages.FileEncryptionData;
 import uk.ac.ebi.ega.ingestion.commons.messages.EncryptEvent;
+import uk.ac.ebi.ega.ingestion.commons.messages.FileEncryptionData;
 import uk.ac.ebi.ega.ingestion.commons.messages.FileEncryptionResult;
 
 import java.io.File;
@@ -58,18 +58,22 @@ public class FileEncryptionService implements IFileEncryptionService {
         logger.info("Starting process for file {}", data.getUri());
         try {
             return doEncrypt(data);
-        } catch (Exception e) {
-            logger.info("Process for file {} is unsuccessful", data.getUri());
+        } catch (IOException | AlgorithmInitializationException e) {
+            logger.info("Process for file {} failed unexpectedly, reason {}.", data.getUri(), e.getMessage());
             return FileEncryptionResult.failure(e.getMessage(), e);
+        } catch (Md5Mismatch md5Mismatch) {
+            logger.info("Process for file {} has been finished but an md5 mismatch has been found", data.getUri());
+            return FileEncryptionResult.md5Failure(md5Mismatch.getMessage(), md5Mismatch);
         }
     }
 
     private FileEncryptionResult doEncrypt(final EncryptEvent data)
-            throws Md5Mismatch, AlgorithmInitializationException, IOException {
+            throws AlgorithmInitializationException, IOException, Md5Mismatch {
         File outputFile = outputFolderPath.resolve(UUID.randomUUID().toString() + ".cip").toFile();
 
-        final IngestionPipelineResult result = new DefaultEncryptionPipeline(new File(data.getUri()), secretRing,
-                secretRingPassphrase, outputFile, encryptedKeyService.decrypt(data.getEncryptionKey())).process();
+        final IngestionPipelineResult result;
+        result = new DefaultEncryptionPipeline(new File(data.getUri()), secretRing, secretRingPassphrase,
+                outputFile, encryptedKeyService.decrypt(data.getEncryptionKey())).process();
 
         assertChecksum(data, result);
 

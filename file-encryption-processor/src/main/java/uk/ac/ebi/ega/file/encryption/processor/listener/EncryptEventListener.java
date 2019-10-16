@@ -51,12 +51,12 @@ public class EncryptEventListener {
                        Acknowledgment acknowledgment) {
         logger.info("Process - key: {} data {}", key, encryptEvent);
 
-        final FileEncryptionResult<FileEncryptionData> fileEncryptionResult = fileEncryptionProcessor.encrypt(encryptEvent);
+        final FileEncryptionResult fileEncryptionResult = fileEncryptionProcessor.encrypt(encryptEvent);
         reportToFileManager(key, fileEncryptionResult);
         acknowledgment.acknowledge();
     }
 
-    private void reportToFileManager(final String key, final FileEncryptionResult<FileEncryptionData> fileEncryptionResult) {
+    private void reportToFileManager(final String key, final FileEncryptionResult fileEncryptionResult) {
         logger.info("Data sent to kafka topic={}, key={}, data={}", completeJobTopic, key, fileEncryptionResult.getData());
         kafkaTemplate.send(completeJobTopic, key, fileEncryptionResult.getData());
     }

@@ -36,6 +36,9 @@ public class FileEncryptionData {
 
     private String encryptionKey;
 
+    FileEncryptionData() {
+    }
+
     public FileEncryptionData(final long plainSize, final URI uri, final String encryptedMD5,
                               final long encryptedSize, final String encryptionKey, final Encryption encryptionType) {
         this.plainSize = plainSize;
