@@ -34,6 +34,7 @@
         <module>job-processor</module>
         <module>staging-ingestion</module>
         <module>file-encryption-processor-simplify</module>
+        <module>fire-handler</module>
     </modules>
 
     <repositories>
