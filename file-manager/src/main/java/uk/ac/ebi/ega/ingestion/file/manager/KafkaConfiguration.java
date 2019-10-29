@@ -43,6 +43,7 @@ import org.springframework.kafka.support.converter.StringJsonMessageConverter;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 import uk.ac.ebi.ega.ingestion.commons.messages.FileEncryptionData;
 import uk.ac.ebi.ega.ingestion.commons.messages.EncryptEvent;
+import uk.ac.ebi.ega.ingestion.commons.messages.FileEncryptionResult;
 import uk.ac.ebi.ega.ingestion.commons.messages.NewFileEvent;
 import uk.ac.ebi.ega.ingestion.file.manager.kafka.listener.FileArchiveListener;
 import uk.ac.ebi.ega.ingestion.file.manager.kafka.listener.IngestionNewFileListener;
@@ -142,9 +143,9 @@ public class KafkaConfiguration {
     }
 
     @Bean
-    public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String, FileEncryptionData>>
+    public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String, FileEncryptionResult>>
     archiveEventListenerContainerFactory() {
-        ConcurrentKafkaListenerContainerFactory<String, FileEncryptionData> factory =
+        ConcurrentKafkaListenerContainerFactory<String, FileEncryptionResult> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConcurrency(1);
         factory.setConsumerFactory(archiveEventConsumerFactory());
@@ -155,7 +156,7 @@ public class KafkaConfiguration {
     }
 
     @Bean
-    public ConsumerFactory<String, FileEncryptionData> archiveEventConsumerFactory() {
+    public ConsumerFactory<String, FileEncryptionResult> archiveEventConsumerFactory() {
         return new DefaultKafkaConsumerFactory<>(manualConsumerConfigs());
     }
 

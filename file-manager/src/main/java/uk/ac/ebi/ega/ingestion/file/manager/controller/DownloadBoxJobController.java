@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 import uk.ac.ebi.ega.encryption.core.encryption.exceptions.AlgorithmInitializationException;
 import uk.ac.ebi.ega.encryption.core.services.IPasswordEncryptionService;
+import uk.ac.ebi.ega.encryption.core.utils.io.IOUtils;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.DownloadBoxJob;
 import uk.ac.ebi.ega.ingestion.file.manager.services.IDownloadBoxJobService;
 import uk.ac.ebi.ega.ingestion.file.manager.services.IKeyGenerator;
@@ -61,7 +62,7 @@ public class DownloadBoxJobController implements ApplicationEventPublisherAware 
                                                     PersistentEntityResourceAssembler assembler)
             throws AlgorithmInitializationException {
         DownloadBoxJob downloadBoxJob = downloadBoxJobResource.getContent();
-        downloadBoxJob.setPassword(passwordEncryptionService.encrypt(passwordGenerator.generateKey()));
+        downloadBoxJob.setPassword(passwordEncryptionService.encrypt(IOUtils.convertToBytes(passwordGenerator.generateKey())));
 
         publisher.publishEvent(new BeforeCreateEvent(downloadBoxJob));
         downloadBoxJob = service.createJob(downloadBoxJob);

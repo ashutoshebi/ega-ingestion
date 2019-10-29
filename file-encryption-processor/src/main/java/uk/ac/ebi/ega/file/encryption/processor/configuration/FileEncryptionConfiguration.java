@@ -28,6 +28,7 @@ import uk.ac.ebi.ega.file.encryption.processor.listener.EncryptEventListener;
 import uk.ac.ebi.ega.file.encryption.processor.service.FileEncryptionService;
 import uk.ac.ebi.ega.file.encryption.processor.service.IFileEncryptionService;
 import uk.ac.ebi.ega.ingestion.commons.messages.FileEncryptionData;
+import uk.ac.ebi.ega.ingestion.commons.messages.FileEncryptionResult;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -49,7 +50,7 @@ public class FileEncryptionConfiguration {
 
     @Bean
     public EncryptEventListener initFileEncryptionEventListener(final IFileEncryptionService fileEncryptionProcessor,
-                                                                final KafkaTemplate<String, FileEncryptionData> kafkaTemplate,
+                                                                final KafkaTemplate<String, FileEncryptionResult> kafkaTemplate,
                                                                 @Value("${spring.kafka.file.archive.queue.name}") String completedTopic) {
         return new EncryptEventListener(fileEncryptionProcessor, kafkaTemplate, completedTopic);
     }
@@ -79,21 +80,21 @@ public class FileEncryptionConfiguration {
     }
 
     private void assertWritePermissionsInOutputFolder(Path outputFolderPath) throws FileNotFoundException, FileSystemException {
-        if (!outputFolderPath.toFile().exists()) {
-            throw new FileNotFoundException("Output file path ".
-                    concat(outputFolderPath.toAbsolutePath().toString()).concat(" doesn't not exists!"));
-        }
-        final File testFile = new File(outputFolderPath.resolve(UUID.randomUUID().toString()).toAbsolutePath().toString());
-        try (final FileOutputStream fileOutputStream = new FileOutputStream(testFile)) {
-            fileOutputStream.write("Data can be written to File".getBytes());
-            fileOutputStream.flush();
-        } catch (IOException e) {
-            throw new FileSystemException("Unable to write file inside Output folder path ".concat(testFile.getAbsolutePath()));
-        }
-
-        if (!testFile.delete()) {
-            throw new FileSystemException("Unable to delete file inside Output folder path ".concat(testFile.getAbsolutePath()));
-        }
+//        if (!outputFolderPath.toFile().exists()) {
+//            throw new FileNotFoundException("Output file path ".
+//                    concat(outputFolderPath.toAbsolutePath().toString()).concat(" doesn't not exists!"));
+//        }
+//        final File testFile = new File(outputFolderPath.resolve(UUID.randomUUID().toString()).toAbsolutePath().toString());
+//        try (final FileOutputStream fileOutputStream = new FileOutputStream(testFile)) {
+//            fileOutputStream.write("Data can be written to File".getBytes());
+//            fileOutputStream.flush();
+//        } catch (IOException e) {
+//            throw new FileSystemException("Unable to write file inside Output folder path ".concat(testFile.getAbsolutePath()));
+//        }
+//
+//        if (!testFile.delete()) {
+//            throw new FileSystemException("Unable to delete file inside Output folder path ".concat(testFile.getAbsolutePath()));
+//        }
     }
 
 }

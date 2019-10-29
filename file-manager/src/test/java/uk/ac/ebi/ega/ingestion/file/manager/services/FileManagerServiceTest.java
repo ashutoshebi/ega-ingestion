@@ -63,10 +63,12 @@ import java.nio.file.Paths;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -153,6 +155,21 @@ public class FileManagerServiceTest {
                 "250CF8B51C773F3F8DC8B4BE867A9A02",
                 "270CF8B51C773F3F8DC8B4BE867A9B03",
                 Encryption.PGP);
+    }
+
+    @Sql(scripts = "classpath:cleanDatabase.sql")
+    @Test
+    public void newFile_sendTwoVersionsSameFile() throws FileHierarchyException, InterruptedException {
+        final NewFileEvent event1 = createFileEvent("/test/test.pgp");
+        TimeUnit.SECONDS.sleep(1l);
+        final NewFileEvent event2 = createFileEvent("/test/test.pgp");
+        fileManagerService.newFile("test-01", event1);
+        fileManagerService.newFile("test-01", event2);
+long count = encryptedObjectRepository.count();
+        assertTrue(encryptedObjectRepository.findByPathAndVersion("/test/test.pgp", event1.getLastModified()).isPresent());
+        assertTrue(encryptedObjectRepository.findByPathAndVersion("/test/test.pgp", event2.getLastModified()).isPresent());
+        assertNotEquals(event1.getLastModified(), event2.getLastModified());
+
     }
 
     @Sql(scripts = "classpath:cleanDatabase.sql")

@@ -49,7 +49,7 @@ public class FileStatusUpdaterService implements IFileStatusUpdaterService {
 
     @Override
     public void updateStatus() {
-        LOGGER.trace("FileStatusUpdaterService.updateStatus was called.");
+        LOGGER.info("FileStatusUpdaterService.updateStatus was called.");
 
         Page<EncryptedObject> pageContainingLocalFilesBeingArchived;
         Pageable pageRequest = PageRequest.of(0, batchSize);

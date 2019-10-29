@@ -118,4 +118,16 @@ public class EncryptEvent {
                 event.getPlainMd5());
     }
 
+    @Override
+    public String toString() {
+        return "EncryptEvent{" +
+                "uri=" + uri +
+                ", currentEncryption=" + currentEncryption +
+                ", decryptionKey='" + decryptionKey + '\'' +
+                ", newEncryption=" + newEncryption +
+                ", encryptionKey='*****'" +
+                ", encryptedMd5='" + encryptedMd5 + '\'' +
+                ", plainMd5='" + plainMd5 + '\'' +
+                '}';
+    }
 }

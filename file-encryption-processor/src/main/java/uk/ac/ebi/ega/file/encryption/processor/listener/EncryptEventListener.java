@@ -34,18 +34,18 @@ public class EncryptEventListener {
     private final Logger logger = LoggerFactory.getLogger(EncryptEventListener.class);
 
     private final IFileEncryptionService fileEncryptionProcessor;
-    private final KafkaTemplate<String, FileEncryptionData> kafkaTemplate;
+    private final KafkaTemplate<String, FileEncryptionResult> kafkaTemplate;
     private final String completeJobTopic;
 
     public EncryptEventListener(final IFileEncryptionService fileEncryptionProcessor,
-                                final KafkaTemplate<String, FileEncryptionData> kafkaTemplate,
+                                final KafkaTemplate<String, FileEncryptionResult> kafkaTemplate,
                                 final String completeJobTopic) {
         this.fileEncryptionProcessor = fileEncryptionProcessor;
         this.kafkaTemplate = kafkaTemplate;
         this.completeJobTopic = completeJobTopic;
     }
 
-    @KafkaListener(id = "${spring.kafka.client-id}", topics = "${spring.kafka.staging.ingestion.queue.name}",
+    @KafkaListener(id = "${spring.kafka.client-id}", topics = "${spring.kafka.file.encrypt.queue.name}",
             groupId = "file-ingestion", clientIdPrefix = "executor", autoStartup = "true")
     public void listen(@Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) String key, EncryptEvent encryptEvent,
                        Acknowledgment acknowledgment) {
@@ -58,6 +58,6 @@ public class EncryptEventListener {
 
     private void reportToFileManager(final String key, final FileEncryptionResult fileEncryptionResult) {
         logger.info("Data sent to kafka topic={}, key={}, data={}", completeJobTopic, key, fileEncryptionResult.getData());
-        kafkaTemplate.send(completeJobTopic, key, fileEncryptionResult.getData());
+        kafkaTemplate.send(completeJobTopic, key, fileEncryptionResult);
     }
 }

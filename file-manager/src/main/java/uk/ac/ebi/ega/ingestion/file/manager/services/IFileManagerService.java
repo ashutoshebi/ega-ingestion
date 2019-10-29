@@ -20,7 +20,7 @@ package uk.ac.ebi.ega.ingestion.file.manager.services;
 import com.querydsl.core.types.Predicate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import uk.ac.ebi.ega.ingestion.commons.messages.FileEncryptionData;
+import uk.ac.ebi.ega.ingestion.commons.messages.FileEncryptionResult;
 import uk.ac.ebi.ega.ingestion.commons.messages.NewFileEvent;
 import uk.ac.ebi.ega.ingestion.commons.models.IFileDetails;
 import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileHierarchyException;
@@ -52,7 +52,7 @@ public interface IFileManagerService {
      * @param fileEncryptionData
      * @throws IOException
      */
-    void archive(String key, FileEncryptionData fileEncryptionData);
+    void archive(String key, FileEncryptionResult fileEncryptionData);
 
     /**
      * Returns List of FileHierarchyModel. Condition checks for case insensitive equals AccountId, StagingAreaId

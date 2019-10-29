@@ -17,6 +17,8 @@
  */
 package uk.ac.ebi.ega.ingestion.file.manager;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -27,6 +29,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import uk.ac.ebi.ega.encryption.core.encryption.exceptions.AlgorithmInitializationException;
 import uk.ac.ebi.ega.encryption.core.services.IPasswordEncryptionService;
 import uk.ac.ebi.ega.encryption.core.services.PasswordEncryptionService;
+import uk.ac.ebi.ega.encryption.core.utils.io.FileUtils;
 import uk.ac.ebi.ega.fire.ingestion.service.IFireService;
 import uk.ac.ebi.ega.fire.ingestion.service.IProFilerDatabaseService;
 import uk.ac.ebi.ega.fire.ingestion.service.OldFireService;
@@ -52,7 +55,6 @@ import uk.ac.ebi.ega.ingestion.file.manager.services.IMailingService;
 import uk.ac.ebi.ega.ingestion.file.manager.services.MailingService;
 import uk.ac.ebi.ega.ingestion.file.manager.services.key.RandomKeyGenerator;
 
-import javax.persistence.EntityManager;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -61,6 +63,8 @@ import java.nio.file.Paths;
 
 @Configuration
 public class FileManagerConfiguration {
+
+    private final Logger logger = LoggerFactory.getLogger(FileManagerConfiguration.class);
 
     @Value("${download-box.queue.name}")
     private String downloadBoxQueueName;
@@ -71,8 +75,8 @@ public class FileManagerConfiguration {
     @Value("${file.manager.download.box.password.size}")
     private int passwordKeySize;
 
-    @Value("${file.manager.encryption.password.encryption.key}")
-    private char[] passwordEncryptionKey;
+    @Value("${file.manager.encryption.key.password.file}")
+    private String encryptionPasswordKeyFile;
 
     @Value("${file.manager.ega.cip.password.file}")
     private String cipPasswordFile;
@@ -144,8 +148,9 @@ public class FileManagerConfiguration {
     }
 
     @Bean
-    public IPasswordEncryptionService passwordEncryptionService() {
-        return new PasswordEncryptionService(passwordEncryptionKey);
+    public IPasswordEncryptionService passwordEncryptionService() throws IOException {
+        logger.error("Password used to encrypt: {}", FileUtils.readPasswordFile(Paths.get(encryptionPasswordKeyFile)));
+        return new PasswordEncryptionService(FileUtils.readPasswordFile(Paths.get(encryptionPasswordKeyFile)));
     }
 
     @Bean

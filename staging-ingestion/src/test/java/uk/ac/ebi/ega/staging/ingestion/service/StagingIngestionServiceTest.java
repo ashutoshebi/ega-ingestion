@@ -115,8 +115,8 @@ public class StagingIngestionServiceTest {
         assertEquals("test-location-id", newFileEvent.getLocationId());
         assertEquals("test", newFileEvent.getUserPath());
         assertEquals(gpgFile.lastModified(), newFileEvent.getLastModified());
-        assertEquals("91fe33afafbe2d57c865443f11bae7gg".toUpperCase(), newFileEvent.getEncryptedMd5());
-        assertEquals("91fe33afafbe2d57c865443f11bae7ff".toUpperCase(), newFileEvent.getPlainMd5());
+        assertEquals("91fe33afafbe2d57c865443f11bae7gg", newFileEvent.getEncryptedMd5());
+        assertEquals("91fe33afafbe2d57c865443f11bae7ff", newFileEvent.getPlainMd5());
         assertEquals(Encryption.PGP, newFileEvent.getEncryption());
     }
 
@@ -252,8 +252,8 @@ public class StagingIngestionServiceTest {
         assertEquals("test-location-id", newFileEvent.getLocationId());
         assertEquals("test", newFileEvent.getUserPath());
         assertEquals(gpgFile.lastModified(), newFileEvent.getLastModified());
-        assertEquals("91fe33afafbe2d57c865443f11bae7gg".toUpperCase(), newFileEvent.getEncryptedMd5());
-        assertEquals("91fe33afafbe2d57c865443f11bae7ff".toUpperCase(), newFileEvent.getPlainMd5());
+        assertEquals("91fe33afafbe2d57c865443f11bae7gg", newFileEvent.getEncryptedMd5());
+        assertEquals("91fe33afafbe2d57c865443f11bae7ff", newFileEvent.getPlainMd5());
         assertEquals(Encryption.PGP, newFileEvent.getEncryption());
     }
 

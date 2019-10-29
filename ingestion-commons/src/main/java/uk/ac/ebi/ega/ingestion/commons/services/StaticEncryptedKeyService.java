@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import uk.ac.ebi.ega.encryption.core.encryption.exceptions.AlgorithmInitializationException;
 import uk.ac.ebi.ega.encryption.core.services.IPasswordEncryptionService;
 import uk.ac.ebi.ega.encryption.core.utils.io.FileUtils;
+import uk.ac.ebi.ega.encryption.core.utils.io.IOUtils;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -38,8 +39,9 @@ public class StaticEncryptedKeyService implements IEncryptedKeyService {
             throws AlgorithmInitializationException {
         this.passwordEncryptionService = passwordEncryptionService;
         this.key = key;
+        logger.error("Static encrypted key: {}", key);
         // We execute a test encryption. If it runs properly then we can safely ignore exceptions in future executions.
-        passwordEncryptionService.encrypt(key);
+        passwordEncryptionService.encrypt(IOUtils.convertToBytes(key));
     }
 
     public StaticEncryptedKeyService(IPasswordEncryptionService passwordEncryptionService, Path keyFile)
@@ -50,7 +52,7 @@ public class StaticEncryptedKeyService implements IEncryptedKeyService {
     @Override
     public String generateNewEncryptedKey() {
         try {
-            return passwordEncryptionService.encrypt(key);
+            return passwordEncryptionService.encrypt(IOUtils.convertToBytes(key));
         } catch (AlgorithmInitializationException e) {
             logger.error(e.getMessage(), e);
             return null;
