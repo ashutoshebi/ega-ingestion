@@ -64,8 +64,6 @@ import java.nio.file.Paths;
 @Configuration
 public class FileManagerConfiguration {
 
-    private final Logger logger = LoggerFactory.getLogger(FileManagerConfiguration.class);
-
     @Value("${download-box.queue.name}")
     private String downloadBoxQueueName;
 
@@ -149,7 +147,6 @@ public class FileManagerConfiguration {
 
     @Bean
     public IPasswordEncryptionService passwordEncryptionService() throws IOException {
-        logger.error("Password used to encrypt: {}", FileUtils.readPasswordFile(Paths.get(encryptionPasswordKeyFile)));
         return new PasswordEncryptionService(FileUtils.readPasswordFile(Paths.get(encryptionPasswordKeyFile)));
     }
 

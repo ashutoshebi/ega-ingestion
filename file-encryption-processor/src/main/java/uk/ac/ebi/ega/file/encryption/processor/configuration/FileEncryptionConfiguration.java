@@ -80,21 +80,21 @@ public class FileEncryptionConfiguration {
     }
 
     private void assertWritePermissionsInOutputFolder(Path outputFolderPath) throws FileNotFoundException, FileSystemException {
-//        if (!outputFolderPath.toFile().exists()) {
-//            throw new FileNotFoundException("Output file path ".
-//                    concat(outputFolderPath.toAbsolutePath().toString()).concat(" doesn't not exists!"));
-//        }
-//        final File testFile = new File(outputFolderPath.resolve(UUID.randomUUID().toString()).toAbsolutePath().toString());
-//        try (final FileOutputStream fileOutputStream = new FileOutputStream(testFile)) {
-//            fileOutputStream.write("Data can be written to File".getBytes());
-//            fileOutputStream.flush();
-//        } catch (IOException e) {
-//            throw new FileSystemException("Unable to write file inside Output folder path ".concat(testFile.getAbsolutePath()));
-//        }
-//
-//        if (!testFile.delete()) {
-//            throw new FileSystemException("Unable to delete file inside Output folder path ".concat(testFile.getAbsolutePath()));
-//        }
+        if (!outputFolderPath.toFile().exists()) {
+            throw new FileNotFoundException("Output file path ".
+                    concat(outputFolderPath.toAbsolutePath().toString()).concat(" doesn't not exists!"));
+        }
+        final File testFile = new File(outputFolderPath.resolve(UUID.randomUUID().toString()).toAbsolutePath().toString());
+        try (final FileOutputStream fileOutputStream = new FileOutputStream(testFile)) {
+            fileOutputStream.write("Data can be written to File".getBytes());
+            fileOutputStream.flush();
+        } catch (IOException e) {
+            throw new FileSystemException("Unable to write file inside Output folder path ".concat(testFile.getAbsolutePath()));
+        }
+
+        if (!testFile.delete()) {
+            throw new FileSystemException("Unable to delete file inside Output folder path ".concat(testFile.getAbsolutePath()));
+        }
     }
 
 }
