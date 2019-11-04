@@ -84,7 +84,7 @@ public class StagingIngestionServiceImpl implements StagingIngestionService {
     }
 
     private static String readMd5File(Path path) throws IOException {
-        return new String(Files.readAllBytes(path), StandardCharsets.UTF_8).trim().toUpperCase();
+        return new String(Files.readAllBytes(path), StandardCharsets.UTF_8).trim().toLowerCase();
     }
 
     private void assertFileExistsAndHasNotBeenModified(File file, FileStatic md5File)

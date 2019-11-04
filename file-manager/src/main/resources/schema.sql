@@ -130,21 +130,22 @@ create table HISTORIC_DOWNLOAD_BOX_FILE_JOB
 
 create table ENCRYPTED_OBJECT
 (
-    ID             bigserial primary key,
-    STAGING_ID     varchar(255)  not null,
-    ACCOUNT_ID     varchar(255)  not null,
-    PATH           varchar(4096) not null,
-    VERSION        bigint        not null,
-    URI            varchar(4096) not null,
-    PLAIN_SIZE     bigint,
-    PLAIN_MD5      varchar(255)  not null,
-    ENCRYPTED_SIZE bigint        not null,
-    ENCRYPTED_MD5  varchar(255)  not null,
-    ENCRYPTION_KEY varchar(255)  not null,
-    STATUS         varchar(255)  not null,
-    FIRE_ID        bigint,
-    CREATED_DATE   timestamp     not null,
-    UPDATED_DATE   timestamp     not null
+    ID              bigserial primary key,
+    STAGING_ID      varchar(255)  not null,
+    ACCOUNT_ID      varchar(255)  not null,
+    PATH            varchar(4096) not null,
+    VERSION         bigint        not null,
+    URI             varchar(4096) not null,
+    PLAIN_SIZE      bigint,
+    PLAIN_MD5       varchar(255)  not null,
+    ENCRYPTED_SIZE  bigint        not null,
+    ENCRYPTED_MD5   varchar(255)  not null,
+    ENCRYPTION_TYPE varchar(255)  not null,
+    ENCRYPTION_KEY  varchar(255)  not null,
+    STATUS          varchar(255)  not null,
+    FIRE_ID         bigint,
+    CREATED_DATE    timestamp     not null,
+    UPDATED_DATE    timestamp     not null
 );
 
 create table FILE_HIERARCHY

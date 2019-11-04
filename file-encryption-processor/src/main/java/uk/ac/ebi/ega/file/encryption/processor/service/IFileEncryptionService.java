@@ -15,12 +15,13 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.ingestion.commons.services;
+package uk.ac.ebi.ega.file.encryption.processor.service;
 
-public interface IEncryptedKeyService {
+import uk.ac.ebi.ega.ingestion.commons.messages.FileEncryptionResult;
+import uk.ac.ebi.ega.ingestion.commons.messages.EncryptEvent;
 
-    String generateNewEncryptedKey();
+public interface IFileEncryptionService {
 
-    char[] decryptKey(String encryptedKey);
+    FileEncryptionResult encrypt(EncryptEvent data);
 
 }

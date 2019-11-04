@@ -27,8 +27,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import uk.ac.ebi.ega.fire.ingestion.service.IFireService;
-import uk.ac.ebi.ega.ingestion.commons.messages.ArchiveEventSimplify;
 import uk.ac.ebi.ega.ingestion.commons.messages.EncryptEvent;
+import uk.ac.ebi.ega.ingestion.commons.messages.FileEncryptionData;
+import uk.ac.ebi.ega.ingestion.commons.messages.FileEncryptionResult;
 import uk.ac.ebi.ega.ingestion.commons.messages.NewFileEvent;
 import uk.ac.ebi.ega.ingestion.commons.models.FileStatus;
 import uk.ac.ebi.ega.ingestion.commons.models.IFileDetails;
@@ -97,6 +98,8 @@ public class FileManagerService implements IFileManagerService {
         }
 
         String encryptionKey = encryptedKeyService.generateNewEncryptedKey();
+        LOGGER.error("Encryption key: {}", encryptionKey);
+        LOGGER.error("Plain encryption key: {}", encryptedKeyService.decryptKey(encryptionKey));
         // Find if exists, otherwise create new object and save into database
         final EncryptedObject encryptedObject = encryptedObjectRepository
                 .findByPathAndVersion(event.getUserPath(), event.getLastModified())
@@ -106,7 +109,7 @@ public class FileManagerService implements IFileManagerService {
                                 event.getLocationId(),
                                 event.getUserPath(),
                                 event.getLastModified(),
-                                fireBoxRelativePath.resolve(event.getPath().toUri().toString()).toString(),
+                                event.getPath().toUri().toString(),
                                 event.getPlainMd5(),
                                 -1,
                                 event.getEncryptedMd5())).getEncryptedObject());
@@ -123,29 +126,44 @@ public class FileManagerService implements IFileManagerService {
 
     @Override
     @Transactional(transactionManager = "fileManagerFireChainedTransactionManager", rollbackFor = Exception.class)
-    public void archive(String key, final ArchiveEventSimplify archiveEvent) {
+    public void archive(String key, final FileEncryptionResult result) {
+        switch (result.getStatus()) {
+            case SUCCESS:
+                doArchive(key, result.getData());
+                break;
+            case FAILURE:
+                // TODO what do we do?
+                break;
+            case MD5_ERROR:
+                // TODO failure
+                break;
+        }
+    }
+
+    private void doArchive(String key, FileEncryptionData data) {
         EncryptedObject encryptedObject = encryptedObjectRepository.findById(Long.parseLong(key)).get();
         if (encryptedObject.getStatus() == FileStatus.PROCESSING) {
             final Long fireId = fireService.archiveFile(
                     oldFireEgaIdPrefix + key,
-                    new File(archiveEvent.getUri()), archiveEvent.getEncryptedMD5(),
-                    encryptedObject.toFirePath()
+                    new File(data.getUri()), data.getEncryptedMD5(),
+                    fireBoxRelativePath + "/" + encryptedObject.toFirePath()
             ).get();
 
             encryptedObject.archive(
-                    archiveEvent.getUri().toString(),
+                    data.getUri().toString(),
                     fireId,
-                    archiveEvent.getEncryptedMD5(),
-                    archiveEvent.getPlainSize(),
-                    archiveEvent.getEncryptedSize(),
-                    archiveEvent.getEncryptionType(),
-                    archiveEvent.getEncryptionKey());
+                    data.getEncryptedMD5(),
+                    data.getPlainSize(),
+                    data.getEncryptedSize(),
+                    data.getEncryptionType(),
+                    data.getEncryptionKey());
             encryptedObjectRepository.save(encryptedObject);
             LOGGER.info("File: {} archiving started", key);
         } else {
             LOGGER.info("File: {} has been processed already", key);
         }
     }
+
 
     @Override
     public List<FileHierarchyModel> findAllFilesAndFoldersInPath(final String accountId,

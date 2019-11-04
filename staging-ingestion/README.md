@@ -10,7 +10,7 @@ Once a message is received the service will perform the following actions:
     - If the files have been modified then END. 
     - If the files are missing then SKIPPED. No error reported as it is not possible to receive messages
      that have already been processed. 
-- Read both md5 files and normalized the md5 values so that they contain only uppercase characters.
+- Read both md5 files and normalized the md5 values so that they contain only lowercase characters.
 - Check the file `pgpFile`.
     - If the file doesn't exist in `user staging path` but it exists within the `stagingPath` this means that while the process completed
      it is possible that the acknowledgement signal was not sent. We will generate a `newFileEvent` and send this

@@ -30,6 +30,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import uk.ac.ebi.ega.encryption.core.encryption.exceptions.AlgorithmInitializationException;
 import uk.ac.ebi.ega.encryption.core.services.IPasswordEncryptionService;
 import uk.ac.ebi.ega.encryption.core.services.PasswordEncryptionService;
+import uk.ac.ebi.ega.encryption.core.utils.io.IOUtils;
 import uk.ac.ebi.ega.file.re.encryption.processor.jobs.ReEncryptJob;
 import uk.ac.ebi.ega.jobs.core.Job;
 import uk.ac.ebi.ega.jobs.core.JobExecution;
@@ -115,7 +116,7 @@ public class ReEncryptServiceTest {
     public void reEncrypt_SuppliedCorrectArgument_ExecutesSuccessfully() throws AlgorithmInitializationException,
             IOException {
         final IPasswordEncryptionService passwordEncryptionService = new PasswordEncryptionService(PASSWORD_KEY);
-        String encryptedPassword = passwordEncryptionService.encrypt(PASSWORD.toCharArray());
+        String encryptedPassword = passwordEncryptionService.encrypt(IOUtils.convertToBytes(PASSWORD.toCharArray()));
 
         final ReEncryptJobParameters reEncryptJobParameters = new ReEncryptJobParameters(passwordEncryptionService,
                 EMPTY_STRING, temporaryFolder.newFile(RE_ENCRYPT_FILE_NAME).getAbsolutePath(),
