@@ -17,6 +17,7 @@
  */
 package uk.ac.ebi.ega.file.encryption.processor.configuration;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,8 +27,8 @@ import uk.ac.ebi.ega.encryption.core.services.PasswordEncryptionService;
 import uk.ac.ebi.ega.encryption.core.utils.io.FileUtils;
 import uk.ac.ebi.ega.file.encryption.processor.listener.EncryptEventListener;
 import uk.ac.ebi.ega.file.encryption.processor.service.FileEncryptionService;
+import uk.ac.ebi.ega.file.encryption.processor.service.GSFileEncryptionService;
 import uk.ac.ebi.ega.file.encryption.processor.service.IFileEncryptionService;
-import uk.ac.ebi.ega.ingestion.commons.messages.FileEncryptionData;
 import uk.ac.ebi.ega.ingestion.commons.messages.FileEncryptionResult;
 
 import java.io.File;
@@ -42,6 +43,9 @@ import java.util.UUID;
 @Configuration
 public class FileEncryptionConfiguration {
 
+    @Value("${file.encryption.output.path}")
+    private String outputFolder;
+
     @Bean
     public IPasswordEncryptionService passwordEncryptionService(@Value("${file.encryption.key.password.path}") String path)
             throws IOException {
@@ -49,17 +53,17 @@ public class FileEncryptionConfiguration {
     }
 
     @Bean
-    public EncryptEventListener initFileEncryptionEventListener(final IFileEncryptionService fileEncryptionProcessor,
+    public EncryptEventListener initFileEncryptionEventListener(@Qualifier("system_file_encryption") final IFileEncryptionService fileEncryptionProcessor,
+                                                                @Qualifier("gcp_file_encryption") final IFileEncryptionService gsEncryptionProcessor,
                                                                 final KafkaTemplate<String, FileEncryptionResult> kafkaTemplate,
                                                                 @Value("${spring.kafka.file.archive.queue.name}") String completedTopic) {
-        return new EncryptEventListener(fileEncryptionProcessor, kafkaTemplate, completedTopic);
+        return new EncryptEventListener(fileEncryptionProcessor, gsEncryptionProcessor, kafkaTemplate, completedTopic);
     }
 
-    @Bean
+    @Bean("system_file_encryption")
     public IFileEncryptionService initFileEncryptionProcessor(IPasswordEncryptionService passwordEncryptionService,
                                                               @Value("${file.encryption.keyring.private}") String privateKeyRing,
-                                                              @Value("${file.encryption.keyring.private.key}") String privateKeyRingPassword,
-                                                              @Value("${file.encryption.output.path}") String outputFolder) throws IOException {
+                                                              @Value("${file.encryption.keyring.private.key}") String privateKeyRingPassword) throws IOException {
         final File privateKeyRingFile = new File(privateKeyRing);
         final File privateKeyRingPasswordFile = new File(privateKeyRingPassword);
         assertFiles(privateKeyRingFile, privateKeyRingPasswordFile);
@@ -67,6 +71,13 @@ public class FileEncryptionConfiguration {
         assertWritePermissionsInOutputFolder(outputFolderPath);
         return new FileEncryptionService(passwordEncryptionService, privateKeyRingFile, privateKeyRingPasswordFile,
                 outputFolderPath);
+    }
+
+    @Bean("gs_file_encryption")
+    public IFileEncryptionService initGSFileEncryptionService(final IPasswordEncryptionService passwordEncryptionService) throws FileNotFoundException, FileSystemException {
+        final Path outputFolderPath = Paths.get(outputFolder);
+        assertWritePermissionsInOutputFolder(outputFolderPath);
+        return new GSFileEncryptionService(passwordEncryptionService, outputFolderPath);
     }
 
     private void assertFiles(File privateKeyRingFile, File privateKeyRingPasswordFile) throws FileNotFoundException {
@@ -96,5 +107,4 @@ public class FileEncryptionConfiguration {
             throw new FileSystemException("Unable to delete file inside Output folder path ".concat(testFile.getAbsolutePath()));
         }
     }
-
 }

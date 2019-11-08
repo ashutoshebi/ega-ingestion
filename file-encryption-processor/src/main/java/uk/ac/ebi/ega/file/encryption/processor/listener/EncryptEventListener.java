@@ -19,28 +19,31 @@ package uk.ac.ebi.ega.file.encryption.processor.listener;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
-import uk.ac.ebi.ega.ingestion.commons.messages.FileEncryptionResult;
 import uk.ac.ebi.ega.file.encryption.processor.service.IFileEncryptionService;
-import uk.ac.ebi.ega.ingestion.commons.messages.FileEncryptionData;
 import uk.ac.ebi.ega.ingestion.commons.messages.EncryptEvent;
+import uk.ac.ebi.ega.ingestion.commons.messages.FileEncryptionResult;
 
 public class EncryptEventListener {
 
     private final Logger logger = LoggerFactory.getLogger(EncryptEventListener.class);
 
     private final IFileEncryptionService fileEncryptionProcessor;
+    private final IFileEncryptionService gsEncryptionProcessor;
     private final KafkaTemplate<String, FileEncryptionResult> kafkaTemplate;
     private final String completeJobTopic;
 
-    public EncryptEventListener(final IFileEncryptionService fileEncryptionProcessor,
+    public EncryptEventListener(@Qualifier("system_file_encryption") final IFileEncryptionService fileEncryptionProcessor,
+                                @Qualifier("gs_file_encryption") final IFileEncryptionService gsEncryptionProcessor,
                                 final KafkaTemplate<String, FileEncryptionResult> kafkaTemplate,
                                 final String completeJobTopic) {
         this.fileEncryptionProcessor = fileEncryptionProcessor;
+        this.gsEncryptionProcessor = gsEncryptionProcessor;
         this.kafkaTemplate = kafkaTemplate;
         this.completeJobTopic = completeJobTopic;
     }
@@ -51,8 +54,11 @@ public class EncryptEventListener {
                        Acknowledgment acknowledgment) {
         logger.info("Process - key: {} data {}", key, encryptEvent);
 
-        final FileEncryptionResult fileEncryptionResult = fileEncryptionProcessor.encrypt(encryptEvent);
-        reportToFileManager(key, fileEncryptionResult);
+        if (encryptEvent.getUri().getPath().startsWith("file://")) {
+            reportToFileManager(key, fileEncryptionProcessor.encrypt(encryptEvent));
+        } else if (encryptEvent.getUri().getPath().startsWith("gs://")) {
+            reportToFileManager(key, gsEncryptionProcessor.encrypt(encryptEvent));
+        }
         acknowledgment.acknowledge();
     }
 

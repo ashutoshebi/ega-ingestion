@@ -15,16 +15,10 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.file.encryption.processor;
+package uk.ac.ebi.ega.file.encryption.processor.exception;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.retry.annotation.EnableRetry;
-
-@EnableRetry
-@SpringBootApplication
-public class FileEncryptionProcessorApplication {
-    public static void main(String... args) {
-        SpringApplication.run(FileEncryptionProcessorApplication.class, args);
+public class GoogleStorageException extends RuntimeException {
+    public GoogleStorageException(final String message, final Throwable throwable) {
+        super(message, throwable);
     }
 }

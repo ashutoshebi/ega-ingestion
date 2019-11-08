@@ -24,18 +24,13 @@ import java.net.URI;
 public class EncryptEvent {
 
     private URI uri;
-
     private Encryption currentEncryption;
-
     private String decryptionKey;
-
     private Encryption newEncryption;
-
     private String encryptionKey;
-
     private String encryptedMd5;
-
     private String plainMd5;
+    private String credentials;
 
     public EncryptEvent() {
     }
@@ -49,6 +44,12 @@ public class EncryptEvent {
         this.encryptionKey = encryptionKey;
         this.encryptedMd5 = encryptedMd5;
         this.plainMd5 = plainMd5;
+    }
+
+    public EncryptEvent(URI uri, Encryption currentEncryption, String decryptionKey, Encryption newEncryption,
+                        String encryptionKey, String encryptedMd5, String plainMd5, String credentials) {
+        this(uri, currentEncryption, decryptionKey, newEncryption, encryptionKey, encryptedMd5, plainMd5);
+        this.credentials = credentials;
     }
 
     public URI getUri() {
@@ -107,6 +108,14 @@ public class EncryptEvent {
         this.plainMd5 = plainMd5;
     }
 
+    public String getCredentials() {
+        return credentials;
+    }
+
+    public void setCredentials(String credentials) {
+        this.credentials = credentials;
+    }
+
     public static EncryptEvent ingest(NewFileEvent event, String encryptionKey) {
         return new EncryptEvent(
                 event.getPath().toUri(),
@@ -118,6 +127,18 @@ public class EncryptEvent {
                 event.getPlainMd5());
     }
 
+    public static EncryptEvent ingestPlain(NewFileEvent event, String encryptionKey, String credentials) {
+        return new EncryptEvent(
+                event.getPath().toUri(),
+                Encryption.PLAIN,
+                null,
+                Encryption.EGA_AES,
+                encryptionKey,
+                event.getEncryptedMd5(),
+                event.getPlainMd5(),
+                credentials);
+    }
+
     @Override
     public String toString() {
         return "EncryptEvent{" +
@@ -125,9 +146,10 @@ public class EncryptEvent {
                 ", currentEncryption=" + currentEncryption +
                 ", decryptionKey='" + decryptionKey + '\'' +
                 ", newEncryption=" + newEncryption +
-                ", encryptionKey='*****'" +
+                ", encryptionKey='" + encryptionKey + '\'' +
                 ", encryptedMd5='" + encryptedMd5 + '\'' +
                 ", plainMd5='" + plainMd5 + '\'' +
+                ", credentials='" + credentials + '\'' +
                 '}';
     }
 }
