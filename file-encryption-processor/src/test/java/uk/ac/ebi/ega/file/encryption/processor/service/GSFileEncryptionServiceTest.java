@@ -39,7 +39,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 @TestPropertySource("classpath:application-test.properties")
 @RunWith(SpringRunner.class)
@@ -55,15 +56,21 @@ public class GSFileEncryptionServiceTest {
     private String gsCredentials;
 
     /**
-     * Test case data needs to be modified accordingly in future when it will be enabled.
+     * Data needs to be modified accordingly when test case will be enabled.
+     * This test case hasn't been tested yet. It needs to be connected to google storage.
+     * Currently we don't have test files on GS to test.
      */
     @Ignore
     @Test
     public void encrypt_whenPassValidEventData_thenEncryptsFileDownloadedFromGS() throws IOException, URISyntaxException {
         final IPasswordEncryptionService passwordEncryptionService = new PasswordEncryptionService(FileUtils.readPasswordFile(Paths.get(passwordEncryptionKey)));
         final IFileEncryptionService gsEncryptionService = new GSFileEncryptionService(passwordEncryptionService, Paths.get(outputFolderPath));
-        final FileEncryptionResult encryptionResult = gsEncryptionService.encrypt(initEncryptEvent());
-        assertThat(encryptionResult).isEqualTo(expectedResult());
+        final FileEncryptionResult actualEncryptionResult = gsEncryptionService.encrypt(initEncryptEvent());
+        final FileEncryptionResult expectedEncryptionResult = expectedResult();
+
+        assertNull(actualEncryptionResult.getMessage());
+        assertEquals(expectedEncryptionResult.getStatus(), actualEncryptionResult.getStatus());
+        assertEquals(expectedEncryptionResult.getData(), actualEncryptionResult.getData());
     }
 
     private EncryptEvent initEncryptEvent() throws URISyntaxException, IOException {
@@ -87,9 +94,9 @@ public class GSFileEncryptionServiceTest {
         return FileEncryptionResult.success(new FileEncryptionData(
                 0,
                 new URI("file://encrypted/file/path"),
-                "add-encrypted-md5",
+                "encrypted-md5",
                 0,
-                "add-encryption-key",
+                "encryption-key",
                 Encryption.EGA_AES));
     }
 }
