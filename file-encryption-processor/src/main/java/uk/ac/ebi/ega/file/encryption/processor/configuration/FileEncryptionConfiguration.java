@@ -54,7 +54,7 @@ public class FileEncryptionConfiguration {
 
     @Bean
     public EncryptEventListener initFileEncryptionEventListener(@Qualifier("system_file_encryption") final IFileEncryptionService fileEncryptionProcessor,
-                                                                @Qualifier("gcp_file_encryption") final IFileEncryptionService gsEncryptionProcessor,
+                                                                @Qualifier("gs_file_encryption") final IFileEncryptionService gsEncryptionProcessor,
                                                                 final KafkaTemplate<String, FileEncryptionResult> kafkaTemplate,
                                                                 @Value("${spring.kafka.file.archive.queue.name}") String completedTopic) {
         return new EncryptEventListener(fileEncryptionProcessor, gsEncryptionProcessor, kafkaTemplate, completedTopic);
