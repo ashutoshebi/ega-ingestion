@@ -85,4 +85,16 @@ public class FileEncryptionData {
                 '}';
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        FileEncryptionData that = (FileEncryptionData) o;
+        return plainSize == that.plainSize &&
+                encryptedSize == that.encryptedSize &&
+                uri.equals(that.uri) &&
+                encryptedMD5.equals(that.encryptedMD5) &&
+                encryptionType == that.encryptionType &&
+                encryptionKey.equals(that.encryptionKey);
+    }
 }
