@@ -26,10 +26,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.transaction.annotation.Transactional;
-import uk.ac.ebi.ega.fire.ingestion.service.IFireService;
 import uk.ac.ebi.ega.ingestion.commons.messages.EncryptEvent;
 import uk.ac.ebi.ega.ingestion.commons.messages.FileEncryptionData;
 import uk.ac.ebi.ega.ingestion.commons.messages.FileEncryptionResult;
+import uk.ac.ebi.ega.ingestion.commons.messages.FireArchiveResult;
+import uk.ac.ebi.ega.ingestion.commons.messages.FireEvent;
+import uk.ac.ebi.ega.ingestion.commons.messages.FireResponse;
 import uk.ac.ebi.ega.ingestion.commons.messages.NewFileEvent;
 import uk.ac.ebi.ega.ingestion.commons.models.FileStatus;
 import uk.ac.ebi.ega.ingestion.commons.models.IFileDetails;
@@ -43,7 +45,6 @@ import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.EncryptedObje
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.FileHierarchyRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.utils.FileStructureType;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -57,34 +58,31 @@ public class FileManagerService implements IFileManagerService {
 
     private final Logger LOGGER = LoggerFactory.getLogger(FileManagerService.class);
 
-    private final IFireService fireService;
     private final Path fireBoxRelativePath;
     private final FileHierarchyRepository fileHierarchyRepository;
     private final EncryptedObjectRepository encryptedObjectRepository;
-
     private final String encryptEventTopic;
     private final KafkaTemplate<String, EncryptEvent> encryptEventKafkaTemplate;
-
+    private final KafkaTemplate<String, FireEvent> fireEventKafkaTemplate;
     private final IEncryptedKeyService encryptedKeyService;
+    private final String archiveTopic;
 
-    private final String oldFireEgaIdPrefix;
-
-    public FileManagerService(final IFireService fireService,
-                              final Path fireBoxRelativePath,
+    public FileManagerService(final Path fireBoxRelativePath,
                               final FileHierarchyRepository fileHierarchyRepository,
                               final EncryptedObjectRepository encryptedObjectRepository,
                               final String encryptEventTopic,
                               final KafkaTemplate<String, EncryptEvent> encryptEventKafkaTemplate,
+                              final KafkaTemplate<String, FireEvent> fireEventKafkaTemplate,
                               final IEncryptedKeyService encryptedKeyService,
-                              final String oldFireEgaIdPrefix) {
-        this.fireService = fireService;
+                              final String archiveTopic) {
         this.fireBoxRelativePath = fireBoxRelativePath;
         this.fileHierarchyRepository = fileHierarchyRepository;
         this.encryptedObjectRepository = encryptedObjectRepository;
         this.encryptEventTopic = encryptEventTopic;
         this.encryptEventKafkaTemplate = encryptEventKafkaTemplate;
+        this.fireEventKafkaTemplate = fireEventKafkaTemplate;
         this.encryptedKeyService = encryptedKeyService;
-        this.oldFireEgaIdPrefix = oldFireEgaIdPrefix;
+        this.archiveTopic = archiveTopic;
     }
 
     @Override
@@ -125,11 +123,11 @@ public class FileManagerService implements IFileManagerService {
     }
 
     @Override
-    @Transactional(transactionManager = "fileManagerFireChainedTransactionManager", rollbackFor = Exception.class)
-    public void archive(String key, final FileEncryptionResult result) {
+    @Transactional(transactionManager = "fileManager_transactionManager", rollbackFor = Exception.class)
+    public void encrypted(final String key, final FileEncryptionResult result) {
         switch (result.getStatus()) {
             case SUCCESS:
-                doArchive(key, result.getData());
+                updateEncryptedDetails(key, result.getData());
                 break;
             case FAILURE:
                 // TODO what do we do?
@@ -140,30 +138,43 @@ public class FileManagerService implements IFileManagerService {
         }
     }
 
-    private void doArchive(String key, FileEncryptionData data) {
-        EncryptedObject encryptedObject = encryptedObjectRepository.findById(Long.parseLong(key)).get();
+    private void updateEncryptedDetails(final String key, final FileEncryptionData data) {
+        final EncryptedObject encryptedObject = encryptedObjectRepository.findById(Long.parseLong(key)).get();
         if (encryptedObject.getStatus() == FileStatus.PROCESSING) {
-            final Long fireId = fireService.archiveFile(
-                    oldFireEgaIdPrefix + key,
-                    new File(data.getUri()), data.getEncryptedMD5(),
-                    fireBoxRelativePath + "/" + encryptedObject.toFirePath()
-            ).get();
-
+            LOGGER.info("File: {} archiving is in progress", key);
             encryptedObject.archive(
                     data.getUri().toString(),
-                    fireId,
                     data.getEncryptedMD5(),
                     data.getPlainSize(),
                     data.getEncryptedSize(),
                     data.getEncryptionType(),
-                    data.getEncryptionKey());
+                    data.getEncryptionKey()
+            );
             encryptedObjectRepository.save(encryptedObject);
-            LOGGER.info("File: {} archiving started", key);
+            final FireEvent fireEvent = new FireEvent(
+                    data.getUri(),
+                    data.getEncryptedMD5(),
+                    fireBoxRelativePath + "/" + encryptedObject.toFirePath()
+            );
+            fireEventKafkaTemplate.send(archiveTopic, key, fireEvent);
+            LOGGER.info("Fire event key: {}, data: {}", key, fireEvent);
         } else {
-            LOGGER.info("File: {} has been processed already", key);
+            LOGGER.info("File: {} has already been processed", key);
         }
     }
 
+    @Transactional(transactionManager = "fileManager_transactionManager", rollbackFor = Exception.class)
+    @Override
+    public void archived(final String key, final FireArchiveResult fireArchiveResult) {
+        final EncryptedObject encryptedObject = encryptedObjectRepository.findById(Long.parseLong(key)).get();
+        if (encryptedObject.getStatus() == FileStatus.ARCHIVE_IN_PROGRESS) {
+            final FireResponse fireResponse = fireArchiveResult.getResponseData();
+            encryptedObject.archived(fireResponse.getFireOid(), fireResponse.getFirePath());
+            encryptedObjectRepository.save(encryptedObject);
+        } else {
+            LOGGER.info("File: {} has already been processed", key);
+        }
+    }
 
     @Override
     public List<FileHierarchyModel> findAllFilesAndFoldersInPath(final String accountId,
@@ -237,5 +248,4 @@ public class FileManagerService implements IFileManagerService {
                         encryptedObjectRepository.findAllByAccountIdAndStagingIdOrderByPath(accountId, stagingAreaId)
                 );
     }
-
 }

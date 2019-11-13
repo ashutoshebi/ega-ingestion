@@ -18,8 +18,6 @@
 package uk.ac.ebi.ega.ingestion.file.manager;
 
 import com.zaxxer.hikari.HikariDataSource;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -32,7 +30,6 @@ import org.springframework.data.rest.core.config.RepositoryRestConfiguration;
 import org.springframework.data.rest.core.event.ValidatingRepositoryEventListener;
 import org.springframework.data.rest.core.mapping.ExposureConfiguration;
 import org.springframework.data.rest.webmvc.config.RepositoryRestConfigurer;
-import org.springframework.data.transaction.ChainedTransactionManager;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.orm.jpa.JpaTransactionManager;
@@ -46,16 +43,16 @@ import uk.ac.ebi.ega.ingestion.file.manager.validator.DownloadBoxJobValidator;
 import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 
-import static org.springframework.http.HttpMethod.*;
+import static org.springframework.http.HttpMethod.DELETE;
+import static org.springframework.http.HttpMethod.PATCH;
+import static org.springframework.http.HttpMethod.POST;
+import static org.springframework.http.HttpMethod.PUT;
 
 @Configuration
 @EnableJpaRepositories(
         transactionManagerRef = "fileManager_transactionManager")
 @EnableJpaAuditing
 public class DatabaseConfiguration {
-
-    @Autowired
-    private ConfigurableApplicationContext applicationContext;
 
     @Bean("fileManager_datasource_properties")
     @ConfigurationProperties("datasource.file-manager")
@@ -76,7 +73,7 @@ public class DatabaseConfiguration {
     }
 
     @Bean
-    public CustomDataSourceInitialization customDatasourceInitializer() {
+    public CustomDataSourceInitialization customDatasourceInitializer(final ConfigurableApplicationContext applicationContext) {
         return new CustomDataSourceInitialization(fileManagerDataSource(), fileManagerDataSourceProperties(),
                 applicationContext);
     }
@@ -103,45 +100,6 @@ public class DatabaseConfiguration {
         return new DataSourceTransactionManager(peaDataSource());
     }
 
-    // FIRE Database configuration - Start
-
-    @Bean("fire_datasource_properties")
-    @ConfigurationProperties("datasource.fire")
-    public DataSourceProperties fireDataSourceProperties() {
-        return new DataSourceProperties();
-    }
-
-    @Bean("fire_datasource")
-    @ConfigurationProperties("datasource.fire.hikari")
-    public DataSource fireDataSource() {
-        return fireDataSourceProperties().initializeDataSourceBuilder().type(HikariDataSource.class).build();
-    }
-
-    @Bean("fire_jdbc_template")
-    public NamedParameterJdbcTemplate fireJdbcTemplate() {
-        return new NamedParameterJdbcTemplate(fireDataSource());
-    }
-
-    @Bean("fire_transaction_manager")
-    public DataSourceTransactionManager fireTransactionManager() {
-        return new DataSourceTransactionManager(fireDataSource());
-    }
-
-    /**
-     * Combines both transaction manager & allows to rollback or commit both transactions
-     * together based on outcome. If either of the fails then both will be rollBacked
-     *
-     * @param jpaTransactionManager FileManager's JPA Transaction manager
-     * @param dataSourceTransactionManager Fire JDBCTemplate Transaction manager
-     * @return ChainedTransactionManager combines both File Manager & Fire Transaction manager
-     * @see ChainedTransactionManager
-     */
-    @Bean(name = "fileManagerFireChainedTransactionManager")
-    public ChainedTransactionManager transactionManager(@Qualifier("fileManager_transactionManager") JpaTransactionManager jpaTransactionManager,
-                                                        @Qualifier("fire_transaction_manager") DataSourceTransactionManager dataSourceTransactionManager) {
-        return new ChainedTransactionManager(jpaTransactionManager, dataSourceTransactionManager);
-    }
-
     @Bean
     public RepositoryRestConfigurer repositoryRestConfigurer(LocalValidatorFactoryBean beanValidator) {
         return new RepositoryRestConfigurer() {
@@ -166,7 +124,6 @@ public class DatabaseConfiguration {
                 listener.addValidator("beforeSave", new DownloadBoxAssignationValidator());
                 listener.addValidator("beforeSave", new DownloadBoxJobValidator());
             }
-
         };
     }
 }

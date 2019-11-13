@@ -23,33 +23,29 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
-import uk.ac.ebi.ega.ingestion.commons.messages.FileEncryptionData;
-import uk.ac.ebi.ega.ingestion.commons.messages.FileEncryptionResult;
+import uk.ac.ebi.ega.ingestion.commons.messages.FireArchiveResult;
 import uk.ac.ebi.ega.ingestion.file.manager.services.IFileManagerService;
 
-public class FileArchiveListener {
+public class FireArchiveEventListener {
 
-    private final Logger logger = LoggerFactory.getLogger(FileArchiveListener.class);
+    private final Logger LOGGER = LoggerFactory.getLogger(FireArchiveEventListener.class);
 
-    private final IFileManagerService encryptJobService;
+    private final IFileManagerService fileManagerService;
 
-    public FileArchiveListener(final IFileManagerService encryptJobService) {
-        this.encryptJobService = encryptJobService;
+    public FireArchiveEventListener(final IFileManagerService fileManagerService) {
+        this.fileManagerService = fileManagerService;
     }
 
     @KafkaListener(
-            topics = "${file.archive.queue.name}",
+            topics = "${fire.archive.queue.name}",
             groupId = "${file.archive.group-id}",
             clientIdPrefix = "${file.archive.group-id}",
             containerFactory = "archiveEventListenerContainerFactory")
     public void listenArchiveEventQueue(@Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) String key,
-                                        @Header(KafkaHeaders.RECEIVED_PARTITION_ID) int partition,
-                                        @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
-                                        @Header(KafkaHeaders.RECEIVED_TIMESTAMP) long ts,
-                                        FileEncryptionResult fileEncryptionData,
+                                        FireArchiveResult fireArchiveResult,
                                         Acknowledgment acknowledgment) {
-        logger.info("File archive event: {} data: {}", key, fileEncryptionData);
-        encryptJobService.archive(key, fileEncryptionData);
+        LOGGER.info("File archived event key: {}, data: {}", key, fireArchiveResult);
+        fileManagerService.archived(key, fireArchiveResult);
         acknowledgment.acknowledge();
     }
 }

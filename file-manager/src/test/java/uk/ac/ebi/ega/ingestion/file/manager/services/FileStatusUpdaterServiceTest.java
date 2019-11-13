@@ -39,8 +39,6 @@ import uk.ac.ebi.ega.ingestion.commons.models.FileStatus;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.EncryptedObject;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.repository.EncryptedObjectRepository;
 
-import java.net.URI;
-import java.nio.file.Paths;
 import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
@@ -144,7 +142,8 @@ public class FileStatusUpdaterServiceTest {
 
     private EncryptedObject createFileDetails() {
         final EncryptedObject encryptedObject = new EncryptedObject("", "", "", 0L, "", "", 0L, "");
-        encryptedObject.archive("file://test", FIRE_ID, "", 0L, 0L, Encryption.EGA_AES, "");
+        encryptedObject.archive("file://test", "", 0L, 0L, Encryption.EGA_AES, "");
+        encryptedObject.setFireId(String.valueOf(FIRE_ID));
         return encryptedObject;
     }
 

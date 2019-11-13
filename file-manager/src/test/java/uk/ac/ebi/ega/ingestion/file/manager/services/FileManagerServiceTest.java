@@ -45,10 +45,15 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
-import uk.ac.ebi.ega.fire.ingestion.service.IFireService;
 import uk.ac.ebi.ega.ingestion.commons.messages.EncryptEvent;
+import uk.ac.ebi.ega.ingestion.commons.messages.FileEncryptionData;
+import uk.ac.ebi.ega.ingestion.commons.messages.FileEncryptionResult;
+import uk.ac.ebi.ega.ingestion.commons.messages.FireArchiveResult;
+import uk.ac.ebi.ega.ingestion.commons.messages.FireEvent;
+import uk.ac.ebi.ega.ingestion.commons.messages.FireResponse;
 import uk.ac.ebi.ega.ingestion.commons.messages.NewFileEvent;
 import uk.ac.ebi.ega.ingestion.commons.models.Encryption;
+import uk.ac.ebi.ega.ingestion.commons.models.FileStatus;
 import uk.ac.ebi.ega.ingestion.commons.models.IFileDetails;
 import uk.ac.ebi.ega.ingestion.commons.services.IEncryptedKeyService;
 import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileHierarchyException;
@@ -60,6 +65,8 @@ import uk.ac.ebi.ega.ingestion.file.manager.utils.FileStructureType;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.util.Date;
 import java.util.List;
@@ -67,6 +74,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -89,6 +97,7 @@ public class FileManagerServiceTest {
 
     public static final String TEST_ACCOUNT = "ega-test-account";
     public static final String TEST_STAGING = "ega-test-staging";
+    private static final String FIRE_BOX_RELATIVE_PATH = "/test/path";
     private IFileManagerService fileManagerService;
 
     @MockBean
@@ -98,7 +107,7 @@ public class FileManagerServiceTest {
     private KafkaTemplate<String, EncryptEvent> kafkaTemplate;
 
     @MockBean
-    private IFireService fireService;
+    private KafkaTemplate<String, FireEvent> fireEventKafkaTemplate;
 
     @Autowired
     private FileHierarchyRepository fileHierarchyRepository;
@@ -123,9 +132,9 @@ public class FileManagerServiceTest {
 
     @Before
     public void init() {
-        fileManagerService = Mockito.spy(new FileManagerService(fireService, Paths.get("/test/path"),
+        fileManagerService = Mockito.spy(new FileManagerService(Paths.get(FIRE_BOX_RELATIVE_PATH),
                 fileHierarchyRepository, encryptedObjectRepository, "encrypt-topic",
-                kafkaTemplate, encryptedKeyService, "NUPD"));
+                kafkaTemplate, fireEventKafkaTemplate, encryptedKeyService, "archive-trigger-topic"));
     }
 
     @Sql(scripts = "classpath:cleanDatabase.sql")
@@ -168,7 +177,7 @@ public class FileManagerServiceTest {
         final NewFileEvent event2 = createFileEvent("/test/test.pgp");
         fileManagerService.newFile("test-01", event1);
         fileManagerService.newFile("test-01", event2);
-long count = encryptedObjectRepository.count();
+        long count = encryptedObjectRepository.count();
         assertTrue(encryptedObjectRepository.findByPathAndVersion("/test/test.pgp", event1.getLastModified()).isPresent());
         assertTrue(encryptedObjectRepository.findByPathAndVersion("/test/test.pgp", event2.getLastModified()).isPresent());
         assertNotEquals(event1.getLastModified(), event2.getLastModified());
@@ -204,7 +213,7 @@ long count = encryptedObjectRepository.count();
 
         final EncryptedObject object = encryptedObjectRepository.findByPathAndVersion("/test/test.pgp",
                 fileEvent.getLastModified()).get();
-        object.archive("file://temp/test.pgp", 0L, "270CF8B51C773F3F8DC8B4BE867A9B03", 0L, 0L,
+        object.archive("file://temp/test.pgp", "270CF8B51C773F3F8DC8B4BE867A9B03", 0L, 0L,
                 Encryption.EGA_AES, "test");
         encryptedObjectRepository.save(object);
 
@@ -222,6 +231,82 @@ long count = encryptedObjectRepository.count();
 
         assertTrue(encryptedObjectRepository.findByPathAndVersion("/test/test.pgp",
                 fileEvent.getLastModified()).isPresent());
+    }
+
+    @Transactional
+    @Test
+    @Sql(scripts = "classpath:cleanDatabase.sql")
+    public void encryptedAndArchived_whenReceivesMessage_thenCreatesNewEncryptedObjectRecordAndThenUpdatesEncryptedAndArchivedStatus() throws URISyntaxException {
+        final EncryptedObject encryptedObject = encryptedObjectRepository.save(initEncryptedObject());
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+
+        TestTransaction.start();
+        final EncryptedObject encryptedObjectBeforeEncryption = encryptedObjectRepository.findById(encryptedObject.getId()).get();
+        assertNotNull(encryptedObjectBeforeEncryption);
+        assertEquals(FileStatus.PROCESSING, encryptedObjectBeforeEncryption.getStatus());
+        TestTransaction.end();
+
+        final URI cipFile = new URI("file://temp/test.cip");
+        final FileEncryptionData encryptionData = new FileEncryptionData(
+                0L,
+                cipFile,
+                "270CF8B51C773F3F8DC8B4BE867A9B03",
+                0L,
+                "test-encryption-key",
+                Encryption.EGA_AES
+        );
+
+        TestTransaction.start();
+        final FileEncryptionResult fileEncryptionResult = FileEncryptionResult.success(encryptionData);
+        fileManagerService.encrypted(String.valueOf(encryptedObject.getId()), fileEncryptionResult);
+        verify(fireEventKafkaTemplate, times(1)).send(eq("archive-trigger-topic"), anyString(), argThat(arg -> {
+            assertEquals(cipFile, arg.getFileToUploadPath());
+            assertThat(arg.getFirePath()).startsWith(FIRE_BOX_RELATIVE_PATH);
+            assertEquals("270CF8B51C773F3F8DC8B4BE867A9B03", arg.getMd5());
+            return true;
+        }));
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+
+        TestTransaction.start();
+        final EncryptedObject encryptedObjectAfterEncryption = encryptedObjectRepository.findById(encryptedObject.getId()).get();
+        assertNotNull(encryptedObjectAfterEncryption);
+        assertEquals(FileStatus.ARCHIVE_IN_PROGRESS, encryptedObjectAfterEncryption.getStatus());
+        TestTransaction.end();
+
+        final FireResponse fireResponse = new FireResponse(
+                "537f6bf5af0441e19d284f1a02e2f540",
+                "fire://fire/path/test.cip",
+                false
+        );
+
+        final FireArchiveResult fireArchiveResult = FireArchiveResult.success(fireResponse);
+
+        TestTransaction.start();
+        fileManagerService.archived(String.valueOf(encryptedObjectAfterEncryption.getId()), fireArchiveResult);
+        TestTransaction.flagForCommit();
+        TestTransaction.end();
+
+        TestTransaction.start();
+        final EncryptedObject encryptedObjectAfterArchived = encryptedObjectRepository.findById(encryptedObject.getId()).get();
+        assertNotNull(encryptedObjectAfterArchived);
+        assertEquals(FileStatus.ARCHIVED_SUCCESSFULLY, encryptedObjectAfterArchived.getStatus());
+        assertThat(encryptedObjectAfterArchived.getFireId()).isEqualTo("537f6bf5af0441e19d284f1a02e2f540");
+        assertThat(encryptedObjectAfterArchived.getUri()).isEqualTo("fire://fire/path/test.cip");
+        TestTransaction.end();
+    }
+
+    private EncryptedObject initEncryptedObject() throws URISyntaxException {
+        return new EncryptedObject(
+                TEST_ACCOUNT,
+                TEST_STAGING,
+                "/user/path/test.gpg",
+                new Date().getTime(),
+                new URI("file://uri/path/test.gpg").toString(),
+                "250CF8B51C773F3F8DC8B4BE867A9A02",
+                12L,
+                "270CF8B51C773F3F8DC8B4BE867A9B03");
     }
 
     @Transactional

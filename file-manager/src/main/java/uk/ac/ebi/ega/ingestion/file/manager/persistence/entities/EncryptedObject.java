@@ -32,6 +32,7 @@ import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 
 @Entity
@@ -77,7 +78,7 @@ public class EncryptedObject implements IFileDetails {
     @Column(nullable = false)
     private FileStatus status;
 
-    private Long fireId;
+    private String fireId;
 
     @CreatedDate
     private LocalDateTime createdDate;
@@ -152,18 +153,25 @@ public class EncryptedObject implements IFileDetails {
         return updatedDate;
     }
 
-    public Long getFireId() {
+    public String getFireId() {
         return fireId;
     }
 
-    public String toFirePath() {
-        return stagingId + "/" + path + "." + version;
+    public void setFireId(String fireId) {
+        this.fireId = fireId;
     }
 
-    public void archive(String newUri, Long fireId, String encryptedMD5, long plainSize, long encryptedSize,
+    public String getUri() {
+        return uri;
+    }
+
+    public String toFirePath() {
+        return Paths.get(stagingId + "/" + path + "." + version).normalize().toString();
+    }
+
+    public void archive(String newUri, String encryptedMD5, long plainSize, long encryptedSize,
                         Encryption encryptionType, String encryptionKey) {
         this.uri = newUri;
-        this.fireId = fireId;
         this.encryptedMd5 = encryptedMD5;
         this.plainSize = plainSize;
         this.encryptedSize = encryptedSize;
@@ -174,6 +182,12 @@ public class EncryptedObject implements IFileDetails {
 
     public void archived(String fireUri) {
         this.uri = fireUri;
+        this.status = FileStatus.ARCHIVED_SUCCESSFULLY;
+    }
+
+    public void archived(final String fireId, final String fireURI) {
+        this.fireId = fireId;
+        this.uri = fireURI;
         this.status = FileStatus.ARCHIVED_SUCCESSFULLY;
     }
 

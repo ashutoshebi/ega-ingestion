@@ -22,7 +22,6 @@ import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.StringExpression;
 import com.querydsl.core.types.dsl.StringPath;
-import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 import org.springframework.data.querydsl.binding.QuerydslBinderCustomizer;
 import org.springframework.data.querydsl.binding.QuerydslBindings;
@@ -31,16 +30,11 @@ import org.springframework.data.repository.PagingAndSortingRepository;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.EncryptedObject;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.FileHierarchy;
 import uk.ac.ebi.ega.ingestion.file.manager.persistence.entities.QFileHierarchy;
-import uk.ac.ebi.ega.ingestion.file.manager.utils.FileStructureType;
 
-import javax.persistence.QueryHint;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Stream;
-
-import static org.hibernate.jpa.QueryHints.HINT_FETCH_SIZE;
 
 public interface FileHierarchyRepository extends PagingAndSortingRepository<FileHierarchy, Long>,
         QuerydslPredicateExecutor<FileHierarchy>, QuerydslBinderCustomizer<QFileHierarchy> {
@@ -86,9 +80,10 @@ public interface FileHierarchyRepository extends PagingAndSortingRepository<File
     }
 
     /**
-     * @param path          Original file path
-     * @param accountId     account id
+     * @param path Original file path
+     * @param accountId account id
      * @param stagingAreaId staging area id
+     *
      * @return FileHierarchy Parent FileHierarchy object
      */
     default FileHierarchy fileHierarchyRecursion(final Path path, final String accountId, final String stagingAreaId) {

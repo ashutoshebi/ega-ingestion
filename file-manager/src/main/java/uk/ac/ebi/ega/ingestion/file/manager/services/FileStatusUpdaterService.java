@@ -74,7 +74,8 @@ public class FileStatusUpdaterService implements IFileStatusUpdaterService {
 
     /**
      * @param encryptedObjects files which are in our local FileDetailsRepository
-     *                         and which have the FileStatus.ARCHIVE_IN_PROGRESS status.
+     *         and which have the FileStatus.ARCHIVE_IN_PROGRESS status.
+     *
      * @see FileStatus
      */
     private void updateStatus(final List<EncryptedObject> encryptedObjects) {
@@ -87,8 +88,8 @@ public class FileStatusUpdaterService implements IFileStatusUpdaterService {
     private List<OldFireFile> getFilesInFireCorrespondingTo(final List<EncryptedObject> encryptedObjects) {
         final List<Long> fireIdsOfLocalFilesBeingArchived = encryptedObjects.stream()
                 .map(EncryptedObject::getFireId)
+                .map(Long::valueOf)
                 .collect(Collectors.toList());
-
         return fireService.findAllByFireId(fireIdsOfLocalFilesBeingArchived);
     }
 
@@ -100,14 +101,13 @@ public class FileStatusUpdaterService implements IFileStatusUpdaterService {
         LOGGER.trace("Map<\"FireId in Fire\", \"current FileStatus in Fire\">: {}", fireIdsToFileStatuses);
 
         for (final EncryptedObject object : objects) {
-            final Long fireIdOfLocalFileBeingArchived = object.getFireId();
-            final Long fireId = fireIdOfLocalFileBeingArchived;
+            final Long fireId = Long.valueOf(object.getFireId());
             final Optional<FileStatus> optionalFileStatus = fireIdsToFileStatuses.get(fireId);
 
             if (optionalFileStatus.isPresent()) {
                 final FileStatus fileStatusOfFileInFire = optionalFileStatus.get();
 
-                switch (fileStatusOfFileInFire){
+                switch (fileStatusOfFileInFire) {
                     case ERROR:
                         LOGGER.error("The file in Fire with ega-pro-filer.ega_ARCHIVE.archive.archive_id={} is in an " +
                                 "erroneous state.", fireId);
@@ -133,6 +133,7 @@ public class FileStatusUpdaterService implements IFileStatusUpdaterService {
      * Returns a map mapping the FireId to FileStatus of the given files.
      *
      * @param fireFiles list of files which are in Fire
+     *
      * @return a map: FireId => current FileStatus in Fire
      */
     private Map<Long, Optional<FileStatus>> getFireIdsAndFileStatusesOf(final List<OldFireFile> fireFiles) {

@@ -44,15 +44,15 @@ import org.springframework.test.context.junit4.SpringRunner;
 import uk.ac.ebi.ega.fire.exceptions.ClientProtocolException;
 import uk.ac.ebi.ega.fire.exceptions.FireServiceException;
 import uk.ac.ebi.ega.fire.handler.config.KafkaConfiguration;
-import uk.ac.ebi.ega.fire.handler.model.FireResponse;
-import uk.ac.ebi.ega.fire.handler.model.FireUpload;
-import uk.ac.ebi.ega.fire.handler.model.Result;
 import uk.ac.ebi.ega.fire.ingestion.service.FireService;
 import uk.ac.ebi.ega.fire.ingestion.service.IFireServiceNew;
 import uk.ac.ebi.ega.fire.listener.ProgressListener;
 import uk.ac.ebi.ega.fire.models.FireObjectRequest;
 import uk.ac.ebi.ega.fire.models.IFireResponse;
 import uk.ac.ebi.ega.fire.models.KeyValue;
+import uk.ac.ebi.ega.ingestion.commons.messages.FireArchiveResult;
+import uk.ac.ebi.ega.ingestion.commons.messages.FireEvent;
+import uk.ac.ebi.ega.ingestion.commons.messages.FireResponse;
 
 import java.io.File;
 import java.io.IOException;
@@ -90,7 +90,7 @@ public class FireHandlerServiceTest {
         }
 
         @Bean
-        public IFireHandlerService initFireHandlerService(final IFireServiceNew fireService, final KafkaTemplate<String, Result> kafkaTemplate,
+        public IFireHandlerService initFireHandlerService(final IFireServiceNew fireService, final KafkaTemplate<String, FireArchiveResult> kafkaTemplate,
                                                           @Value("${spring.kafka.fire.queue.name}") final String fireResponseTopic) {
             return new FireHandlerService(fireService, kafkaTemplate, fireResponseTopic);
         }
@@ -123,7 +123,7 @@ public class FireHandlerServiceTest {
 
         when(fireService.upload(any(FireObjectRequest.class), any(ProgressListener.class))).thenReturn(initFireResponse());
 
-        final FireUpload fireUpload = new FireUpload(tmpFile.getAbsolutePath(), "dummy-md5", "dummy/fire/path");
+        final FireEvent fireUpload = new FireEvent(tmpFile.toURI(), "dummy-md5", "dummy/fire/path");
         fireHandlerService.upload(fireUpload, "dummy-key");
 
         //Just wait for message to be delivered to KafkaListener.
@@ -137,7 +137,7 @@ public class FireHandlerServiceTest {
 
         when(fireService.upload(any(FireObjectRequest.class), any(ProgressListener.class))).thenThrow(new FireServiceException("Request retry test"));
 
-        final FireUpload fireUpload = new FireUpload(tmpFile.getAbsolutePath(), "dummy-md5", "dummy/fire/path");
+        final FireEvent fireUpload = new FireEvent(tmpFile.toURI(), "dummy-md5", "dummy/fire/path");
         fireHandlerService.upload(fireUpload, "dummy-key");
 
         //Just wait for message to be delivered to KafkaListener.
@@ -151,7 +151,7 @@ public class FireHandlerServiceTest {
 
         when(fireService.upload(any(FireObjectRequest.class), any(ProgressListener.class))).thenThrow(new FileAlreadyExistsException("File already exists"));
 
-        final FireUpload fireUpload = new FireUpload(tmpFile.getAbsolutePath(), "dummy-md5", "dummy/fire/path");
+        final FireEvent fireUpload = new FireEvent(tmpFile.toURI(), "dummy-md5", "dummy/fire/path");
         fireHandlerService.upload(fireUpload, "dummy-key");
 
         //Just wait for message to be delivered to KafkaListener.
@@ -207,20 +207,20 @@ public class FireHandlerServiceTest {
                 clientIdPrefix = "${spring.kafka.client-id.prefix}",
                 containerFactory = "kafkaListenerContainerFactory",
                 autoStartup = "true")
-        public void listen(@Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) final String key, final Result result,
+        public void listen(@Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) final String key, final FireArchiveResult fireArchiveResult,
                            final Acknowledgment acknowledgment) {
 
             assertEquals("dummy-key", key);
-            assertNotNull(result);
+            assertNotNull(fireArchiveResult);
 
-            if (Result.Status.RETRY.equals(result.getStatus())) {
-                assertNotNull(result.getMessage());
+            if (FireArchiveResult.Status.RETRY.equals(fireArchiveResult.getStatus())) {
+                assertNotNull(fireArchiveResult.getMessage());
                 latch.countDown();
-            } else if (Result.Status.EXISTS.equals(result.getStatus())) {
-                assertNotNull(result.getMessage());
+            } else if (FireArchiveResult.Status.EXISTS.equals(fireArchiveResult.getStatus())) {
+                assertNotNull(fireArchiveResult.getMessage());
                 latch.countDown();
-            } else if (Result.Status.SUCCESS.equals(result.getStatus())) {
-                final FireResponse fireResponse = result.getResponseData();
+            } else if (FireArchiveResult.Status.SUCCESS.equals(fireArchiveResult.getStatus())) {
+                final FireResponse fireResponse = fireArchiveResult.getResponseData();
                 assertEquals("fire-oid-12345", fireResponse.getFireOid());
                 assertEquals("dummy-path", fireResponse.getFirePath());
                 assertFalse(fireResponse.isPublished());

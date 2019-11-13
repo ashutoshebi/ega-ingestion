@@ -17,11 +17,6 @@
  */
 package uk.ac.ebi.ega.fire.handler.config;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.MapperFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -39,14 +34,15 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
 import org.springframework.kafka.listener.ContainerProperties;
-import org.springframework.kafka.support.converter.StringJsonMessageConverter;
-import org.springframework.kafka.support.serializer.JsonSerializer;
-import uk.ac.ebi.ega.fire.handler.model.FireUpload;
-import uk.ac.ebi.ega.fire.handler.model.Result;
+import uk.ac.ebi.ega.ingestion.commons.messages.FireArchiveResult;
+import uk.ac.ebi.ega.ingestion.commons.messages.FireEvent;
 
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
+
+import static uk.ac.ebi.ega.ingestion.commons.util.MessageUtil.getJsonSerializer;
+import static uk.ac.ebi.ega.ingestion.commons.util.MessageUtil.getStringJsonMessageConverter;
 
 @Configuration
 @EnableKafka
@@ -65,33 +61,33 @@ public class KafkaConfiguration {
     private Duration sessionTimeout;
 
     @Bean
-    public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String, FireUpload>>
+    public KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String, FireEvent>>
     kafkaListenerContainerFactory() {
-        ConcurrentKafkaListenerContainerFactory<String, FireUpload> factory =
+        ConcurrentKafkaListenerContainerFactory<String, FireEvent> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
         factory.setConcurrency(1);
         factory.getContainerProperties().setPollTimeout(600000);
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
-        factory.setMessageConverter(new StringJsonMessageConverter(getObjectMapper()));
+        factory.setMessageConverter(getStringJsonMessageConverter());
         return factory;
     }
 
     @Bean
-    public ConsumerFactory<String, FireUpload> consumerFactory() {
+    public ConsumerFactory<String, FireEvent> consumerFactory() {
         return new DefaultKafkaConsumerFactory<>(consumerConfigs());
     }
 
     @Bean
-    public ProducerFactory<String, Result> producerFactory() {
-        DefaultKafkaProducerFactory<String, Result> factory =
+    public ProducerFactory<String, FireArchiveResult> producerFactory() {
+        DefaultKafkaProducerFactory<String, FireArchiveResult> factory =
                 new DefaultKafkaProducerFactory<>(producerConfigs());
-        factory.setValueSerializer(new JsonSerializer<>(getObjectMapper()));
+        factory.setValueSerializer(getJsonSerializer());
         return factory;
     }
 
     @Bean
-    public KafkaTemplate<String, Result> kafkaTemplate() {
+    public KafkaTemplate<String, FireArchiveResult> kafkaTemplate() {
         return new KafkaTemplate<>(producerFactory());
     }
 
@@ -115,15 +111,5 @@ public class KafkaConfiguration {
         properties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, consumerAutoOffsetReset);
         properties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
         return properties;
-    }
-
-    private ObjectMapper getObjectMapper() {
-        final ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule());
-        objectMapper.configure(MapperFeature.DEFAULT_VIEW_INCLUSION, false);
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-        objectMapper.configure(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
-        return objectMapper;
     }
 }

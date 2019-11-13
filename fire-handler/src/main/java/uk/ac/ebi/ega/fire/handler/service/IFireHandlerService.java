@@ -18,8 +18,8 @@
 package uk.ac.ebi.ega.fire.handler.service;
 
 import uk.ac.ebi.ega.fire.exceptions.FireServiceException;
-import uk.ac.ebi.ega.fire.handler.model.FireUpload;
+import uk.ac.ebi.ega.ingestion.commons.messages.FireEvent;
 
 public interface IFireHandlerService {
-    void upload(FireUpload fireUpload, String key) throws FireServiceException;
+    void upload(FireEvent fireEvent, String key) throws FireServiceException;
 }

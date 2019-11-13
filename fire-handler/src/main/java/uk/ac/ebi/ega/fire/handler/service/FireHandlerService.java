@@ -25,12 +25,12 @@ import org.springframework.retry.annotation.Recover;
 import org.springframework.retry.annotation.Retryable;
 import uk.ac.ebi.ega.fire.exceptions.ClientProtocolException;
 import uk.ac.ebi.ega.fire.exceptions.FireServiceException;
-import uk.ac.ebi.ega.fire.handler.model.FireResponse;
-import uk.ac.ebi.ega.fire.handler.model.FireUpload;
-import uk.ac.ebi.ega.fire.handler.model.Result;
 import uk.ac.ebi.ega.fire.ingestion.service.IFireServiceNew;
 import uk.ac.ebi.ega.fire.models.FireObjectRequest;
 import uk.ac.ebi.ega.fire.models.IFireResponse;
+import uk.ac.ebi.ega.ingestion.commons.messages.FireArchiveResult;
+import uk.ac.ebi.ega.ingestion.commons.messages.FireEvent;
+import uk.ac.ebi.ega.ingestion.commons.messages.FireResponse;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -41,11 +41,11 @@ public class FireHandlerService implements IFireHandlerService {
     private static final Logger LOGGER = LoggerFactory.getLogger(FireHandlerService.class);
 
     private final IFireServiceNew fireService;
-    private final KafkaTemplate<String, Result> kafkaTemplate;
+    private final KafkaTemplate<String, FireArchiveResult> kafkaTemplate;
     private final String fireResponseTopic;
 
     public FireHandlerService(final IFireServiceNew fireService,
-                              final KafkaTemplate<String, Result> kafkaTemplate,
+                              final KafkaTemplate<String, FireArchiveResult> kafkaTemplate,
                               final String fireResponseTopic) {
         this.fireService = fireService;
         this.kafkaTemplate = kafkaTemplate;
@@ -58,38 +58,38 @@ public class FireHandlerService implements IFireHandlerService {
             value = {FireServiceException.class}
     )
     @Override
-    public void upload(final FireUpload fireUpload, final String key) throws FireServiceException {
+    public void upload(final FireEvent fireEvent, final String key) throws FireServiceException {
         try {
-            doUpload(fireUpload, key);
+            doUpload(fireEvent, key);
         } catch (FireServiceException fse) {
             LOGGER.error("Rethrowing FireServiceException for request retrial");
             throw fse;
         } catch (FileAlreadyExistsException fae) {
             LOGGER.error(fae.getMessage(), fae);
-            reportResult(key, Result.exists("File ".concat(fireUpload.getFileToUploadPath()).concat(" already exists on fire with given fire path")));
+            reportResult(key, FireArchiveResult.exists("File ".concat(fireEvent.getFileToUploadPath().toString()).concat(" already exists on fire with given fire path")));
         } catch (FileNotFoundException | ClientProtocolException e) {
             LOGGER.error(e.getMessage(), e);
-            reportResult(key, Result.failure("Error while uploading file "
-                    .concat(fireUpload.getFileToUploadPath())
+            reportResult(key, FireArchiveResult.failure("Error while uploading file "
+                    .concat(fireEvent.getFileToUploadPath().toString())
                     .concat(". Check whether request is properly constructed & file to upload exists")));
         }//catch clause can be modified in case error handling changes.
     }
 
-    private void doUpload(final FireUpload fireUpload, final String key) throws FireServiceException, FileNotFoundException, FileAlreadyExistsException, ClientProtocolException {
-        final FireObjectRequest fireObjectRequest = new FireObjectRequest(new File(fireUpload.getFileToUploadPath()), fireUpload.getMd5(), fireUpload.getFirePath());
+    private void doUpload(final FireEvent fireEvent, final String key) throws FireServiceException, FileNotFoundException, FileAlreadyExistsException, ClientProtocolException {
+        final FireObjectRequest fireObjectRequest = new FireObjectRequest(new File(fireEvent.getFileToUploadPath()), fireEvent.getMd5(), fireEvent.getFirePath());
         final IFireResponse fireResponse = fireService.upload(fireObjectRequest, bytesTransferred -> {/* Add logic to work with count of byte transferred */});
         final FireResponse fireResponseModel = new FireResponse(fireResponse.getFireOid(), fireResponse.getPath().orElse(""), fireResponse.isPublished());
-        reportResult(key, Result.success(fireResponseModel));
+        reportResult(key, FireArchiveResult.success(fireResponseModel));
     }
 
     @Recover
-    public void recoverFromFixedRetry(final FireServiceException fse, final FireUpload fireUpload, final String key) {
+    public void recoverFromFixedRetry(final FireServiceException fse, final FireEvent fireEvent, final String key) {
         LOGGER.info("Recovering from fixed retry");
-        reportResult(key, Result.retry("Unable to process file ".concat(fireUpload.getFileToUploadPath()).concat(" request after several retries")));
+        reportResult(key, FireArchiveResult.retry("Unable to process file ".concat(fireEvent.getFileToUploadPath().toString()).concat(" request after several retries")));
     }
 
-    private void reportResult(final String key, final Result result) {
-        LOGGER.info("Data sent to kafka topic={}, key={}, data={}", fireResponseTopic, key, result);
-        kafkaTemplate.send(fireResponseTopic, key, result);
+    private void reportResult(final String key, final FireArchiveResult fireArchiveResult) {
+        LOGGER.info("Data sent to kafka topic={}, key={}, data={}", fireResponseTopic, key, fireArchiveResult);
+        kafkaTemplate.send(fireResponseTopic, key, fireArchiveResult);
     }
 }

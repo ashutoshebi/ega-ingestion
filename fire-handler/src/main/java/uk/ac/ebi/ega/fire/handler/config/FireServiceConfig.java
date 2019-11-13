@@ -29,12 +29,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.core.KafkaTemplate;
 import uk.ac.ebi.ega.fire.handler.kafka.listener.FireEventListener;
-import uk.ac.ebi.ega.fire.handler.model.Result;
 import uk.ac.ebi.ega.fire.handler.service.FireHandlerService;
 import uk.ac.ebi.ega.fire.handler.service.IFireHandlerService;
 import uk.ac.ebi.ega.fire.ingestion.service.FireService;
 import uk.ac.ebi.ega.fire.ingestion.service.IFireServiceNew;
 import uk.ac.ebi.ega.fire.properties.HttpClientProperties;
+import uk.ac.ebi.ega.ingestion.commons.messages.FireArchiveResult;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -97,7 +97,7 @@ public class FireServiceConfig {
 
     @Bean
     public IFireHandlerService initFireHandlerService(final IFireServiceNew fireService,
-                                                      final KafkaTemplate<String, Result> kafkaTemplate,
+                                                      final KafkaTemplate<String, FireArchiveResult> kafkaTemplate,
                                                       @Value("${spring.kafka.fire.queue.name}") final String topicName) {
         return new FireHandlerService(fireService, kafkaTemplate, topicName);
     }

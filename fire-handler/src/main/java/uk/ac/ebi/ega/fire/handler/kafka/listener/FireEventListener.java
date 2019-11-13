@@ -22,8 +22,8 @@ import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import uk.ac.ebi.ega.fire.exceptions.FireServiceException;
-import uk.ac.ebi.ega.fire.handler.model.FireUpload;
 import uk.ac.ebi.ega.fire.handler.service.IFireHandlerService;
+import uk.ac.ebi.ega.ingestion.commons.messages.FireEvent;
 
 public class FireEventListener {
 
@@ -35,9 +35,9 @@ public class FireEventListener {
 
     @KafkaListener(id = "${spring.kafka.client-id}", topics = "${spring.kafka.file.archive.queue.name}",
             groupId = "${spring.kafka.client.group-id}", clientIdPrefix = "${spring.kafka.client-id.prefix}", autoStartup = "true")
-    public void listen(@Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) final String key, final FireUpload fireUpload,
+    public void listen(@Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) final String key, final FireEvent fireEvent,
                        final Acknowledgment acknowledgment) throws FireServiceException {
-        fireHandlerService.upload(fireUpload, key);
+        fireHandlerService.upload(fireEvent, key);
         /* Sending acknowledgment once request has been executed.
            Acknowledgment will be sent in all cases.
          */

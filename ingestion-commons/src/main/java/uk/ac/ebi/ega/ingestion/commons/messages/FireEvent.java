@@ -15,30 +15,29 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.fire.handler.model;
+package uk.ac.ebi.ega.ingestion.commons.messages;
 
-/**
- * Temporary class to store file details to upload file to Fire. Can be moved to common library.
- */
-public class FireUpload {
-    private String fileToUploadPath;
+import java.net.URI;
+
+public class FireEvent {
+    private URI fileToUploadPath;
     private String md5;
     private String firePath;
 
-    public FireUpload() {
+    public FireEvent() {
     }
 
-    public FireUpload(final String fileToUploadPath, final String md5, final String firePath) {
+    public FireEvent(final URI fileToUploadPath, final String md5, final String firePath) {
         this.fileToUploadPath = fileToUploadPath;
         this.md5 = md5;
         this.firePath = firePath;
     }
 
-    public String getFileToUploadPath() {
+    public URI getFileToUploadPath() {
         return fileToUploadPath;
     }
 
-    public void setFileToUploadPath(String fileToUploadPath) {
+    public void setFileToUploadPath(URI fileToUploadPath) {
         this.fileToUploadPath = fileToUploadPath;
     }
 
@@ -56,5 +55,14 @@ public class FireUpload {
 
     public void setFirePath(String firePath) {
         this.firePath = firePath;
+    }
+
+    @Override
+    public String toString() {
+        return "FireEvent{" +
+                "fileToUploadPath=" + fileToUploadPath +
+                ", md5='" + md5 + '\'' +
+                ", firePath='" + firePath + '\'' +
+                '}';
     }
 }

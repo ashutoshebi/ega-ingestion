@@ -17,8 +17,6 @@
  */
 package uk.ac.ebi.ega.ingestion.file.manager;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -30,11 +28,8 @@ import uk.ac.ebi.ega.encryption.core.encryption.exceptions.AlgorithmInitializati
 import uk.ac.ebi.ega.encryption.core.services.IPasswordEncryptionService;
 import uk.ac.ebi.ega.encryption.core.services.PasswordEncryptionService;
 import uk.ac.ebi.ega.encryption.core.utils.io.FileUtils;
-import uk.ac.ebi.ega.fire.ingestion.service.IFireService;
-import uk.ac.ebi.ega.fire.ingestion.service.IProFilerDatabaseService;
-import uk.ac.ebi.ega.fire.ingestion.service.OldFireService;
-import uk.ac.ebi.ega.fire.ingestion.service.ProFilerDatabaseService;
 import uk.ac.ebi.ega.ingestion.commons.messages.EncryptEvent;
+import uk.ac.ebi.ega.ingestion.commons.messages.FireEvent;
 import uk.ac.ebi.ega.ingestion.commons.services.IEncryptedKeyService;
 import uk.ac.ebi.ega.ingestion.commons.services.StaticEncryptedKeyService;
 import uk.ac.ebi.ega.ingestion.file.manager.kafka.message.DownloadBoxFileProcess;
@@ -55,10 +50,7 @@ import uk.ac.ebi.ega.ingestion.file.manager.services.IMailingService;
 import uk.ac.ebi.ega.ingestion.file.manager.services.MailingService;
 import uk.ac.ebi.ega.ingestion.file.manager.services.key.RandomKeyGenerator;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 
 @Configuration
@@ -81,9 +73,6 @@ public class FileManagerConfiguration {
 
     @Value("${file.manager.mail.alert}")
     private String mailAlert;
-
-    @Value("${file.manager.old.fire.ega.id.prefix}")
-    private String oldFireEgaIdPrefix;
 
     @Bean
     public IKeyGenerator keyGenerator() {
@@ -114,35 +103,16 @@ public class FileManagerConfiguration {
     }
 
     @Bean
-    public IProFilerDatabaseService proFilerDatabaseService(@Qualifier("fire_jdbc_template")
-                                                                    NamedParameterJdbcTemplate jdbcTemplate) {
-        return new ProFilerDatabaseService(jdbcTemplate);
-    }
-
-    @Bean
-    public IFireService fireIngestion(@Value("${fire.staging.path}") String fireStagingPath,
-                                      IProFilerDatabaseService proFilerDatabaseService) throws FileNotFoundException {
-        return new OldFireService(assertAndGetPath(fireStagingPath), proFilerDatabaseService);
-    }
-
-    private Path assertAndGetPath(String path) throws FileNotFoundException {
-        final File file = new File(path);
-        if (!file.exists()) {
-            throw new FileNotFoundException(file.getAbsolutePath());
-        }
-        return file.toPath();
-    }
-
-    @Bean
-    public IFileManagerService fileManagerService(IFireService fireIngestion,
-                                                  @Value("${file.manager.fire.relative.path}") String fireBoxRelativePath,
+    public IFileManagerService fileManagerService(@Value("${file.manager.fire.relative.path}") String fireBoxRelativePath,
                                                   FileHierarchyRepository fileHierarchyRepository,
                                                   EncryptedObjectRepository encryptedObjectRepository,
-                                                  KafkaTemplate<String, EncryptEvent> encryptEventKafkaTemplate)
+                                                  KafkaTemplate<String, EncryptEvent> encryptEventKafkaTemplate,
+                                                  KafkaTemplate<String, FireEvent> fireEventKafkaTemplate,
+                                                  @Value("${fire.archive.trigger.queue.name}") String archiveTopic)
             throws IOException, AlgorithmInitializationException {
-        return new FileManagerService(fireIngestion, Paths.get(fireBoxRelativePath), fileHierarchyRepository,
-                encryptedObjectRepository, fileEncryptQueueName, encryptEventKafkaTemplate, encryptedKeyService(),
-                oldFireEgaIdPrefix);
+        return new FileManagerService(Paths.get(fireBoxRelativePath), fileHierarchyRepository,
+                encryptedObjectRepository, fileEncryptQueueName, encryptEventKafkaTemplate, fireEventKafkaTemplate,
+                encryptedKeyService(), archiveTopic);
     }
 
     @Bean

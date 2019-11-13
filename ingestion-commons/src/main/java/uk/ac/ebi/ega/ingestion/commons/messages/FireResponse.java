@@ -15,11 +15,8 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.fire.handler.model;
+package uk.ac.ebi.ega.ingestion.commons.messages;
 
-/**
- * Temporary class to store fire response. Can be moved to common library.
- */
 public class FireResponse {
 
     private String fireOid;

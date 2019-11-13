@@ -21,13 +21,13 @@ import com.querydsl.core.types.Predicate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import uk.ac.ebi.ega.ingestion.commons.messages.FileEncryptionResult;
+import uk.ac.ebi.ega.ingestion.commons.messages.FireArchiveResult;
 import uk.ac.ebi.ega.ingestion.commons.messages.NewFileEvent;
 import uk.ac.ebi.ega.ingestion.commons.models.IFileDetails;
 import uk.ac.ebi.ega.ingestion.file.manager.controller.exceptions.FileHierarchyException;
 import uk.ac.ebi.ega.ingestion.file.manager.models.FileHierarchyModel;
 
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
@@ -50,9 +50,16 @@ public interface IFileManagerService {
      *
      * @param key
      * @param fileEncryptionData
-     * @throws IOException
      */
-    void archive(String key, FileEncryptionResult fileEncryptionData);
+    void encrypted(String key, FileEncryptionResult fileEncryptionData);
+
+    /**
+     * Completes the archive process. Updates fire details.
+     *
+     * @param key
+     * @param fireArchiveResult
+     */
+    void archived(String key, FireArchiveResult fireArchiveResult);
 
     /**
      * Returns List of FileHierarchyModel. Condition checks for case insensitive equals AccountId, StagingAreaId
@@ -61,9 +68,10 @@ public interface IFileManagerService {
      * List is ordered by originalPath.
      * It is a Non Recursive result.
      *
-     * @param accountId     Account Id
+     * @param accountId Account Id
      * @param stagingAreaId Staging Area Id
-     * @param filePath      File path (optional)
+     * @param filePath File path (optional)
+     *
      * @return List of FileHierarchyModel.
      * @throws FileNotFoundException
      */
@@ -74,10 +82,11 @@ public interface IFileManagerService {
      * Returns Page of file details on accountId and stagingAreaId filtered with predicate
      * Page will have no records if no data found.
      *
-     * @param accountId     Account Id
+     * @param accountId Account Id
      * @param stagingAreaId Staging Area Id
-     * @param predicate     Predicate
-     * @param pageable      Pageable
+     * @param predicate Predicate
+     * @param pageable Pageable
+     *
      * @return Page object of FileHierarchyModel.
      */
     Page<? extends IFileDetails> findAllFiles(String accountId, String stagingAreaId, Predicate predicate,
@@ -88,8 +97,9 @@ public interface IFileManagerService {
      * will return empty Stream if no file exists under this path.
      * Stream is ordered by originalPath.
      *
-     * @param accountId     Account Id
+     * @param accountId Account Id
      * @param stagingAreaId Staging Area Id
+     *
      * @return Stream of FileHierarchyModel object.
      */
     Stream<? extends IFileDetails> findAllFiles(String accountId, String stagingAreaId, Optional<String> optionalPath);
@@ -100,6 +110,7 @@ public interface IFileManagerService {
      * @param accountId
      * @param locationId
      * @param path
+     *
      * @return Optional FileHierarchyModel
      */
     Optional<FileHierarchyModel> findParentOfPath(String accountId, String locationId, Path path);

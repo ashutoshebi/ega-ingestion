@@ -15,13 +15,9 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.fire.handler.model;
+package uk.ac.ebi.ega.ingestion.commons.messages;
 
-/**
- * Not making responseData generic as it doesn't necessary.
- * If required in future can be done.
- */
-public class Result {
+public class FireArchiveResult {
 
     public enum Status {
         SUCCESS, FAILURE, EXISTS, RETRY;
@@ -31,15 +27,15 @@ public class Result {
     private Status status;
     private String message;
 
-    private Result() {
+    private FireArchiveResult() {
     }
 
-    private Result(final FireResponse responseData, final Status status) {
+    private FireArchiveResult(final FireResponse responseData, final Status status) {
         this.responseData = responseData;
         this.status = status;
     }
 
-    private Result(final Status status, final String message) {
+    private FireArchiveResult(final Status status, final String message) {
         this.status = status;
         this.message = message;
     }
@@ -56,20 +52,20 @@ public class Result {
         return message;
     }
 
-    public static Result success(final FireResponse responseData) {
-        return new Result(responseData, Status.SUCCESS);
+    public static FireArchiveResult success(final FireResponse responseData) {
+        return new FireArchiveResult(responseData, Status.SUCCESS);
     }
 
-    public static Result failure(final String message) {
-        return new Result(Status.FAILURE, message);
+    public static FireArchiveResult failure(final String message) {
+        return new FireArchiveResult(Status.FAILURE, message);
     }
 
-    public static Result exists(final String message) {
-        return new Result(Status.EXISTS, message);
+    public static FireArchiveResult exists(final String message) {
+        return new FireArchiveResult(Status.EXISTS, message);
     }
 
-    public static Result retry(final String message) {
-        return new Result(Status.RETRY, message);
+    public static FireArchiveResult retry(final String message) {
+        return new FireArchiveResult(Status.RETRY, message);
     }
 
     @Override
