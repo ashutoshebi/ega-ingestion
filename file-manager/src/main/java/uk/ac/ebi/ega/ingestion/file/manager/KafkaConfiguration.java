@@ -17,6 +17,11 @@
  */
 package uk.ac.ebi.ega.ingestion.file.manager;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -34,6 +39,8 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
 import org.springframework.kafka.listener.ContainerProperties;
+import org.springframework.kafka.support.converter.StringJsonMessageConverter;
+import org.springframework.kafka.support.serializer.JsonSerializer;
 import uk.ac.ebi.ega.ingestion.commons.messages.EncryptEvent;
 import uk.ac.ebi.ega.ingestion.commons.messages.FileEncryptionResult;
 import uk.ac.ebi.ega.ingestion.commons.messages.FireArchiveResult;
@@ -49,9 +56,6 @@ import uk.ac.ebi.ega.ingestion.file.manager.services.IFileManagerService;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
-
-import static uk.ac.ebi.ega.ingestion.commons.util.MessageUtil.getJsonSerializer;
-import static uk.ac.ebi.ega.ingestion.commons.util.MessageUtil.getStringJsonMessageConverter;
 
 @Configuration
 public class KafkaConfiguration {
@@ -77,7 +81,7 @@ public class KafkaConfiguration {
     public ProducerFactory<String, DownloadBoxFileProcess> producerFactory() {
         DefaultKafkaProducerFactory<String, DownloadBoxFileProcess> factory =
                 new DefaultKafkaProducerFactory<>(producerConfigs());
-        factory.setValueSerializer(getJsonSerializer());
+        factory.setValueSerializer(new JsonSerializer<>(getObjectMapper()));
         return factory;
     }
 
@@ -90,7 +94,7 @@ public class KafkaConfiguration {
     public ProducerFactory<String, EncryptEvent> encryptEventProducerFactory() {
         DefaultKafkaProducerFactory<String, EncryptEvent> factory =
                 new DefaultKafkaProducerFactory<>(producerConfigs());
-        factory.setValueSerializer(getJsonSerializer());
+        factory.setValueSerializer(new JsonSerializer<>(getObjectMapper()));
         return factory;
     }
 
@@ -103,7 +107,7 @@ public class KafkaConfiguration {
     public ProducerFactory<String, FireEvent> fireEventProducerFactory() {
         DefaultKafkaProducerFactory<String, FireEvent> factory =
                 new DefaultKafkaProducerFactory<>(producerConfigs());
-        factory.setValueSerializer(getJsonSerializer());
+        factory.setValueSerializer(new JsonSerializer<>(getObjectMapper()));
         return factory;
     }
 
@@ -123,7 +127,7 @@ public class KafkaConfiguration {
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConcurrency(1);
         factory.setConsumerFactory(reEncryptCompleteConsumerFactory());
-        factory.setMessageConverter(getStringJsonMessageConverter());
+        factory.setMessageConverter(new StringJsonMessageConverter(getObjectMapper()));
         return factory;
     }
 
@@ -139,7 +143,7 @@ public class KafkaConfiguration {
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConcurrency(1);
         factory.setConsumerFactory(archiveEventConsumerFactory());
-        factory.setMessageConverter(getStringJsonMessageConverter());
+        factory.setMessageConverter(new StringJsonMessageConverter(getObjectMapper()));
         factory.getContainerProperties().setPollTimeout(600000);
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
         return factory;
@@ -179,7 +183,7 @@ public class KafkaConfiguration {
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConcurrency(1);
         factory.setConsumerFactory(new DefaultKafkaConsumerFactory<>(manualConsumerConfigs()));
-        factory.setMessageConverter(getStringJsonMessageConverter());
+        factory.setMessageConverter(new StringJsonMessageConverter(getObjectMapper()));
         factory.getContainerProperties().setPollTimeout(600000);
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
         return factory;
@@ -197,7 +201,7 @@ public class KafkaConfiguration {
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConcurrency(1);
         factory.setConsumerFactory(fireArchiveEventConsumerFactory());
-        factory.setMessageConverter(getStringJsonMessageConverter());
+        factory.setMessageConverter(new StringJsonMessageConverter(getObjectMapper()));
         factory.getContainerProperties().setPollTimeout(600000);
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
         return factory;
@@ -211,5 +215,15 @@ public class KafkaConfiguration {
     @Bean
     public FireArchiveEventListener fireArchiveEventListener(@Autowired IFileManagerService fileManagerService) {
         return new FireArchiveEventListener(fileManagerService);
+    }
+
+    private static ObjectMapper getObjectMapper() {
+        final ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.configure(MapperFeature.DEFAULT_VIEW_INCLUSION, false);
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+        objectMapper.configure(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
+        return objectMapper;
     }
 }
